@@ -1,6 +1,7 @@
 """
 Walking skeleton: Contract<int> → Snapshot → Script(x+1)
 → Observation → Provided ⊨ Required → PASS
++ InterfaceContract + PlanLock
 """
 from __future__ import annotations
 
@@ -13,6 +14,11 @@ from acid_engine.scripts.specification import (
 )
 from acid_engine.scripts.module import ScriptModule
 from acid_engine.scripts.python_runtime import run_script
+from acid_engine.contracts.resolver import ConstraintResolver
+from acid_engine.modules.leaf import LeafModule
+from acid_engine.interface.contract import InterfaceContract
+from acid_engine.execution.plan_lock import PlanLock
+from acid_engine.execution.modes import ExecutionMode
 
 
 def build_script() -> ScriptModule:
@@ -35,6 +41,7 @@ def main() -> None:
     script = build_script()
     leaf = LeafModule(module_id="leaf_x_plus_1", script=script)
 
+    # Input snapshot
     in_port = PortRef(module="x_plus_1", direction="input", name="value")
     input_snap = ContainerSnapshot.create(
         port_ref=in_port,
@@ -44,14 +51,17 @@ def main() -> None:
         cardinality=1,
     )
 
+    # Resolve constraints
     resolver = ConstraintResolver()
     effective_policy = resolver.resolve_policy(
         parent_policy={},
         child_policy=script.specification.policy.to_canonical_dict(),
     )
 
+    # Execute
     output_snap, obs, delta, state = run_script(script, input_snap)
 
+    # Conformance
     result = check_conformance(
         required_output_type="int",
         provided_data=output_snap.data,
@@ -61,6 +71,7 @@ def main() -> None:
         contract_id=str(script.contract_id),
     )
 
+    # Interface contract
     iface = InterfaceContract(
         contract_id=ContractId(namespace="demo", name="skeleton_iface"),
         version=Version(0, 1, 0),
@@ -71,6 +82,7 @@ def main() -> None:
         module_hashes={leaf.module_id: leaf.content_hash},
     )
 
+    # plan.lock
     plan = PlanLock.create(
         plan_id="skeleton-001",
         interface_contract_hash=iface.content_hash,
@@ -91,6 +103,7 @@ def main() -> None:
     assert result.ok, "Walking skeleton must PASS"
     assert output_snap.data == 4
     print("PASS")
+
 
 if __name__ == "__main__":
     main()
