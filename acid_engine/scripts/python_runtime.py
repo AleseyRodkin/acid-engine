@@ -9,21 +9,29 @@ from acid_engine.containers.observation import ExecutionObservation
 from acid_engine.containers.delta import ContainerDelta
 from acid_engine.containers.state import ExecutionState, ExecutionStatus
 from acid_engine.containers.port import PortRef
+from acid_engine.execution.modes import ExecutionMode
 
 
 def run_script(
     script: ScriptModule,
     input_snapshot: ContainerSnapshot,
+    mode: ExecutionMode = ExecutionMode.NORMAL,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
     Execute a ScriptModule.
     Returns output snapshot, observation, delta, and final state.
+    In LIGHT mode, observations are cheaper (no detailed trace/effects).
     """
     state = ExecutionState()
     state.mark_running()
     start = time.perf_counter()
     effects: list[str] = []
-    trace: list[str] = [f"start:{script.name or script.contract_id.name}"]
+    trace: list[str] = []
+
+    if mode == ExecutionMode.NORMAL:
+        trace.append(f"start:{script.name or script.contract_id.name}")
+    else:
+        trace.append("start:light")
 
     try:
         result = script.implementation(input_snapshot.data)
@@ -49,17 +57,17 @@ def run_script(
             start=start,
             end=end,
             status="completed",
-            effects=tuple(effects),
+            effects=tuple(effects) if mode == ExecutionMode.NORMAL else (),
             trace=tuple(trace),
-            input_hash=input_snapshot.content_hash,
-            output_hash=output_snapshot.content_hash,
+            input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+            output_hash=output_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
         )
 
         delta = ContainerDelta(
             input_cardinality=input_snapshot.cardinality,
             output_cardinality=output_snapshot.cardinality,
-            input_hash=input_snapshot.content_hash,
-            output_hash=output_snapshot.content_hash,
+            input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+            output_hash=output_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
             status="completed",
             latency_ms=obs.latency_ms,
         )
@@ -73,14 +81,14 @@ def run_script(
             start=start,
             end=end,
             status="failed",
-            effects=tuple(effects),
+            effects=tuple(effects) if mode == ExecutionMode.NORMAL else (),
             trace=tuple(trace),
-            input_hash=input_snapshot.content_hash,
+            input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
         )
         delta = ContainerDelta(
             input_cardinality=input_snapshot.cardinality,
             output_cardinality=0,
-            input_hash=input_snapshot.content_hash,
+            input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
             output_hash="",
             status="failed",
             latency_ms=obs.latency_ms,
