@@ -16,12 +16,8 @@ def run_script(
     script: ScriptModule,
     input_snapshot: ContainerSnapshot,
     mode: ExecutionMode = ExecutionMode.NORMAL,
+    logger=None,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
-    """
-    Execute a ScriptModule.
-    Returns output snapshot, observation, delta, and final state.
-    In LIGHT mode, observations are cheaper (no detailed trace/effects).
-    """
     state = ExecutionState()
     state.mark_running()
     start = time.perf_counter()
@@ -61,6 +57,7 @@ def run_script(
             trace=tuple(trace),
             input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
             output_hash=output_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+            logger=logger,
         )
 
         delta = ContainerDelta(
@@ -84,6 +81,7 @@ def run_script(
             effects=tuple(effects) if mode == ExecutionMode.NORMAL else (),
             trace=tuple(trace),
             input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+            logger=logger,
         )
         delta = ContainerDelta(
             input_cardinality=input_snapshot.cardinality,
