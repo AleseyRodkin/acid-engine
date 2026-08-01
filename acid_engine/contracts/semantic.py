@@ -23,14 +23,22 @@ class EqualsPredicate(SemanticPredicate):
 
 class ContainsPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        if isinstance(provided, str) and isinstance(expected, str):
+        # если provided — строка, ищем подстроку
+        if isinstance(provided, str):
             if expected in provided:
                 return True, "contains"
             return False, f"'{expected}' not found in output"
-        if isinstance(provided, list) and expected in provided:
+        # для словаря или списка ищем в JSON-представлении
+        if isinstance(provided, (dict, list)):
+            import json
+            as_str = json.dumps(provided, ensure_ascii=False)
+            if expected in as_str:
+                return True, "contains"
+            return False, f"'{expected}' not found in output"
+        # остальные типы
+        if expected in str(provided):
             return True, "contains"
-        return False, f"{expected!r} not found in {provided!r}"
-
+        return False, f"'{expected}' not found in {provided!r}"
 
 class MatchesPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
