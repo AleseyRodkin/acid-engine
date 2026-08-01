@@ -52,6 +52,8 @@ class AttributeSet:
         return None
 
     def to_canonical_dict(self) -> dict:
+        # Сортируем атрибуты по имени для детерминированной сериализации
+        sorted_attrs = sorted(self.attributes, key=lambda a: a.name)
         return {
-            "attributes": [a.to_canonical_dict() for a in self.attributes]
+            "attributes": [a.to_canonical_dict() for a in sorted_attrs]
         }
