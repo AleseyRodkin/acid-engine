@@ -7,7 +7,7 @@ from acid_engine.contracts.strategies.base import ConstraintStrategy
 from acid_engine.contracts.strategies.numeric import MinValueStrategy, MaxValueStrategy
 from acid_engine.contracts.strategies.set_ops import IntersectionStrategy, UnionStrategy
 from acid_engine.contracts.strategies.boolean_policy import BooleanStrengthenStrategy
-
+from acid_engine.contracts.strategies.string_enum import StringEnumStrategy
 
 @dataclass
 class ResolveConflict(Exception):
@@ -31,6 +31,9 @@ DEFAULT_STRATEGIES: Dict[str, ConstraintStrategy] = {
     "allowed_domains": IntersectionStrategy(),
     "forbidden_effects": UnionStrategy(),
     "pure": BooleanStrengthenStrategy(),
+    "history": StringEnumStrategy(("none", "compact", "full")),
+    "network": StringEnumStrategy(("allowed", "forbidden")),
+    "security": StringEnumStrategy(("permissive", "restricted")),
 }
 
 

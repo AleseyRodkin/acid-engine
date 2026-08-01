@@ -53,3 +53,28 @@ def test_resolve_policy():
     result = r.resolve_policy(parent, child)
     assert result["max_latency_ms"] == 50
     assert result["pure"] is True
+
+def test_history_merge_none_compact():
+    r = ConstraintResolver()
+    assert r.resolve_field("history", "none", "compact") == "compact"
+
+def test_history_merge_full_compact():
+    r = ConstraintResolver()
+    assert r.resolve_field("history", "full", "compact") == "full"
+
+def test_network_merge():
+    r = ConstraintResolver()
+    # forbidden строже allowed
+    assert r.resolve_field("network", "forbidden", "allowed") == "forbidden"
+
+def test_security_merge():
+    r = ConstraintResolver()
+    assert r.resolve_field("security", "restricted", "permissive") == "restricted"
+
+def test_history_compare_provided_required():
+    r = ConstraintResolver()
+    s = r.strategies["history"]
+    # provided=full, required=compact -> ok
+    assert s.compare_provided_required("full", "compact")
+    # provided=compact, required=full -> fail
+    assert not s.compare_provided_required("compact", "full")
