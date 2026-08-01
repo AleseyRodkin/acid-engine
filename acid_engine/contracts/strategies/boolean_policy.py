@@ -25,4 +25,6 @@ class BooleanStrengthenStrategy(ConstraintStrategy):
 
     def detect_conflict(self, parent: Any, child: Any) -> bool:
         """Child tries to weaken parent pure=True to False."""
+        if parent is None or child is None:
+            return False
         return bool(parent) is True and bool(child) is False
