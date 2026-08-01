@@ -8,6 +8,7 @@ from typing import Any, Optional
 from acid_engine.contracts.failure import FailureReason
 from acid_engine.containers.observation import ExecutionObservation
 from acid_engine.scripts.specification import Policy
+from acid_engine.contracts.semantic import check_semantic
 
 
 class ConformanceLevel(str, Enum):
@@ -43,6 +44,7 @@ def check_conformance(
     contract_id: str = "",
     schema: Any = None,
     semantic_rules: Optional[Dict[str, Any]] = None,
+    invariants: Optional[tuple[Callable[[Any], bool], ...]] = None,
 ) -> ConformanceResult:
     # Structural check
     type_map = {
@@ -108,6 +110,23 @@ def check_conformance(
                     ),
                 )
 
+    # Проверка Property-Based инвариантов (если переданы)
+    if invariants:
+        for inv in invariants:
+            ok, msg = check_semantic("invariant", provided_data, inv)
+            if not ok:
+                return ConformanceResult(
+                    status=ConformanceStatus.FAIL,
+                    level=ConformanceLevel.SEMANTIC,
+                    message=f"Property invariant violated: {msg}",
+                    failure=FailureReason(
+                        node_id=node_id,
+                        contract_id=contract_id,
+                        property_name="invariant",
+                        expected="True",
+                        actual=msg,
+                    ),
+                )
     # Operational: latency
     if policy.max_latency_ms is not None and obs.latency_ms > policy.max_latency_ms:
         return ConformanceResult(

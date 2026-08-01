@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 from acid_engine.contracts.identity import ContractId, Version
 from acid_engine.contracts.serialization import content_hash_of
 
@@ -17,6 +17,8 @@ class InterfaceContract:
     capabilities: List[str] = field(default_factory=list)
     provenance: str = ""
     module_hashes: Dict[str, str] = field(default_factory=dict)
+    # Рантайм-инварианты (функции), не сериализуются
+    invariants: Optional[tuple[Callable[[Any], bool], ...]] = None
 
     @property
     def content_hash(self) -> str:

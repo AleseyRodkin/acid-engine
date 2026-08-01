@@ -155,13 +155,29 @@ class JsonPathPredicate(SemanticPredicate):
                 return None
         return current
 
+class InvariantPredicate(SemanticPredicate):
+    """Проверяет переданную функцию-инвариант на provided_data."""
+
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        # expected должна быть callable
+        if not callable(expected):
+            return False, "Invariant must be callable"
+        try:
+            result = expected(provided)
+            if result:
+                return True, "invariant holds"
+            return False, "invariant violated"
+        except Exception as e:
+            return False, f"Invariant check raised: {e}"
+
 PREDICATES: Dict[str, SemanticPredicate] = {
     "equals": EqualsPredicate(),
     "contains": ContainsPredicate(),
     "matches": MatchesPredicate(),
     "cardinality": CardinalityPredicate(),
     "json_schema": JsonSchemaPredicate(),
-    "jsonpath": JsonPathPredicate(),   # <-- новая строка
+    "jsonpath": JsonPathPredicate(),
+    "invariant": InvariantPredicate(),
 }
 
 
