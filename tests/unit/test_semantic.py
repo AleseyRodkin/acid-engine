@@ -1,0 +1,41 @@
+import pytest
+from acid_engine.contracts.semantic import (
+    check_semantic, check_semantic_rules,
+)
+from acid_engine.contracts.conformance import check_conformance
+from acid_engine.containers.observation import ExecutionObservation
+from acid_engine.scripts.specification import Policy
+
+
+def test_equals():
+    assert check_semantic("equals", 42, 42)[0]
+
+def test_contains_string():
+    assert check_semantic("contains", "hello world", "world")[0]
+
+def test_matches():
+    assert check_semantic("matches", "abc123", r"\d+")[0]
+
+def test_cardinality():
+    assert check_semantic("cardinality", [1,2,3], ">=2")[0]
+
+def test_json_schema():
+    rules = {"name": {"type": "str"}, "age": {"type": "int"}}
+    assert check_semantic("json_schema", {"name": "A", "age": 30}, rules)[0]
+
+def test_conformance_semantic_pass():
+    obs = ExecutionObservation.create(0, 0.001, "completed")
+    result = check_conformance(
+        "int", 42, obs, Policy(),
+        semantic_rules={"equals": 42},
+    )
+    assert result.ok
+
+def test_conformance_semantic_fail():
+    obs = ExecutionObservation.create(0, 0.001, "completed")
+    result = check_conformance(
+        "int", 42, obs, Policy(),
+        semantic_rules={"equals": 99},
+    )
+    assert not result.ok
+    assert result.failure.property_name == "equals"

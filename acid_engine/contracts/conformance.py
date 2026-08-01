@@ -1,6 +1,7 @@
 """Conformance levels and result types."""
 from __future__ import annotations
 
+from typing import Any, Optional
 from enum import Enum
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -40,7 +41,8 @@ def check_conformance(
     policy: Policy,
     node_id: str = "",
     contract_id: str = "",
-    schema: Any = None,  # RecordSchema, если тип record
+    schema: Any = None,
+    semantic_rules: Optional[Dict[str, Any]] = None,
 ) -> ConformanceResult:
     # Structural check
     type_map = {
@@ -68,7 +70,7 @@ def check_conformance(
             ),
         )
 
-    # Если record — валидация по схеме с default'ами
+    # Record schema
     if required_output_type == "record" and schema is not None:
         from acid_engine.containers.types import RecordSchema
         if isinstance(schema, RecordSchema):
@@ -83,6 +85,25 @@ def check_conformance(
                         contract_id=contract_id,
                         property_name="record_schema",
                         expected=str(schema.to_canonical_dict()),
+                        actual=str(provided_data),
+                    ),
+                )
+
+    # Semantic rules (NEW)
+    if semantic_rules:
+        from acid_engine.contracts.semantic import check_semantic_rules
+        results = check_semantic_rules(semantic_rules, provided_data)
+        for ok, pred_name, msg in results:
+            if not ok:
+                return ConformanceResult(
+                    status=ConformanceStatus.FAIL,
+                    level=ConformanceLevel.SEMANTIC,
+                    message=f"Semantic rule '{pred_name}' failed: {msg}",
+                    failure=FailureReason(
+                        node_id=node_id,
+                        contract_id=contract_id,
+                        property_name=pred_name,
+                        expected=str(semantic_rules[pred_name]),
                         actual=str(provided_data),
                     ),
                 )
@@ -107,7 +128,6 @@ def check_conformance(
         level=ConformanceLevel.OPERATIONAL,
         message="Provided satisfies Required (structural+operational)",
     )
-
 
 def explain_result(result: ConformanceResult) -> str:
     """Human-readable explanation of conformance result."""

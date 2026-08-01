@@ -1,0 +1,127 @@
+"""Семантические предикаты для проверки выходных значений."""
+from __future__ import annotations
+
+import re
+import json
+from typing import Any, Dict, List, Optional
+
+
+class SemanticPredicate:
+    """Базовый класс предиката."""
+
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        """Возвращает (passed, message)."""
+        raise NotImplementedError
+
+
+class EqualsPredicate(SemanticPredicate):
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        if provided == expected:
+            return True, "equals"
+        return False, f"Expected {expected!r}, got {provided!r}"
+
+
+class ContainsPredicate(SemanticPredicate):
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        if isinstance(provided, str) and isinstance(expected, str):
+            if expected in provided:
+                return True, "contains"
+            return False, f"'{expected}' not found in output"
+        if isinstance(provided, list) and expected in provided:
+            return True, "contains"
+        return False, f"{expected!r} not found in {provided!r}"
+
+
+class MatchesPredicate(SemanticPredicate):
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        pattern = str(expected)
+        text = str(provided)
+        if re.search(pattern, text):
+            return True, f"matches /{pattern}/"
+        return False, f"Pattern /{pattern}/ not found in '{text[:80]}...'"
+
+
+class CardinalityPredicate(SemanticPredicate):
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        # expected: ">=N", "==N", "<=N"
+        op = expected[:2] if expected[:2] in (">=", "<=", "==") else expected[:1]
+        n = int(expected[len(op):])
+        count = len(provided) if isinstance(provided, (list, dict, str)) else 1
+        if op == ">=" and count >= n:
+            return True, f"cardinality >= {n}"
+        if op == "<=" and count <= n:
+            return True, f"cardinality <= {n}"
+        if op == "==" and count == n:
+            return True, f"cardinality == {n}"
+        if op == ">" and count > n:
+            return True, f"cardinality > {n}"
+        if op == "<" and count < n:
+            return True, f"cardinality < {n}"
+        return False, f"Cardinality {count} does not satisfy {expected}"
+
+
+class JsonSchemaPredicate(SemanticPredicate):
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        # expected — словарь с простой JSON Schema (поля + типы)
+        if not isinstance(provided, dict):
+            return False, "Provided is not a dict"
+        if not isinstance(expected, dict):
+            return False, "Expected schema is not a dict"
+        errors = []
+        for key, spec in expected.items():
+            if key not in provided:
+                if spec.get("required", True):
+                    errors.append(f"Missing required field '{key}'")
+                continue
+            val = provided[key]
+            typ = spec.get("type")
+            if typ == "int" and not isinstance(val, int):
+                errors.append(f"Field '{key}': expected int, got {type(val).__name__}")
+            elif typ == "float" and not isinstance(val, (int, float)):
+                errors.append(f"Field '{key}': expected float, got {type(val).__name__}")
+            elif typ == "str" and not isinstance(val, str):
+                errors.append(f"Field '{key}': expected str, got {type(val).__name__}")
+            elif typ == "bool" and not isinstance(val, bool):
+                errors.append(f"Field '{key}': expected bool, got {type(val).__name__}")
+        if errors:
+            return False, "; ".join(errors)
+        return True, "json_schema valid"
+
+
+PREDICATES: Dict[str, SemanticPredicate] = {
+    "equals": EqualsPredicate(),
+    "contains": ContainsPredicate(),
+    "matches": MatchesPredicate(),
+    "cardinality": CardinalityPredicate(),
+    "json_schema": JsonSchemaPredicate(),
+}
+
+
+def check_semantic(
+    predicate_name: str,
+    provided: Any,
+    expected: Any,
+) -> tuple[bool, str]:
+    """
+    Проверяет provided против expected с помощью именованного предиката.
+    Возвращает (passed, message).
+    """
+    pred = PREDICATES.get(predicate_name)
+    if pred is None:
+        return False, f"Unknown predicate: {predicate_name}"
+    return pred.check(provided, expected)
+
+
+def check_semantic_rules(
+    rules: Dict[str, Any],
+    provided_data: Any,
+) -> list[tuple[bool, str, str]]:
+    """
+    Применяет набор правил: {"predicate_name": expected_value, ...}
+    Возвращает список (passed, predicate_name, message).
+    """
+    results = []
+    for pred_name, expected in rules.items():
+        ok, msg = check_semantic(pred_name, provided_data, expected)
+        results.append((ok, pred_name, msg))
+    return results
