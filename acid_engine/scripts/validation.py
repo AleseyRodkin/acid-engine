@@ -20,8 +20,6 @@ def validate_implementation_requirements(script: ScriptModule) -> list[str]:
             errors.append(f"Missing required method: {method_name}")
 
     # required_exports: check module-level attributes (for functions/classes)
-    # In our model, implementation is a callable (not a module). 
-    # For MVP, we inspect __module__ of the implementation function and look for exports there.
     if req.required_exports:
         import sys
         mod_name = getattr(impl, '__module__', None)
@@ -31,7 +29,7 @@ def validate_implementation_requirements(script: ScriptModule) -> list[str]:
                 if not hasattr(mod, export_name):
                     errors.append(f"Missing required export: {export_name}")
 
-    # required_signatures: placeholder — just check if attribute exists (for future)
+    # required_signatures: placeholder — just check if attribute exists
     for sig_name in req.required_signatures:
         if not hasattr(impl, sig_name):
             errors.append(f"Missing required signature: {sig_name}")

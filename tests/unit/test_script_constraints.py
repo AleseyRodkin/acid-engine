@@ -43,6 +43,8 @@ def test_required_methods_present():
     class Impl:
         def transform(self, x):
             return x
+        def __call__(self, x):
+            return self.transform(x)
     impl = Impl()
     script = ScriptModule(
         contract_id=ContractId("test", "good"),
@@ -54,6 +56,6 @@ def test_required_methods_present():
         ),
         input_type="int",
         output_type="int",
-        implementation=impl.transform,
+        implementation=impl,   # передаём сам callable объект
     )
     assert validate_implementation_requirements(script) == []
