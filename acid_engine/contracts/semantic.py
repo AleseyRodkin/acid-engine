@@ -95,6 +95,65 @@ class JsonSchemaPredicate(SemanticPredicate):
             return False, "; ".join(errors)
         return True, "json_schema valid"
 
+class JsonPathPredicate(SemanticPredicate):
+    """Проверка JSON-поля по пути (например, $.stdout или result.name)."""
+
+    def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
+        if isinstance(expected, str) and "==" in expected:
+            path, val = expected.split("==", 1)
+            path = path.strip()
+            val = val.strip()
+            op = "equals"
+        elif isinstance(expected, dict):
+            path = expected.get("path", "")
+            val = expected.get("value", "")
+            op = expected.get("op", "equals")
+        else:
+            return False, "Invalid jsonpath format"
+
+        # нормализуем путь: убираем начальный '$' или '$.'
+        if path.startswith("$."):
+            path = path[2:]
+        elif path.startswith("$"):
+            path = path[1:]
+
+        extracted = self._extract(provided, path)
+        if extracted is None:
+            return False, f"Path '{path}' not found"
+        if op == "equals":
+            if str(extracted) == val:
+                return True, f"$.{path} == {val}"
+            return False, f"Expected {val}, got {extracted}"
+        if op == "contains":
+            if val in str(extracted):
+                return True, f"$.{path} contains {val}"
+            return False, f"Value '{val}' not found in {extracted}"
+        return False, f"Unknown op {op}"
+
+    def _extract(self, data: Any, path: str) -> Any:
+        """Извлекает значение по простому пути (без $)."""
+        parts = path.split(".")
+        current = data
+        for part in parts:
+            if current is None:
+                return None
+            # Обработка индексов [n]
+            if "[" in part and part.endswith("]"):
+                field, idx_str = part.split("[", 1)
+                idx = int(idx_str[:-1])
+                if isinstance(current, dict) and field in current:
+                    current = current[field]
+                else:
+                    return None
+                if isinstance(current, list) and 0 <= idx < len(current):
+                    current = current[idx]
+                else:
+                    return None
+            elif isinstance(current, dict):
+                current = current.get(part)
+            else:
+                return None
+        return current
 
 PREDICATES: Dict[str, SemanticPredicate] = {
     "equals": EqualsPredicate(),
@@ -102,6 +161,7 @@ PREDICATES: Dict[str, SemanticPredicate] = {
     "matches": MatchesPredicate(),
     "cardinality": CardinalityPredicate(),
     "json_schema": JsonSchemaPredicate(),
+    "jsonpath": JsonPathPredicate(),   # <-- новая строка
 }
 
 
