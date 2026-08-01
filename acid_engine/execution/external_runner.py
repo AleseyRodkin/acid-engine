@@ -1,4 +1,4 @@
-"""External runner: исполнение произвольной команды (подпроцесс) с захватом фактов."""
+"""External runner: исполнение произвольной команды с расширенными возможностями."""
 from __future__ import annotations
 
 import subprocess
@@ -21,6 +21,8 @@ def run_external(
     mode: ExecutionMode = ExecutionMode.NORMAL,
     logger=None,
     timeout: Optional[float] = None,
+    stdin_data: Optional[str] = None,       # данные для stdin процесса
+    text_mode: bool = True,                 # text mode (str) или bytes
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
     Запускает внешнюю команду, собирает stdout/stderr, exit code и latency.
@@ -30,40 +32,44 @@ def run_external(
     state.mark_running()
     start = time.perf_counter()
 
-    # Формируем input snapshot (может быть пустым)
+    # Формируем input snapshot
     in_port = PortRef(module=contract_id.name, direction="input", name="stdin")
     input_snapshot = ContainerSnapshot.create(
         port_ref=in_port,
         contract_id=contract_id,
         contract_hash=contract_hash,
-        data=input_data if input_data is not None else "",
+        data=input_data if input_data is not None else (stdin_data or ""),
     )
 
     effects: list[str] = []
     trace: list[str] = [f"start_external:{command[0]}"]
 
     try:
+        kwargs = {
+            "capture_output": True,
+            "text": text_mode,
+        }
+        if stdin_data is not None:
+            kwargs["input"] = stdin_data
+
         proc = subprocess.run(
             command,
-            capture_output=True,
-            text=True,
             timeout=timeout,
+            **kwargs,
         )
         end = time.perf_counter()
 
-        stdout = proc.stdout.strip()
-        stderr = proc.stderr.strip()
+        stdout = (proc.stdout.strip() if isinstance(proc.stdout, str) else proc.stdout)
+        stderr = (proc.stderr.strip() if isinstance(proc.stderr, str) else proc.stderr)
         exit_code = proc.returncode
 
-        # Собираем результат как словарь (можно интерпретировать как JSON)
         output_data = {
-            "stdout": stdout,
-            "stderr": stderr,
+            "stdout": stdout or "",
+            "stderr": stderr or "",
             "exit_code": exit_code,
         }
         status_str = "completed" if exit_code == 0 else "failed"
-
-        state.mark_completed() if exit_code == 0 else state.mark_failed(stderr)
+        state.mark_completed() if exit_code == 0 else state.mark_failed(str(stderr))
         trace.append(f"exit_code:{exit_code}")
 
         out_port = PortRef(module=contract_id.name, direction="output", name="result")

@@ -42,3 +42,15 @@ def test_run_external_timeout():
     )
     assert obs.status == "failed"
     assert "timeout" in state.error_message
+
+def test_run_external_with_stdin():
+    cid = ContractId("test", "cat")
+    out, obs, delta, state = run_external(
+        command=["cat"],
+        contract_id=cid,
+        contract_hash="hash",
+        stdin_data="hello stdin",
+        mode=ExecutionMode.LIGHT,
+    )
+    assert out.data["stdout"] == "hello stdin"
+    assert out.data["exit_code"] == 0
