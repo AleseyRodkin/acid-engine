@@ -33,8 +33,8 @@ def build_script() -> ScriptModule:
 
 def main() -> None:
     script = build_script()
+    leaf = LeafModule(module_id="leaf_x_plus_1", script=script)
 
-    # Input snapshot
     in_port = PortRef(module="x_plus_1", direction="input", name="value")
     input_snap = ContainerSnapshot.create(
         port_ref=in_port,
@@ -44,10 +44,14 @@ def main() -> None:
         cardinality=1,
     )
 
-    # Execute
+    resolver = ConstraintResolver()
+    effective_policy = resolver.resolve_policy(
+        parent_policy={},
+        child_policy=script.specification.policy.to_canonical_dict(),
+    )
+
     output_snap, obs, delta, state = run_script(script, input_snap)
 
-    # Conformance check
     result = check_conformance(
         required_output_type="int",
         provided_data=output_snap.data,
@@ -57,17 +61,36 @@ def main() -> None:
         contract_id=str(script.contract_id),
     )
 
-    # Output
+    iface = InterfaceContract(
+        contract_id=ContractId(namespace="demo", name="skeleton_iface"),
+        version=Version(0, 1, 0),
+        inputs={"value": "int"},
+        outputs={"result": "int"},
+        constraints=effective_policy,
+        capabilities=["pure_transform"],
+        module_hashes={leaf.module_id: leaf.content_hash},
+    )
+
+    plan = PlanLock.create(
+        plan_id="skeleton-001",
+        interface_contract_hash=iface.content_hash,
+        resolved_policies=effective_policy,
+        module_hashes=iface.module_hashes,
+        execution_mode=ExecutionMode.NORMAL,
+    )
+
     print("=== Walking Skeleton ===")
     print(f"input:  {input_snap.data}")
     print(f"output: {output_snap.data}")
     print(f"latency: {obs.latency_ms:.3f} ms")
     print(explain_result(result))
+    print(f"plan.lock hash: {plan.content_hash[:16]}...")
+    if result.failure:
+        print(result.failure.human())
 
     assert result.ok, "Walking skeleton must PASS"
     assert output_snap.data == 4
     print("PASS")
-
 
 if __name__ == "__main__":
     main()

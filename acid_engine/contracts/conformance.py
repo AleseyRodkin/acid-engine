@@ -40,23 +40,24 @@ def check_conformance(
     policy: Policy,
     node_id: str = "",
     contract_id: str = "",
+    schema: Any = None,  # RecordSchema, если тип record
 ) -> ConformanceResult:
     """
-    Compare Provided (data + observation) against Required (type + policy).
-    Returns ConformanceResult with PASS/FAIL and optional FailureReason.
+    Compare Provided against Required.
     """
-    # Structural: check type tag (very simplified)
+    # Structural check
     type_map = {
         "int": int,
-        "float": float,
+        "float": (int, float),
         "str": str,
         "bool": bool,
         "list": list,
         "dict": dict,
+        "record": dict,   # record — это dict, проверяем по схеме
         "None": type(None),
     }
-    expected_type = type_map.get(required_output_type, object)
-    if not isinstance(provided_data, expected_type):
+    expected = type_map.get(required_output_type, object)
+    if not isinstance(provided_data, expected):
         return ConformanceResult(
             status=ConformanceStatus.FAIL,
             level=ConformanceLevel.STRUCTURAL,
@@ -70,7 +71,25 @@ def check_conformance(
             ),
         )
 
-    # Operational: check latency
+    # Если record — валидация по схеме
+    if required_output_type == "record" and schema is not None:
+        from acid_engine.containers.types import RecordSchema
+        if isinstance(schema, RecordSchema):
+            if not schema.validate(provided_data):
+                return ConformanceResult(
+                    status=ConformanceStatus.FAIL,
+                    level=ConformanceLevel.STRUCTURAL,
+                    message="Record schema validation failed",
+                    failure=FailureReason(
+                        node_id=node_id,
+                        contract_id=contract_id,
+                        property_name="record_schema",
+                        expected=str(schema.to_canonical_dict()),
+                        actual=str(provided_data),
+                    ),
+                )
+
+    # Operational: latency
     if policy.max_latency_ms is not None and obs.latency_ms > policy.max_latency_ms:
         return ConformanceResult(
             status=ConformanceStatus.FAIL,
@@ -84,9 +103,6 @@ def check_conformance(
                 actual=obs.latency_ms,
             ),
         )
-
-    # Operational: pure=true требует effects_observed == () (но не доказывает pure)
-    # Пока просто пропускаем, потому что effects_observed=none не означает pure proven.
 
     return ConformanceResult(
         status=ConformanceStatus.PASS,
