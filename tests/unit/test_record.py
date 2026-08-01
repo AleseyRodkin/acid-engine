@@ -16,7 +16,8 @@ def test_record_schema_missing_required():
         RecordField("name", "str"),
         RecordField("age", "int", optional=True),
     ))
-    assert not schema.validate({"age": 30})  # name missing
+    ok, _ = schema.validate({"age": 30})  # name missing
+    assert not ok
 
 def test_record_schema_optional_missing():
     schema = RecordSchema(fields=(

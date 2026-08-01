@@ -42,9 +42,6 @@ def check_conformance(
     contract_id: str = "",
     schema: Any = None,  # RecordSchema, если тип record
 ) -> ConformanceResult:
-    """
-    Compare Provided against Required.
-    """
     # Structural check
     type_map = {
         "int": int,
@@ -53,7 +50,7 @@ def check_conformance(
         "bool": bool,
         "list": list,
         "dict": dict,
-        "record": dict,   # record — это dict, проверяем по схеме
+        "record": dict,
         "None": type(None),
     }
     expected = type_map.get(required_output_type, object)
@@ -71,11 +68,12 @@ def check_conformance(
             ),
         )
 
-    # Если record — валидация по схеме
+    # Если record — валидация по схеме с default'ами
     if required_output_type == "record" and schema is not None:
         from acid_engine.containers.types import RecordSchema
         if isinstance(schema, RecordSchema):
-            if not schema.validate(provided_data):
+            ok, _ = schema.validate(provided_data, apply_defaults=True)
+            if not ok:
                 return ConformanceResult(
                     status=ConformanceStatus.FAIL,
                     level=ConformanceLevel.STRUCTURAL,
