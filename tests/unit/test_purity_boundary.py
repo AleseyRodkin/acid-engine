@@ -55,3 +55,51 @@ def test_purity_is_not_proven_by_single_observation():
 
     # Но сам прогон прошёл успешно (PASS)
     assert result.ok, f"Expected PASS, got {result.status}"
+
+def test_purity_boundary_with_hidden_side_effect():
+    """
+    Функция с условным побочным эффектом, который не срабатывает
+    при обычном входе. Система не должна считать pure доказанным.
+    """
+    # Функция с "спящим" side effect
+    def func_with_hidden_branch(x):
+        if x > 1_000_000:          # не сработает при малых x
+            import requests         # потенциальный сетевой вызов
+            requests.get("http://example.com")
+        return x + 1
+
+    script = ScriptModule(
+        contract_id=ContractId("test", "hidden_effect"),
+        version=Version(1, 0, 0),
+        specification=Specification(policy=Policy(pure=True)),
+        input_type="int",
+        output_type="int",
+        implementation=func_with_hidden_branch,
+        name="hidden_branch_test"
+    )
+
+    in_port = PortRef("test", "input", "val")
+    snap = ContainerSnapshot.create(
+        in_port, script.contract_id, script.content_hash, 1
+    )
+    out_snap, obs, delta, state = run_script(script, snap)
+
+    # Структурная гарантия: у Observation нет поля proven_pure
+    assert not hasattr(obs, 'proven_pure'), \
+        "Observation must not claim purity as proven"
+
+    # В данном прогоне эффектов не наблюдалось
+    assert obs.effects_observed == ()
+
+    # Проверка конформности не должна содержать "proven" в сообщении
+    result = check_conformance(
+        required_output_type="int",
+        provided_data=out_snap.data,
+        obs=obs,
+        policy=script.specification.policy,
+    )
+    assert "proven" not in result.message.lower(), \
+        f"Result message should not claim purity as proven, got: {result.message}"
+    
+    # Прогон успешен (чисто синтаксически)
+    assert result.ok
