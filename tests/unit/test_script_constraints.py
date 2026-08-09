@@ -1,10 +1,10 @@
 import pytest
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.scripts.specification import (
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.script.specification import (
     Specification, ImplementationRequirements,
 )
-from acid_engine.scripts.module import ScriptModule
-from acid_engine.scripts.validation import validate_implementation_requirements
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.validation import validate_implementation_requirements
 
 
 def my_func(x):

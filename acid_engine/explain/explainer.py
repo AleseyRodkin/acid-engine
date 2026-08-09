@@ -1,9 +1,9 @@
 """Человекочитаемые объяснения конформности и решений резолвера."""
 from __future__ import annotations
 
-from acid_engine.contracts.conformance import ConformanceResult
-from acid_engine.contracts.failure import FailureReason
-from acid_engine.contracts.resolver import ResolveConflict
+from acid_engine.level2.conformance import ConformanceResult
+from acid_engine.level2.failure import FailureReason
+from acid_engine.level2.resolver import ResolveConflict
 
 
 def explain_conformance(result: ConformanceResult) -> str:

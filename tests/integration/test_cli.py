@@ -29,8 +29,8 @@ def test_cli_run_walking_skeleton():
 
 def test_cli_validate():
     # Создаём временный Python-контракт
-    contract_code = '''from acid_engine.interface.contract import InterfaceContract
-from acid_engine.contracts.identity import ContractId, Version
+    contract_code = '''from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.identity import ContractId, Version
 contract = InterfaceContract(
     contract_id=ContractId("test", "echo"),
     version=Version(1,0,0),

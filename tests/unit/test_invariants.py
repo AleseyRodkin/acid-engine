@@ -1,8 +1,8 @@
 import pytest
-from acid_engine.contracts.conformance import check_conformance
-from acid_engine.contracts.semantic import check_semantic
-from acid_engine.containers.observation import ExecutionObservation
-from acid_engine.scripts.specification import Policy
+from acid_engine.level2.conformance import check_conformance
+from acid_engine.level2.semantic import check_semantic
+from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.level3.script.specification import Policy
 
 
 def test_invariant_predicate_pass():

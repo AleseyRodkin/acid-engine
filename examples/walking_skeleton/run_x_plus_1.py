@@ -5,20 +5,20 @@ Walking skeleton: Contract<int> → Snapshot → Script(x+1)
 """
 from __future__ import annotations
 
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.contracts.conformance import check_conformance, explain_result
-from acid_engine.containers.port import PortRef
-from acid_engine.containers.snapshot import ContainerSnapshot
-from acid_engine.scripts.specification import (
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.conformance import check_conformance, explain_result
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.script.specification import (
     Specification, Parameters, Policy, ImplementationRequirements,
 )
-from acid_engine.scripts.module import ScriptModule
-from acid_engine.scripts.python_runtime import run_script
-from acid_engine.contracts.resolver import ConstraintResolver
-from acid_engine.modules.leaf import LeafModule
-from acid_engine.interface.contract import InterfaceContract
-from acid_engine.execution.plan_lock import PlanLock
-from acid_engine.execution.modes import ExecutionMode
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.python_runtime import run_script
+from acid_engine.level2.resolver import ConstraintResolver
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.script.modes import ExecutionMode
 
 
 def build_script() -> ScriptModule:

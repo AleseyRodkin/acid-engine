@@ -1,7 +1,7 @@
 import pytest
-from acid_engine.orchestration.adapter import LocalAdapter
-from acid_engine.execution.plan_lock import PlanLock
-from acid_engine.execution.modes import ExecutionMode
+from acid_engine.level3.orchestration.adapter import LocalAdapter
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.script.modes import ExecutionMode
 
 
 def test_local_adapter():

@@ -1,7 +1,7 @@
-from acid_engine.contracts.attributes import (
+from acid_engine.level2.attributes import (
     Attribute, AttributeSet, Origin, Mutability, ValueKind,
 )
-from acid_engine.contracts.serialization import canonical_serialize, content_hash_of
+from acid_engine.level2.serialization import canonical_serialize, content_hash_of
 
 def test_attribute_creation():
     a = Attribute(

@@ -1,14 +1,14 @@
 import pytest
 import asyncio
-from acid_engine.scripts.async_module import AsyncScriptModule
-from acid_engine.scripts.async_runtime import run_async_script
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.scripts.specification import Specification
-from acid_engine.containers.port import PortRef
-from acid_engine.containers.snapshot import ContainerSnapshot
-from acid_engine.modules.leaf import LeafModule
-from acid_engine.modules.composite import CompositeModule
-from acid_engine.graph.model import DependencyGraph
+from acid_engine.level3.script.async_module import AsyncScriptModule
+from acid_engine.level3.script.async_runtime import run_async_script
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.script.specification import Specification
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.module.composite import CompositeModule
+from acid_engine.level3.graph.model import DependencyGraph
 
 
 @pytest.mark.asyncio

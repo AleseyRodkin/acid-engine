@@ -4,12 +4,12 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from acid_engine.contracts.conformance import check_conformance, explain_result
-from acid_engine.execution.external_runner import run_external
-from acid_engine.execution.modes import ExecutionMode
-from acid_engine.scripts.specification import Policy
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.interface.contract import InterfaceContract
+from acid_engine.level2.conformance import check_conformance, explain_result
+from acid_engine.level3.script.external_runner import run_external
+from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level3.script.specification import Policy
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.interface.contract import InterfaceContract
 
 
 def cmd_init(args):
@@ -26,9 +26,9 @@ def cmd_init(args):
 
     if args.script:
         script_content = '''"""Demo script for AcidEngine."""
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.scripts.specification import Specification, Policy
-from acid_engine.scripts.module import ScriptModule
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.script.specification import Specification, Policy
+from acid_engine.level3.script.module import ScriptModule
 
 script = ScriptModule(
     contract_id=ContractId(namespace="demo", name="my_script"),
@@ -56,7 +56,7 @@ def cmd_validate(args):
 
     # Пробуем загрузить контракт как Python-модуль (ожидаем переменную contract)
     try:
-        from acid_engine.contracts.loader import PythonLoader
+        from acid_engine.level2.loader import PythonLoader
         loader = PythonLoader()
         if loader.can_load(spec_path):
             iface = loader.load(spec_path)
@@ -100,9 +100,9 @@ def cmd_run(args):
         from acid_engine.cli import load_script_from_file as _load
         script = _load(args.script)
         input_val = int(args.input) if args.input else 3
-        from acid_engine.containers.port import PortRef
-        from acid_engine.containers.snapshot import ContainerSnapshot
-        from acid_engine.scripts.python_runtime import run_script
+        from acid_engine.level3.container.port import PortRef
+        from acid_engine.level3.container.snapshot import ContainerSnapshot
+        from acid_engine.level3.script.python_runtime import run_script
 
         in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
         input_snap = ContainerSnapshot.create(

@@ -1,9 +1,9 @@
 import pytest
-from acid_engine.contracts.migration import (
+from acid_engine.level2.migration import (
     plan_migration, MigrationAction, MigrationStep, MigrationPlan,
 )
-from acid_engine.interface.contract import InterfaceContract
-from acid_engine.contracts.identity import ContractId, Version
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.identity import ContractId, Version
 
 
 def make_iface(inputs, outputs, constraints=None):

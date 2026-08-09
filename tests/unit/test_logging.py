@@ -1,7 +1,7 @@
 import tempfile
 import os
-from acid_engine.execution.logging import ExecutionLogger
-from acid_engine.containers.observation import ExecutionObservation
+from acid_engine.services.logging.logger import ExecutionLogger
+from acid_engine.level3.container.observation import ExecutionObservation
 
 
 def test_logger_writes_and_reads():

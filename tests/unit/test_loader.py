@@ -1,9 +1,9 @@
 import pytest
 import tempfile
 from pathlib import Path
-from acid_engine.contracts.loader import DictLoader, PythonLoader, load_contract
-from acid_engine.interface.contract import InterfaceContract
-from acid_engine.contracts.identity import ContractId, Version
+from acid_engine.level2.loader import DictLoader, PythonLoader, load_contract
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.identity import ContractId, Version
 
 
 def test_dict_loader():
@@ -19,8 +19,8 @@ def test_dict_loader():
 
 def test_python_loader():
     # Создаём временный .py файл с переменной contract
-    code = '''from acid_engine.interface.contract import InterfaceContract
-from acid_engine.contracts.identity import ContractId, Version
+    code = '''from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.identity import ContractId, Version
 contract = InterfaceContract(
     contract_id=ContractId("tmp", "test"),
     version=Version(1,0,0),

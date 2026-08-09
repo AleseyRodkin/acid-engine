@@ -1,5 +1,5 @@
 import pytest
-from acid_engine.contracts.resolver import ConstraintResolver, ResolveConflict
+from acid_engine.level2.resolver import ConstraintResolver, ResolveConflict
 
 
 def test_max_latency_min_merge():

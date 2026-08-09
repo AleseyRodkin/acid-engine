@@ -1,10 +1,10 @@
 import pytest
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.scripts.specification import Specification
-from acid_engine.scripts.module import ScriptModule
-from acid_engine.modules.leaf import LeafModule
-from acid_engine.modules.composite import CompositeModule
-from acid_engine.graph.model import DependencyGraph
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.script.specification import Specification
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.module.composite import CompositeModule
+from acid_engine.level3.graph.model import DependencyGraph
 
 
 def make_leaf(name: str, func) -> LeafModule:

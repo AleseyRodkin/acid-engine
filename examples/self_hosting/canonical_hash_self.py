@@ -6,10 +6,10 @@ from __future__ import annotations
 import json
 from acid_engine.self_describe import build_self_contract
 from acid_engine.self_hosting.stage_c import build_self_hosted_graph
-from acid_engine.contracts.conformance import check_conformance, explain_result
-from acid_engine.containers.observation import ExecutionObservation
-from acid_engine.scripts.specification import Policy
-from acid_engine.contracts.serialization import content_hash_of
+from acid_engine.level2.conformance import check_conformance, explain_result
+from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.level3.script.specification import Policy
+from acid_engine.level2.serialization import content_hash_of
 import time
 
 

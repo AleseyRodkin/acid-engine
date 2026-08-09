@@ -1,9 +1,9 @@
 import pytest
-from acid_engine.containers.snapshot import ContainerSnapshot
-from acid_engine.containers.port import PortRef
-from acid_engine.contracts.identity import ContractId
-from acid_engine.execution.plan_lock import PlanLock
-from acid_engine.execution.modes import ExecutionMode
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level2.identity import ContractId
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.script.modes import ExecutionMode
 
 
 def test_container_snapshot_immutable():

@@ -1,15 +1,15 @@
 """Self-description: AcidEngine описывает собственные контракты."""
 from __future__ import annotations
 
-from acid_engine.interface.contract import InterfaceContract
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.contracts.serialization import content_hash_of
-from acid_engine.graph.model import DependencyGraph
-from acid_engine.modules.leaf import LeafModule
-from acid_engine.modules.composite import CompositeModule
-from acid_engine.scripts.module import ScriptModule
-from acid_engine.scripts.specification import Specification, Policy
-from acid_engine.containers.types import RecordSchema, RecordField
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.module.composite import CompositeModule
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.specification import Specification, Policy
+from acid_engine.level3.container.types import RecordSchema, RecordField
 
 
 def _dummy_script(name: str, inp: str, out: str) -> ScriptModule:

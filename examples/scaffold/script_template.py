@@ -2,9 +2,9 @@
 Шаблон ScriptModule.
 Скопируй этот файл, измени IMPLEMENTATION и метаданные.
 """
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.scripts.specification import Specification, Parameters, Policy
-from acid_engine.scripts.module import ScriptModule
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.script.specification import Specification, Parameters, Policy
+from acid_engine.level3.script.module import ScriptModule
 
 script = ScriptModule(
     contract_id=ContractId(namespace="user", name="my_script"),

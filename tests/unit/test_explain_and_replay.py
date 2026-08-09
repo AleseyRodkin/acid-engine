@@ -1,15 +1,15 @@
 import pytest
 from acid_engine.explain.explainer import explain_conformance
-from acid_engine.contracts.conformance import (
+from acid_engine.level2.conformance import (
     ConformanceResult, ConformanceStatus, ConformanceLevel,
 )
-from acid_engine.contracts.failure import FailureReason
-from acid_engine.execution.runner import replay_run
-from acid_engine.execution.plan_lock import PlanLock
-from acid_engine.execution.modes import ExecutionMode
-from acid_engine.contracts.identity import ContractId, Version
-from acid_engine.scripts.specification import Specification
-from acid_engine.scripts.module import ScriptModule
+from acid_engine.level2.failure import FailureReason
+from acid_engine.level3.script.runner import replay_run
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level3.script.specification import Specification
+from acid_engine.level3.script.module import ScriptModule
 
 
 def test_explain_pass():

@@ -1,4 +1,4 @@
-from acid_engine.contracts.serialization import canonical_serialize, content_hash_of
+from acid_engine.level2.serialization import canonical_serialize, content_hash_of
 
 def test_same_object_same_hash():
     a = {"x": 1, "y": [3, 2]}
