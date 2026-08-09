@@ -3,7 +3,7 @@ import asyncio
 from acid_engine.level3.script.async_module import AsyncScriptModule
 from acid_engine.level3.script.async_runtime import run_async_script
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification
+from acid_engine.level2.specification import Specification
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.module.leaf import LeafModule

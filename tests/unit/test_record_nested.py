@@ -2,7 +2,7 @@ import pytest
 from acid_engine.level3.container.types import RecordSchema, RecordField
 from acid_engine.level2.conformance import check_conformance
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.script.specification import Policy
+from acid_engine.level2.specification import Policy
 
 
 def test_nested_record_valid():

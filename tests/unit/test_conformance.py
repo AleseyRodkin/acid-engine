@@ -6,7 +6,7 @@ from acid_engine.level2.conformance import (
 )
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.script.specification import Policy
+from acid_engine.level2.specification import Policy
 
 
 def test_pass_int():

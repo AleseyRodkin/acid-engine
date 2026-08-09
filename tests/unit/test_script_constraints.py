@@ -1,6 +1,6 @@
 import pytest
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import (
+from acid_engine.level2.specification import (
     Specification, ImplementationRequirements,
 )
 from acid_engine.level3.script.module import ScriptModule

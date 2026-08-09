@@ -8,7 +8,7 @@ from acid_engine.level3.script.runner import replay_run
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification
+from acid_engine.level2.specification import Specification
 from acid_engine.level3.script.module import ScriptModule
 
 

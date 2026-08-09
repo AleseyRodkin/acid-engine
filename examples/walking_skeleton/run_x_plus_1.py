@@ -9,7 +9,7 @@ from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.conformance import check_conformance, explain_result
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.script.specification import (
+from acid_engine.level2.specification import (
     Specification, Parameters, Policy, ImplementationRequirements,
 )
 from acid_engine.level3.script.module import ScriptModule

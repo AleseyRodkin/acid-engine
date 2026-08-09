@@ -1,5 +1,5 @@
 import pytest
-from acid_engine.level3.script.specification import (
+from acid_engine.level2.specification import (
     Parameters, Policy, ImplementationRequirements, Specification,
 )
 from acid_engine.level3.script.module import ScriptModule

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.script.specification import Policy
+from acid_engine.level2.specification import Policy
 from acid_engine.level2.semantic import check_semantic
 
 

@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Tuple, Optional, Callable
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level2.base import Contract
+from acid_engine.level2.attributes import Attribute
 
 
 @dataclass(frozen=True, slots=True)
-class InterfaceContract:
+class InterfaceContract(Contract):
     contract_id: ContractId
     version: Version
     inputs: Dict[str, str]
@@ -17,8 +19,13 @@ class InterfaceContract:
     capabilities: List[str] = field(default_factory=list)
     provenance: str = ""
     module_hashes: Dict[str, str] = field(default_factory=dict)
-    # Рантайм-инварианты (функции), не сериализуются
-    invariants: Optional[tuple[Callable[[Any], bool], ...]] = None
+    invariants: Optional[Tuple[Callable[[Any], bool], ...]] = None
+
+    def get_entity(self) -> ContractId:
+        return self.contract_id
+
+    def get_actions(self) -> Tuple[str, ...]:
+        return ("validate", "execute")
 
     @property
     def content_hash(self) -> str:

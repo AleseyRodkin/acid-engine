@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Callable
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification
+from acid_engine.level2.specification import Specification
 
 
 def derive_map(

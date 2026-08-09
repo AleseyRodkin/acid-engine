@@ -4,7 +4,7 @@ from acid_engine.level4.history import (
 )
 from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification
+from acid_engine.level2.specification import Specification
 from acid_engine.level3.script.module import ScriptModule
 
 

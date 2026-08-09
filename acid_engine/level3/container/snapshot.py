@@ -2,18 +2,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Tuple
 from acid_engine.level2.identity import ContractId
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level2.base import Contract
+from acid_engine.level2.attributes import Attribute
 
 
 @dataclass(frozen=True, slots=True)
-class ContainerSnapshot:
-    """
-    Immutable snapshot of data at a port.
-    NOT runtime mutable state.
-    """
+class ContainerSnapshot(Contract):
     port_ref: PortRef
     contract_id: ContractId
     contract_hash: str
@@ -21,6 +19,12 @@ class ContainerSnapshot:
     content_hash: str
     cardinality: int = 1
     provenance: str = ""
+
+    def get_entity(self) -> ContractId:
+        return self.contract_id
+
+    def get_actions(self) -> Tuple[str, ...]:
+        return ("store", "load", "validate")
 
     @staticmethod
     def create(

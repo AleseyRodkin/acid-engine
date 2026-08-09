@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Coroutine
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification
+from acid_engine.level2.specification import Specification
 from acid_engine.level2.serialization import content_hash_of
 
 

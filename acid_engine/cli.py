@@ -7,7 +7,7 @@ from pathlib import Path
 from acid_engine.level2.conformance import check_conformance, explain_result
 from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
-from acid_engine.level3.script.specification import Policy
+from acid_engine.level2.specification import Policy
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level3.interface.contract import InterfaceContract
 
@@ -27,7 +27,7 @@ def cmd_init(args):
     if args.script:
         script_content = '''"""Demo script for AcidEngine."""
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification, Policy
+from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level3.script.module import ScriptModule
 
 script = ScriptModule(

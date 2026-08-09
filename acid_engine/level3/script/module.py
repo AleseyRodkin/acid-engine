@@ -1,26 +1,34 @@
-"""ScriptModule — minimal executable unit."""
+"""ScriptModule — минимальная исполняемая единица."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Tuple
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.script.specification import Specification
+from acid_engine.level2.specification import Specification
 from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level2.base import Contract
+from acid_engine.level2.attributes import Attribute
 
 
 @dataclass(frozen=True, slots=True)
-class ScriptModule:
-    """
-    Human view: CONSTRAINTS / INPUT / OUTPUT / IMPLEMENTATION
-    Core view:  Specification + InputContract + OutputContract + Implementation
-    """
+class ScriptModule(Contract):
     contract_id: ContractId
     version: Version
     specification: Specification
-    input_type: str          # simplified type tag for MVP, e.g. "int"
+    input_type: str
     output_type: str
     implementation: Callable[[Any], Any]
     name: str = ""
+
+    def get_entity(self) -> ContractId:
+        return self.contract_id
+
+    def get_characteristics(self) -> Tuple[Attribute, ...]:
+        # Пока возвращаем пустой кортеж, можно расширить позже
+        return ()
+
+    def get_actions(self) -> Tuple[str, ...]:
+        return ("execute",)
 
     @property
     def content_hash(self) -> str:
