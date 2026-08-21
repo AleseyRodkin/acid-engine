@@ -1,5 +1,5 @@
 import pytest
-from acid_engine.level3.pipeline import Pipeline
+from acid_engine.level3.pipeline import Pipeline, PipelineResult
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level2.identity import ContractId, Version
@@ -10,7 +10,7 @@ from acid_engine.level2.conformance import ConformanceStatus
 def test_pipeline_with_script_module():
     script = ScriptModule(
         contract_id=ContractId("test", "inc"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         specification=Specification(policy=Policy(max_latency_ms=100)),
         input_type="int",
         output_type="int",
@@ -19,7 +19,11 @@ def test_pipeline_with_script_module():
     )
     pipeline = Pipeline(script)
     result = pipeline.execute(5)
+    assert isinstance(result, PipelineResult)
     assert result.ok, f"Expected PASS, got {result.message}"
+    assert result.data == 6
+    assert result.observation is not None
+    assert result.observation.status == "completed"
 
 
 def test_pipeline_interface_never_pass():
@@ -33,4 +37,6 @@ def test_pipeline_interface_never_pass():
     result = Pipeline(iface).execute("garbage")
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok
+    assert result.data is None
+    assert result.observation is None
     assert "not executed" in result.message.lower()

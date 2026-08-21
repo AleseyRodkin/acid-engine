@@ -3,8 +3,11 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import sys
 from pathlib import Path
+from typing import Any
+
 from acid_engine.level2.conformance import check_conformance, explain_result
 from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
@@ -19,7 +22,9 @@ def load_script_from_file(path: str | Path) -> ScriptModule:
         raise FileNotFoundError(f"Script file not found: {source}")
     if source.suffix != ".py":
         raise ValueError(f"Script must be a .py file, got: {source}")
-    spec = importlib.util.spec_from_file_location("acid_user_script", str(source))
+    # unique name so repeated loads do not collide in sys.modules
+    mod_name = f"acid_user_script_{source.resolve().stem}_{id(source)}"
+    spec = importlib.util.spec_from_file_location(mod_name, str(source))
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot load module from {source}")
     module = importlib.util.module_from_spec(spec)
@@ -32,20 +37,29 @@ def load_script_from_file(path: str | Path) -> ScriptModule:
     return script
 
 
-def cmd_init(args):
-    """Создаёт шаблон спецификации (OpenSpec) и простой скрипт."""
-    spec_content = """# demo-contract
-## Scenario: echo returns expected output
-- **GIVEN** input: "hello"
-- **WHEN** the echo command is executed
-- **THEN** stdout contains hello
-"""
-    spec_path = Path(args.path or "spec.md")
-    spec_path.write_text(spec_content, encoding="utf-8")
-    print(f"Spec created: {spec_path}")
+def parse_cli_input(raw: str | None, default: Any = 3) -> Any:
+    """Parse --input: int, JSON (list/dict/...), иначе строка. Без --input → default."""
+    if raw is None or raw == "":
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
 
-    if args.script:
-        script_content = '''"""Demo script for AcidEngine."""
+
+def cmd_init(args):
+    """Создаёт шаблон ScriptModule (.py). Markdown-спеки не создаём — не парсятся."""
+    target = Path(args.path or "script.py")
+    if target.suffix == ".md":
+        # старый default был spec.md — не пишем мёртвый markdown
+        target = Path("script.py")
+        print("NOTE: markdown specs are not parsed; writing script.py instead")
+
+    script_content = '''"""Demo script for AcidEngine."""
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level3.script.module import ScriptModule
@@ -62,13 +76,14 @@ script = ScriptModule(
     name="demo_script",
 )
 '''
-        script_path = Path(args.script)
-        script_path.write_text(script_content, encoding="utf-8")
-        print(f"Script created: {script_path}")
+    if args.script:
+        target = Path(args.script)
+    target.write_text(script_content, encoding="utf-8")
+    print(f"Script created: {target}")
 
 
 def cmd_validate(args):
-    """Запускает проверку контракта для внешней команды."""
+    """Проверка внешней команды по .py-контракту (переменная contract)."""
     spec_path = Path(args.spec)
     if not spec_path.exists():
         print(f"ERROR: spec file not found: {spec_path}")
@@ -120,14 +135,14 @@ def cmd_validate(args):
 
 
 def cmd_run(args):
-    """Запускает walking skeleton или пользовательский скрипт."""
+    """Walking skeleton или пользовательский скрипт."""
     if args.script:
         try:
             script = load_script_from_file(args.script)
         except Exception as e:
             print(f"ERROR: Failed to load script: {e}")
             sys.exit(1)
-        input_val = int(args.input) if args.input else 3
+        input_val = parse_cli_input(args.input, default=3)
         from acid_engine.level3.container.port import PortRef
         from acid_engine.level3.container.snapshot import ContainerSnapshot
         from acid_engine.level3.script.python_runtime import run_script
@@ -161,9 +176,9 @@ def main():
     parser = argparse.ArgumentParser(prog="acid-engine", description="AcidEngine CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    p_init = subparsers.add_parser("init", help="Создать шаблон спецификации")
-    p_init.add_argument("--path", default="spec.md", help="Путь к файлу спеки")
-    p_init.add_argument("--script", help="Создать шаблон скрипта")
+    p_init = subparsers.add_parser("init", help="Создать шаблон ScriptModule (.py)")
+    p_init.add_argument("--path", default="script.py", help="Путь к .py файлу скрипта")
+    p_init.add_argument("--script", help="Альтернативный путь к шаблону скрипта")
     p_init.set_defaults(func=cmd_init)
 
     p_val = subparsers.add_parser("validate", help="Проверить внешнюю команду по контракту")
@@ -172,8 +187,11 @@ def main():
     p_val.set_defaults(func=cmd_validate)
 
     p_run = subparsers.add_parser("run", help="Запустить скрипт или walking skeleton")
-    p_run.add_argument("--script", help="Путь к Python-файлу со ScriptModule (переменная script)")
-    p_run.add_argument("--input", help="Входное значение (int)")
+    p_run.add_argument("--script", help="Путь к .py со ScriptModule (переменная script)")
+    p_run.add_argument(
+        "--input",
+        help='Вход: int, JSON (напр. \'[1,2,3]\') или строка. По умолчанию 3',
+    )
     p_run.set_defaults(func=cmd_run)
 
     args = parser.parse_args()

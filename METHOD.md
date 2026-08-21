@@ -65,3 +65,13 @@ Fan-in > 1 в Composite запрещён, пока нет merge-контракт
 ## Observation
 
 Ядро не печатает в stdout. Лог observation — только opt-in через переданный logger.
+
+
+## Pipeline
+
+`Pipeline.execute` возвращает `PipelineResult`: `data`, `observation`, `conformance`.
+Interface без исполнения → SKIPPED, `data=None`, `observation=None`.
+
+## CLI input
+
+`--input`: int, JSON (list/dict) или строка. Не только int.

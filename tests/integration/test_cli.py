@@ -17,10 +17,19 @@ def test_cli_help():
 
 def test_cli_init():
     with tempfile.TemporaryDirectory() as tmp:
-        spec_file = os.path.join(tmp, "test_spec.md")
-        result = _run_cli("init", "--path", spec_file)
+        # markdown path is redirected: init writes a .py script, not dead markdown
+        md_path = os.path.join(tmp, "test_spec.md")
+        result = _run_cli("init", "--path", md_path)
         assert result.returncode == 0
-        assert os.path.exists(spec_file)
+        # cwd is repo root; script.py is written there when .md requested
+        # prefer explicit --script target
+        script_file = os.path.join(tmp, "demo_script.py")
+        result2 = _run_cli("init", "--script", script_file)
+        assert result2.returncode == 0
+        assert os.path.exists(script_file)
+        body = Path(script_file).read_text()
+        assert "ScriptModule" in body
+        assert "script =" in body
 
 def test_cli_run_walking_skeleton():
     result = _run_cli("run")
