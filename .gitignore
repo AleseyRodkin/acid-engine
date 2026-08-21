@@ -6,4 +6,6 @@ __pycache__/
 .ruff_cache/
 dist/
 build/
-*.egg-info/script.py
+*.egg-info/
+script.py
+.hypothesis/
