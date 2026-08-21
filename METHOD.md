@@ -75,3 +75,9 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 ## CLI input
 
 `--input`: int, JSON (list/dict) или строка. Не только int.
+
+## History
+
+`replay_from_record` возвращает `ConformanceResult`, не bool.
+Факт выхода — `expected_output` или `record.output_data`. Несовпадение → FAIL.
+`find_record` — только lookup по `run_id`. Отката состояния нет.
