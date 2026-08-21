@@ -1,0 +1,97 @@
+"""Первый реальный пайплайн (слой A): order amounts через честный контур."""
+import subprocess
+import sys
+from pathlib import Path
+
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Specification, Policy
+from acid_engine.level2.conformance import check_conformance, ConformanceStatus
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.script.python_runtime import run_script
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.script.modes import ExecutionMode
+
+from examples.commerce.order_amounts import (
+    build_pipeline,
+    build_filter_script,
+    build_scale_script,
+    run_leaf,
+    make_plan,
+    filter_non_negative,
+    scale_cents_to_units,
+)
+
+
+def test_commerce_pipeline_main():
+    script_path = (
+        Path(__file__).parent.parent.parent
+        / "examples"
+        / "commerce"
+        / "order_amounts.py"
+    )
+    import os
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(script_path.parent.parent.parent)
+    result = subprocess.run(
+        [sys.executable, str(script_path)],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(script_path.parent.parent.parent),
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
+    assert "PASS" in result.stdout
+    assert "plan.lock" in result.stdout
+
+
+def test_commerce_happy_path_gate():
+    _, leaf_filter, leaf_scale = build_pipeline()
+    data = [15000, -200, 0, True, 25050, 100]
+    filtered, obs1, conf1, _ = run_leaf(leaf_filter, data)
+    assert conf1.ok
+    assert obs1.status == "completed"
+    assert filtered == [15000, 0, 25050, 100]
+
+    scaled, obs2, conf2, _ = run_leaf(leaf_scale, filtered)
+    assert conf2.ok
+    assert scaled == [150.0, 0.0, 250.5, 1.0]
+
+
+def test_agent_swap_impl_breaks_plan_lock():
+    """Подмена тела scale при той же декларации меняет hash и plan.lock."""
+    good = build_scale_script()
+    bad = ScriptModule(
+        contract_id=good.contract_id,
+        version=good.version,
+        specification=good.specification,
+        input_type=good.input_type,
+        output_type=good.output_type,
+        implementation=lambda data: [x / 50 for x in data],  # другая реализация
+        name=good.name,
+    )
+    assert good.content_hash != bad.content_hash
+
+    leaf_f = LeafModule("filter_node", build_filter_script())
+    plan_good = make_plan(leaf_f, LeafModule("scale_node", good))
+    plan_bad = make_plan(leaf_f, LeafModule("scale_node", bad))
+    assert plan_good.content_hash != plan_bad.content_hash
+
+
+def test_commerce_type_fail():
+    """Неверный тип выхода → FAIL, не PASS."""
+    script = ScriptModule(
+        contract_id=ContractId("commerce", "bad"),
+        version=Version(0, 1, 0),
+        specification=Specification(policy=Policy(max_latency_ms=200)),
+        input_type="list",
+        output_type="list",
+        implementation=lambda data: "not-a-list",
+        name="bad",
+    )
+    leaf = LeafModule("bad", script)
+    _, _, conf, _ = run_leaf(leaf, [1, 2, 3])
+    assert not conf.ok
+    assert conf.status == ConformanceStatus.FAIL
