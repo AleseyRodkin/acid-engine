@@ -1,21 +1,34 @@
-# AcidEngine v3.0
+# AcidEngine 0.1.0
 
-**Контрактно-ориентированная операционная система разработки.**
+Hard gate для Python-функции под контрактом.
 
-AcidEngine — это не язык программирования и не фреймворк. Это среда, в которой все части проекта (от функций до интерфейса приложения) описываются единым механизмом — **контрактом**. Код остаётся обычным кодом (Python, Rust, Go, ...), но его соответствие контракту проверяется автоматически и жёстко (hard gate).
+Код пишет человек или ИИ. Арбитр — проверяемый контракт, не модель.
+Система не имеет права утверждать больше, чем наблюдала.
+`Observed ≠ Proven`: один чистый прогон не доказывает `pure`.
 
-## Основные возможности
-- Единая грамматика контрактов (сущность / характеристики / правила / действия)
-- Иерархическая архитектура (уровни 0–4)
-- Замкнутый контур проверки: `Provided ⊨ Required → PASS/FAIL`
-- Семантические предикаты для проверки JSON, кардинальности, инвариантов, безопасности
-- Представления кода для человека и ИИ
-- Универсальные профили сборки (Library, CLI, Desktop, Service, SaaS, Embedded)
-- Самоприменимость: AcidEngine собирает сам себя
+Это не операционная система разработки, не self-hosting и не замена Pydantic/Pandera.
 
-## Быстрый старт
+## Что сейчас работает
+
+- `ScriptModule`: CONSTRAINTS / INPUT / OUTPUT / IMPLEMENTATION
+- `content_hash` покрывает декларацию **и тело реализации**
+- `run` → Observed → структурная/операционная проверка → PASS / FAIL
+- Walking skeleton: вход `3` → выход `4`
+- `Pipeline(ScriptModule)` исполняет и проверяет
+- Нет исполнения → не PASS (`InterfaceContract` в Pipeline, `LocalAdapter` → SKIPPED)
 
 ```bash
-python -m acid_engine init          # создать шаблон спецификации
-python -m acid_engine run           # запустить walking skeleton (x+1)
-python -m acid_engine validate spec.md echo "hello"   # проверить внешнюю команду по контракту
+python -m acid_engine run
+python -m acid_engine run --script path.py --input 3
+python -m acid_engine validate contract.py echo hello
+```
+
+`run --script` грузит переменную `script` из `.py`.
+`validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
+
+См. [METHOD.md](METHOD.md) — закон. Если правила нет в рантайме, его нет в METHOD и его нельзя писать сюда.
+
+## Чего в 0.1 нет
+
+Профили сборки (Library/CLI/SaaS/Embedded), DSL, AI-context, aggregator,
+`validate spec.md`, формальная верификация, `proven_pure`.

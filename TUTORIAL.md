@@ -1,6 +1,6 @@
 # AcidEngine Tutorial
 
-В этом руководстве вы шаг за шагом освоите AcidEngine — контрактно-ориентированную платформу разработки.
+В этом руководстве вы шаг за шагом освоите AcidEngine — проверяемый контрактный контур вокруг Python-функции (версия 0.1).
 
 ## 1. Установка
 
@@ -188,12 +188,11 @@ AcidEngine предоставляет следующие команды.
 
 ### `init`
 
-Создать шаблон спецификации и скрипта:
+Пишет черновик markdown и опционально шаблон `.py` со `script`.
+Markdown **не парсится** как контракт.
 
 ```bash
-python -m acid_engine init \
-    --path myspec.md \
-    --script my_script.py
+python -m acid_engine init --script my_script.py
 ```
 
 ### `run`
@@ -241,82 +240,10 @@ result = check_conformance(
 print(result.message)
 ```
 
-## 7. Self-hosting
-
-AcidEngine способен описать и выполнить собственный граф компонентов:
-
-```python
-from acid_engine.self_hosting.stage_c import build_self_hosted_graph
-
-pipeline = build_self_hosted_graph()
-
-hash_result = pipeline.execute({
-    "z": 1,
-    "a": [3, 2]
-})
-
-print(hash_result)  # хеш от канонической формы
-```
-
-## 8. Реестр контрактов
-
-Храните модули в реестре:
-
-```python
-from acid_engine.level4.registry import ContractRegistry
-
-reg = ContractRegistry()
-
-reg.register(script)
-
-resolved = reg.resolve(
-    ContractId("demo", "increment")
-)
-
-print(resolved.name)
-```
-
-## 9. AI-контекст
-
-Получите контекст для языковой модели:
-
-```python
-from acid_engine.services.ai_context.provider import AIContextProvider
-
-provider = AIContextProvider(reg)
-
-ctx = provider.get_context(
-    ContractId("demo", "increment")
-)
-
-print(ctx)
-```
-
-Сгенерируйте промпт:
-
-```python
-prompt = provider.build_prompt(
-    ContractId("demo", "increment"),
-    "Add error handling"
-)
-
-print(prompt)
-```
-
 ## Заключение
 
-Вы освоили основные возможности AcidEngine:
+В 0.1 есть: ScriptModule, исполнение, observation, проверка типа и latency,
+линейный композит, CLI `run` / `run --script` / `validate` для `.py`.
 
-* создание контрактов;
-* описание `ScriptModule`;
-* выполнение реализаций;
-* проверку соответствия контракту;
-* использование семантических предикатов;
-* построение композитных модулей;
-* создание графов зависимостей;
-* использование CLI;
-* запуск внешних реализаций;
-* работу с реестром контрактов;
-* построение контекста для ИИ.
-
-Теперь вы можете строить контрактно-ориентированные пайплайны, автоматически проверять их соответствие заданным ограничениям и интегрировать ИИ в процесс разработки под контролем контрактной модели.
+Нет: self-hosting как продукта, AI-context, профилей сборки, парсера markdown-спек.
+Заглушка не PASS. ИИ не арбитр. Закон — [METHOD.md](METHOD.md).
