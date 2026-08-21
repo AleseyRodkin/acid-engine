@@ -6,6 +6,7 @@ from typing import Any, Callable, Coroutine
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
 from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level2.implementation_canon import canonical_implementation
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,19 +22,7 @@ class AsyncScriptModule:
     implementation: Callable[[Any], Coroutine[Any, Any, Any]]
     name: str = ""
 
-    @property
-    def content_hash(self) -> str:
-        decl = {
-            "contract_id": str(self.contract_id),
-            "version": str(self.version),
-            "specification": self.specification.to_canonical_dict(),
-            "input_type": self.input_type,
-            "output_type": self.output_type,
-            "name": self.name,
-        }
-        return content_hash_of(decl)
-
-    def to_canonical_dict(self) -> dict:
+    def _identity_dict(self) -> dict:
         return {
             "contract_id": str(self.contract_id),
             "version": str(self.version),
@@ -41,5 +30,14 @@ class AsyncScriptModule:
             "input_type": self.input_type,
             "output_type": self.output_type,
             "name": self.name,
-            "content_hash": self.content_hash,
+            "implementation": canonical_implementation(self.implementation),
         }
+
+    @property
+    def content_hash(self) -> str:
+        return content_hash_of(self._identity_dict())
+
+    def to_canonical_dict(self) -> dict:
+        body = self._identity_dict()
+        body["content_hash"] = self.content_hash
+        return body
