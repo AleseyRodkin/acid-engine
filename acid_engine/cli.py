@@ -2,14 +2,34 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import sys
 from pathlib import Path
 from acid_engine.level2.conformance import check_conformance, explain_result
 from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level2.specification import Policy
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level3.script.module import ScriptModule
+
+
+def load_script_from_file(path: str | Path) -> ScriptModule:
+    """Load a ScriptModule from a .py file that defines `script`."""
+    source = Path(path)
+    if not source.exists():
+        raise FileNotFoundError(f"Script file not found: {source}")
+    if source.suffix != ".py":
+        raise ValueError(f"Script must be a .py file, got: {source}")
+    spec = importlib.util.spec_from_file_location("acid_user_script", str(source))
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module from {source}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    if not hasattr(module, "script"):
+        raise ValueError(f"{source} does not define 'script'")
+    script = module.script
+    if not isinstance(script, ScriptModule):
+        raise TypeError(f"{source}: 'script' is {type(script)!r}, expected ScriptModule")
+    return script
 
 
 def cmd_init(args):
@@ -53,8 +73,13 @@ def cmd_validate(args):
     if not spec_path.exists():
         print(f"ERROR: spec file not found: {spec_path}")
         sys.exit(1)
+    if spec_path.suffix != ".py":
+        print(
+            "ERROR: markdown specs are not parsed. "
+            "Pass a .py file that defines 'contract'."
+        )
+        sys.exit(1)
 
-    # Пробуем загрузить контракт как Python-модуль (ожидаем переменную contract)
     try:
         from acid_engine.level2.loader import PythonLoader
         loader = PythonLoader()
@@ -97,8 +122,11 @@ def cmd_validate(args):
 def cmd_run(args):
     """Запускает walking skeleton или пользовательский скрипт."""
     if args.script:
-        from acid_engine.cli import load_script_from_file as _load
-        script = _load(args.script)
+        try:
+            script = load_script_from_file(args.script)
+        except Exception as e:
+            print(f"ERROR: Failed to load script: {e}")
+            sys.exit(1)
         input_val = int(args.input) if args.input else 3
         from acid_engine.level3.container.port import PortRef
         from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -121,8 +149,10 @@ def cmd_run(args):
             contract_id=str(script.contract_id),
         )
         print(explain_result(result))
+        print(f"output: {out_snap.data}")
+        if not result.ok:
+            sys.exit(1)
     else:
-        # Демо: walking skeleton
         from examples.walking_skeleton.run_x_plus_1 import main as ws_main
         ws_main()
 
@@ -131,22 +161,19 @@ def main():
     parser = argparse.ArgumentParser(prog="acid-engine", description="AcidEngine CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # init
     p_init = subparsers.add_parser("init", help="Создать шаблон спецификации")
     p_init.add_argument("--path", default="spec.md", help="Путь к файлу спеки")
     p_init.add_argument("--script", help="Создать шаблон скрипта")
     p_init.set_defaults(func=cmd_init)
 
-    # validate
-    p_val = subparsers.add_parser("validate", help="Проверить внешнюю команду по спецификации")
-    p_val.add_argument("spec", help="Путь к spec.md")
+    p_val = subparsers.add_parser("validate", help="Проверить внешнюю команду по контракту")
+    p_val.add_argument("spec", help="Путь к .py файлу с переменной contract")
     p_val.add_argument("command", nargs="*", help="Команда для проверки")
     p_val.set_defaults(func=cmd_validate)
 
-    # run
     p_run = subparsers.add_parser("run", help="Запустить скрипт или walking skeleton")
-    p_run.add_argument("--script", help="Путь к Python-файлу со скриптом")
-    p_run.add_argument("--input", help="Входное значение (для int-скриптов)")
+    p_run.add_argument("--script", help="Путь к Python-файлу со ScriptModule (переменная script)")
+    p_run.add_argument("--input", help="Входное значение (int)")
     p_run.set_defaults(func=cmd_run)
 
     args = parser.parse_args()
