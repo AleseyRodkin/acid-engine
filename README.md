@@ -15,6 +15,7 @@ Hard gate для Python-функции под контрактом.
 - `run` → Observed → структурная/операционная проверка → PASS / FAIL
 - Walking skeleton: вход `3` → выход `4`
 - Первый реальный пайплайн (слой A): `examples/commerce/order_amounts.py` — filter → scale сумм заказа, plan.lock, Observed, gate
+- Второй: `examples/commerce/sku_normalize.py` — clean → dedupe SKU каталога
 - `Pipeline(ScriptModule)` исполняет и проверяет
 - Нет исполнения → не PASS (`InterfaceContract` в Pipeline, `LocalAdapter` → SKIPPED)
 
