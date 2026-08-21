@@ -36,6 +36,10 @@ class PipelineResult:
     def message(self) -> str:
         return self.conformance.message
 
+    @property
+    def failure(self):
+        return self.conformance.failure
+
 
 class Pipeline:
     """Замкнутый контур: контракт → исполнение (если есть) → conformance."""

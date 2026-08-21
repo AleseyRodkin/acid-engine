@@ -1,4 +1,3 @@
-import pytest
 from acid_engine.explain.explainer import explain_conformance
 from acid_engine.level2.conformance import (
     ConformanceResult, ConformanceStatus, ConformanceLevel,
@@ -20,6 +19,7 @@ def test_explain_pass():
     )
     assert "[PASS]" in explain_conformance(result)
 
+
 def test_explain_fail():
     failure = FailureReason(
         node_id="n1",
@@ -38,10 +38,11 @@ def test_explain_fail():
     assert "expected=1" in explanation
     assert "actual=2" in explanation
 
+
 def test_replay_ok():
     script = ScriptModule(
         contract_id=ContractId("t", "x2"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         specification=Specification(),
         input_type="int",
         output_type="int",
@@ -52,7 +53,8 @@ def test_replay_ok():
         plan_id="replay-test",
         interface_contract_hash="hash",
         resolved_policies={},
-        module_hashes={},
+        module_hashes={script.name: script.content_hash},
         execution_mode=ExecutionMode.LIGHT,
     )
-    assert replay_run(plan, script, 5, expected_output=10)
+    result = replay_run(plan, script, 5, expected_output=10)
+    assert result.ok

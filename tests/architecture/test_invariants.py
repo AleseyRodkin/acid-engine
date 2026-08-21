@@ -122,3 +122,53 @@ def test_observation_no_stdout_by_default():
     with contextlib.redirect_stdout(buf):
         ExecutionObservation.create(0, 0.001, "completed")
     assert buf.getvalue() == ""
+
+
+def test_execute_plan_rejects_swapped_body():
+    from acid_engine.level3.script.runner import execute_plan
+    from acid_engine.level3.interface.contract import InterfaceContract
+    from acid_engine.level2.conformance import ConformanceStatus
+    from acid_engine.level2.specification import Policy
+
+    def plus_one(x):
+        return x + 1
+
+    def plus_hundred(x):
+        return x + 100
+
+    good = ScriptModule(
+        contract_id=ContractId("t", "s"),
+        version=Version(1, 0, 0),
+        specification=Specification(policy=Policy()),
+        input_type="int",
+        output_type="int",
+        implementation=plus_one,
+        name="s",
+    )
+    bad = ScriptModule(
+        contract_id=ContractId("t", "s"),
+        version=Version(1, 0, 0),
+        specification=Specification(policy=Policy()),
+        input_type="int",
+        output_type="int",
+        implementation=plus_hundred,
+        name="s",
+    )
+    iface = InterfaceContract(
+        contract_id=ContractId("t", "iface"),
+        version=Version(1, 0, 0),
+        inputs={"x": "int"},
+        outputs={"y": "int"},
+        constraints={},
+        module_hashes={"s": good.content_hash},
+    )
+    plan = PlanLock.create(
+        plan_id="p",
+        interface_contract_hash=iface.content_hash,
+        resolved_policies={},
+        module_hashes={"s": good.content_hash},
+        execution_mode=ExecutionMode.NORMAL,
+    )
+    result = execute_plan(iface, plan, bad, 1)
+    assert result.status == ConformanceStatus.FAIL
+    assert not result.ok

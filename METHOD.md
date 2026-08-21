@@ -81,3 +81,13 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `replay_from_record` возвращает `ConformanceResult`, не bool.
 Факт выхода — `expected_output` или `record.output_data`. Несовпадение → FAIL.
 `find_record` — только lookup по `run_id`. Отката состояния нет.
+
+## Plan.lock
+
+`execute_plan` / `replay_run` сверяют `script.content_hash` с `plan.module_hashes`
+**до** исполнения. Несовпадение → FAIL, тело не запускается.
+Нет хешей в lock → SKIPPED.
+`interface_contract_hash` тоже сверяется.
+`replay_run` без `expected_output` → SKIPPED.
+`execute_plan` возвращает `PipelineResult` (data + observation + conformance).
+
