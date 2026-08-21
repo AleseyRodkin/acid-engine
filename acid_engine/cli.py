@@ -134,8 +134,35 @@ def cmd_validate(args):
         sys.exit(1)
 
 
+def _lock_for_script(script: ScriptModule):
+    """Заморозить plan.lock на тело загруженного скрипта (CLI path = execute_plan)."""
+    from acid_engine.level2.identity import Version
+    from acid_engine.level3.interface.contract import InterfaceContract
+    from acid_engine.level3.bootstrap.plan_lock import PlanLock
+    from acid_engine.level3.script.modes import ExecutionMode
+
+    iface = InterfaceContract(
+        contract_id=script.contract_id,
+        version=script.version if hasattr(script, "version") else Version(0, 1, 0),
+        inputs={"value": script.input_type},
+        outputs={"result": script.output_type},
+        constraints=script.specification.policy.to_canonical_dict()
+        if hasattr(script.specification, "policy")
+        else {},
+        module_hashes={script.name: script.content_hash},
+    )
+    plan = PlanLock.create(
+        plan_id=f"cli-{script.name}",
+        interface_contract_hash=iface.content_hash,
+        resolved_policies=iface.constraints,
+        module_hashes=iface.module_hashes,
+        execution_mode=ExecutionMode.NORMAL,
+    )
+    return iface, plan
+
+
 def cmd_run(args):
-    """Walking skeleton или пользовательский скрипт."""
+    """Walking skeleton или пользовательский скрипт через execute_plan / plan.lock."""
     if args.script:
         try:
             script = load_script_from_file(args.script)
@@ -143,28 +170,13 @@ def cmd_run(args):
             print(f"ERROR: Failed to load script: {e}")
             sys.exit(1)
         input_val = parse_cli_input(args.input, default=3)
-        from acid_engine.level3.container.port import PortRef
-        from acid_engine.level3.container.snapshot import ContainerSnapshot
-        from acid_engine.level3.script.python_runtime import run_script
+        from acid_engine.level3.script.runner import execute_plan
 
-        in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
-        input_snap = ContainerSnapshot.create(
-            port_ref=in_port,
-            contract_id=script.contract_id,
-            contract_hash=script.content_hash,
-            data=input_val,
-        )
-        out_snap, obs, delta, state = run_script(script, input_snap)
-        result = check_conformance(
-            required_output_type=script.output_type,
-            provided_data=out_snap.data,
-            obs=obs,
-            policy=script.specification.policy,
-            node_id=script.name,
-            contract_id=str(script.contract_id),
-        )
-        print(explain_result(result))
-        print(f"output: {out_snap.data}")
+        iface, plan = _lock_for_script(script)
+        result = execute_plan(iface, plan, script, input_val)
+        print(explain_result(result.conformance))
+        print(f"output: {result.data}")
+        print(f"plan.lock: {plan.content_hash[:16]}...")
         if not result.ok:
             sys.exit(1)
     else:

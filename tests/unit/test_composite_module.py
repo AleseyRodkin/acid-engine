@@ -3,14 +3,14 @@ from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.module.composite import CompositeModule
+from acid_engine.level3.module.composite import CompositeModule, CompositeResult
 from acid_engine.level3.graph.model import DependencyGraph
 
 
 def make_leaf(name: str, func) -> LeafModule:
     script = ScriptModule(
         contract_id=ContractId("test", name),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         specification=Specification(),
         input_type="int",
         output_type="int",
@@ -21,7 +21,6 @@ def make_leaf(name: str, func) -> LeafModule:
 
 
 def test_composite_with_one_node():
-    """Один модуль в композите эквивалентен LeafModule."""
     leaf = make_leaf("x2", lambda x: x * 2)
     g = DependencyGraph()
     g.add_node("x2", payload=leaf)
@@ -30,16 +29,19 @@ def test_composite_with_one_node():
         graph=g,
         modules={"x2": leaf},
         contract_id=ContractId("test", "comp"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         input_node="x2",
         output_node="x2",
     )
     result = composite.execute(5)
-    assert result == 10
+    assert isinstance(result, CompositeResult)
+    assert result.data == 10
+    assert result.observation is not None
+    assert result.observation.status == "completed"
+    assert len(result.observations) == 1
 
 
 def test_composite_two_nodes():
-    """Два модуля: A (x+1) -> B (x*2). 3 -> 8."""
     leaf_a = make_leaf("plus1", lambda x: x + 1)
     leaf_b = make_leaf("times2", lambda x: x * 2)
     g = DependencyGraph()
@@ -51,16 +53,17 @@ def test_composite_two_nodes():
         graph=g,
         modules={"plus1": leaf_a, "times2": leaf_b},
         contract_id=ContractId("test", "pipe"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         input_node="plus1",
         output_node="times2",
     )
     result = composite.execute(3)
-    assert result == 8
+    assert result.data == 8
+    assert len(result.observations) == 2
+    assert all(o.status == "completed" for o in result.observations)
 
 
 def test_composite_with_cycle():
-    """Граф с циклом должен выбрасывать ошибку при выполнении."""
     leaf = make_leaf("id", lambda x: x)
     g = DependencyGraph()
     g.add_node("a", payload=leaf)
@@ -72,7 +75,7 @@ def test_composite_with_cycle():
         graph=g,
         modules={"a": leaf, "b": leaf},
         contract_id=ContractId("test", "cycle"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         input_node="a",
         output_node="b",
     )
@@ -81,7 +84,6 @@ def test_composite_with_cycle():
 
 
 def test_composite_fan_in_forbidden():
-    """A→C, B→C: fan-in > 1 запрещён до merge-контракта."""
     leaf_a = make_leaf("a", lambda x: x + 1)
     leaf_b = make_leaf("b", lambda x: x * 2)
     leaf_c = make_leaf("c", lambda x: x)

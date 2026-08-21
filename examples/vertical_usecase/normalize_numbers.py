@@ -67,7 +67,7 @@ def main():
     effective_policy = resolver.resolve_policy({}, pipe.modules["filter_node"].script.specification.policy.to_canonical_dict())
 
     input_data = [150, -10, 0, 250, 50]
-    output_data = pipe.execute(input_data)
+    output_data = pipe.execute(input_data).data
 
     # Формируем Interface Contract
     iface = InterfaceContract(

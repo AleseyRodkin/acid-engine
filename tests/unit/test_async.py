@@ -57,4 +57,4 @@ def test_composite_with_async_leaf():
         output_node="leaf",
     )
     result = composite.execute(10)
-    assert result == 20
+    assert result.data == 20

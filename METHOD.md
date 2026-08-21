@@ -98,3 +98,12 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `policy.pure=True` и непустые `effects_observed` → FAIL.
 `InMemoryDataPlane` и `FileSystemDataPlane`. Пустые effects ≠ proven pure.
 
+## Composite
+
+`Composite.execute` возвращает `CompositeResult`: `data` + `observations` по узлам.
+
+## CLI run
+
+`run --script` идёт через `execute_plan` / `plan.lock` на тело загруженного скрипта.
+Не обходит lock прямым `run_script`.
+

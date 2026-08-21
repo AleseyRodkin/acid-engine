@@ -148,7 +148,7 @@ def main() -> None:
     step2 = execute_plan(iface, plan, leaf_dedupe.script, step1.data)
     assert step2.ok, explain_result(step2.conformance)
 
-    composite_out = pipe.execute(input_data)
+    composite_out = pipe.execute(input_data).data
     expected = ["AB-01", "XY-9", "ZZ-3"]
 
     print("=== Commerce pipeline: SKU normalize ===")
