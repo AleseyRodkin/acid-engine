@@ -11,6 +11,7 @@ from acid_engine.level3.container.delta import ContainerDelta
 from acid_engine.level3.container.state import ExecutionState, ExecutionStatus
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level1.effects import EffectCollector
 
 
 async def run_async_script(
@@ -26,8 +27,8 @@ async def run_async_script(
     state = ExecutionState()
     state.mark_running()
     start = time.perf_counter()
-    effects: list[str] = []
     trace: list[str] = []
+    collector = EffectCollector()
 
     if mode == ExecutionMode.NORMAL:
         trace.append(f"start:{script.name or script.contract_id.name}")
@@ -35,10 +36,12 @@ async def run_async_script(
         trace.append("start:light")
 
     try:
-        result = await script.implementation(input_snapshot.data)
+        with collector:
+            result = await script.implementation(input_snapshot.data)
         end = time.perf_counter()
         state.mark_completed()
         trace.append("completed")
+        effects = tuple(collector.effects) if mode == ExecutionMode.NORMAL else ()
 
         out_port = PortRef(
             module=script.contract_id.name,
@@ -79,6 +82,7 @@ async def run_async_script(
         end = time.perf_counter()
         state.mark_failed(str(e))
         trace.append(f"failed:{e}")
+        effects = tuple(collector.effects) if mode == ExecutionMode.NORMAL else ()
         obs = ExecutionObservation.create(
             start=start,
             end=end,

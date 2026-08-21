@@ -1,13 +1,9 @@
 """
-Слой A — первый реальный пайплайн: нормализация сумм строк заказа.
+Слой A — пайплайн: нормализация сумм строк заказа.
 
-Вход: список сумм в минорных единицах (копейки/центы), возможны мусор и отрицательные.
-Конвейер: filter (>=0, число) → scale (/100 → major units).
-
-Полный контур:
-  ScriptModule (хеш тела) → Leaf → Composite (линейный) → run_script/Observed
-  → check_conformance → plan.lock → PASS | FAIL
-Заглушка Interface без исполнения не используется как успех.
+Вход: список сумм в минорных единицах (копейки/центы).
+Конвейер: filter (>=0, число; bool не число) → scale (/100 → major units).
+Каждый лист идёт через execute_plan (plan.lock связывает тело).
 """
 from __future__ import annotations
 
@@ -24,10 +20,10 @@ from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.script.python_runtime import run_script
+from acid_engine.level3.script.runner import execute_plan
 
 
 def filter_non_negative(data: list) -> list:
-    """Оставить только числа >= 0. bool не число."""
     out = []
     for x in data:
         if type(x) is bool:
@@ -38,7 +34,6 @@ def filter_non_negative(data: list) -> list:
 
 
 def scale_cents_to_units(data: list) -> list:
-    """Минорные единицы → major ( / 100 ), 2 знака."""
     return [round(x / 100.0, 2) for x in data]
 
 
@@ -66,7 +61,7 @@ def build_scale_script() -> ScriptModule:
     )
 
 
-def build_pipeline() -> tuple[CompositeModule, LeafModule, LeafModule]:
+def build_pipeline():
     filter_script = build_filter_script()
     scale_script = build_scale_script()
     leaf_filter = LeafModule(module_id="filter_node", script=filter_script)
@@ -90,7 +85,6 @@ def build_pipeline() -> tuple[CompositeModule, LeafModule, LeafModule]:
 
 
 def run_leaf(leaf: LeafModule, data):
-    """Исполнение листа с Observed и conformance."""
     script = leaf.script
     in_port = PortRef(module=leaf.module_id, direction="input", name="value")
     snap = ContainerSnapshot.create(
@@ -111,7 +105,7 @@ def run_leaf(leaf: LeafModule, data):
     return out_snap.data, obs, result, state
 
 
-def make_plan(leaf_filter: LeafModule, leaf_scale: LeafModule) -> PlanLock:
+def lock_pair(leaf_filter: LeafModule, leaf_scale: LeafModule):
     iface = InterfaceContract(
         contract_id=ContractId("commerce", "order_amounts_iface"),
         version=Version(0, 1, 0),
@@ -119,57 +113,54 @@ def make_plan(leaf_filter: LeafModule, leaf_scale: LeafModule) -> PlanLock:
         outputs={"normalized": "list"},
         constraints=leaf_filter.script.specification.policy.to_canonical_dict(),
         module_hashes={
-            "filter": leaf_filter.content_hash,
-            "scale": leaf_scale.content_hash,
+            leaf_filter.script.name: leaf_filter.content_hash,
+            leaf_scale.script.name: leaf_scale.content_hash,
         },
     )
-    return PlanLock.create(
+    plan = PlanLock.create(
         plan_id="commerce-order-amounts-001",
         interface_contract_hash=iface.content_hash,
         resolved_policies=iface.constraints,
         module_hashes=iface.module_hashes,
         execution_mode=ExecutionMode.NORMAL,
     )
+    return iface, plan
+
+
+def make_plan(leaf_filter: LeafModule, leaf_scale: LeafModule) -> PlanLock:
+    return lock_pair(leaf_filter, leaf_scale)[1]
 
 
 def main() -> None:
     pipe, leaf_filter, leaf_scale = build_pipeline()
     input_data = [15000, -200, 0, True, 25050, 100]
+    iface, plan = lock_pair(leaf_filter, leaf_scale)
 
-    # Шаг 1: filter с observation
-    filtered, obs1, conf1, state1 = run_leaf(leaf_filter, input_data)
-    from acid_engine.level3.container.state import ExecutionStatus
-    assert state1.status == ExecutionStatus.COMPLETED
-    assert conf1.ok, explain_result(conf1)
+    step1 = execute_plan(iface, plan, leaf_filter.script, input_data)
+    assert step1.ok, explain_result(step1.conformance)
+    assert step1.observation is not None
 
-    # Шаг 2: scale с observation
-    scaled, obs2, conf2, state2 = run_leaf(leaf_scale, filtered)
-    assert conf2.ok, explain_result(conf2)
+    step2 = execute_plan(iface, plan, leaf_scale.script, step1.data)
+    assert step2.ok, explain_result(step2.conformance)
+    assert step2.observation is not None
 
-    # Composite (линейный путь, fan-in=1)
     composite_out = pipe.execute(input_data)
-    assert composite_out == scaled
+    assert composite_out == step2.data
 
     expected = [150.0, 0.0, 250.5, 1.0]
-    plan = make_plan(leaf_filter, leaf_scale)
 
     print("=== Commerce pipeline: order amounts ===")
     print(f"input:     {input_data}")
-    print(f"filtered:  {filtered}")
-    print(f"output:    {scaled}")
+    print(f"filtered:  {step1.data}")
+    print(f"output:    {step2.data}")
     print(f"expected:  {expected}")
-    print(f"obs1:      status={obs1.status} latency_ms={obs1.latency_ms:.3f}")
-    print(f"obs2:      status={obs2.status} latency_ms={obs2.latency_ms:.3f}")
-    print(explain_result(conf1))
-    print(explain_result(conf2))
+    print(explain_result(step1.conformance))
+    print(explain_result(step2.conformance))
     print(f"plan.lock: {plan.content_hash[:16]}...")
-    print(f"filter hash: {leaf_filter.content_hash[:16]}...")
-    print(f"scale hash:  {leaf_scale.content_hash[:16]}...")
 
-    assert scaled == expected, f"output mismatch: {scaled} != {expected}"
+    assert step2.data == expected
     assert composite_out == expected
-    # Observed ≠ Proven: pure=True в policy, но proven_pure нет
-    assert not hasattr(obs2, "proven_pure")
+    assert not hasattr(step2.observation, "proven_pure")
     print("PASS")
 
 

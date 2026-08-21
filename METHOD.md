@@ -91,3 +91,10 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `replay_run` без `expected_output` → SKIPPED.
 `execute_plan` возвращает `PipelineResult` (data + observation + conformance).
 
+## Effects / DataPlane
+
+`EffectCollector` собирает `effects_observed` за прогон.
+`DataPlane.store` / `record_effect` — факт.
+`policy.pure=True` и непустые `effects_observed` → FAIL.
+`InMemoryDataPlane` и `FileSystemDataPlane`. Пустые effects ≠ proven pure.
+

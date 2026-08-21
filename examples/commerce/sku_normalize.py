@@ -1,12 +1,8 @@
 """
-Слой A — второй реальный пайплайн: нормализация SKU каталога.
+Слой A — пайплайн: нормализация SKU каталога.
 
-Вход: список «сырых» артикулов (мусор, пробелы, разный регистр, дубли).
-Конвейер: clean (str.strip + upper, drop empty/non-str) → dedupe (порядок сохранения).
-
-Тот же контур, что order_amounts:
-  ScriptModule (хеш тела) → Leaf → Composite → run_script/Observed
-  → check_conformance → plan.lock → PASS | FAIL
+Вход: сырые артикулы. Конвейер: clean (strip+upper) → dedupe (порядок).
+Каждый лист идёт через execute_plan (plan.lock связывает тело).
 """
 from __future__ import annotations
 
@@ -22,12 +18,11 @@ from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.state import ExecutionStatus
 from acid_engine.level3.script.python_runtime import run_script
+from acid_engine.level3.script.runner import execute_plan
 
 
 def clean_skus(data: list) -> list:
-    """Только непустые строки → strip + upper."""
     out = []
     for x in data:
         if type(x) is not str:
@@ -39,7 +34,6 @@ def clean_skus(data: list) -> list:
 
 
 def dedupe_preserve_order(data: list) -> list:
-    """Убрать дубли, сохранив первый порядок."""
     seen: set[str] = set()
     out = []
     for x in data:
@@ -74,7 +68,7 @@ def build_dedupe_script() -> ScriptModule:
     )
 
 
-def build_pipeline() -> tuple[CompositeModule, LeafModule, LeafModule]:
+def build_pipeline():
     clean_script = build_clean_script()
     dedupe_script = build_dedupe_script()
     leaf_clean = LeafModule(module_id="clean_node", script=clean_script)
@@ -118,7 +112,7 @@ def run_leaf(leaf: LeafModule, data):
     return out_snap.data, obs, result, state
 
 
-def make_plan(leaf_clean: LeafModule, leaf_dedupe: LeafModule) -> PlanLock:
+def lock_pair(leaf_clean: LeafModule, leaf_dedupe: LeafModule):
     iface = InterfaceContract(
         contract_id=ContractId("commerce", "sku_normalize_iface"),
         version=Version(0, 1, 0),
@@ -126,53 +120,49 @@ def make_plan(leaf_clean: LeafModule, leaf_dedupe: LeafModule) -> PlanLock:
         outputs={"normalized_skus": "list"},
         constraints=leaf_clean.script.specification.policy.to_canonical_dict(),
         module_hashes={
-            "clean": leaf_clean.content_hash,
-            "dedupe": leaf_dedupe.content_hash,
+            leaf_clean.script.name: leaf_clean.content_hash,
+            leaf_dedupe.script.name: leaf_dedupe.content_hash,
         },
     )
-    return PlanLock.create(
+    plan = PlanLock.create(
         plan_id="commerce-sku-normalize-001",
         interface_contract_hash=iface.content_hash,
         resolved_policies=iface.constraints,
         module_hashes=iface.module_hashes,
         execution_mode=ExecutionMode.NORMAL,
     )
+    return iface, plan
+
+
+def make_plan(leaf_clean: LeafModule, leaf_dedupe: LeafModule) -> PlanLock:
+    return lock_pair(leaf_clean, leaf_dedupe)[1]
 
 
 def main() -> None:
     pipe, leaf_clean, leaf_dedupe = build_pipeline()
     input_data = ["  ab-01 ", "ab-01", "XY-9", 42, "", "  xy-9  ", None, "zz-3"]
+    iface, plan = lock_pair(leaf_clean, leaf_dedupe)
 
-    cleaned, obs1, conf1, state1 = run_leaf(leaf_clean, input_data)
-    assert state1.status == ExecutionStatus.COMPLETED
-    assert conf1.ok, explain_result(conf1)
-
-    deduped, obs2, conf2, state2 = run_leaf(leaf_dedupe, cleaned)
-    assert state2.status == ExecutionStatus.COMPLETED
-    assert conf2.ok, explain_result(conf2)
+    step1 = execute_plan(iface, plan, leaf_clean.script, input_data)
+    assert step1.ok, explain_result(step1.conformance)
+    step2 = execute_plan(iface, plan, leaf_dedupe.script, step1.data)
+    assert step2.ok, explain_result(step2.conformance)
 
     composite_out = pipe.execute(input_data)
-    assert composite_out == deduped
-
     expected = ["AB-01", "XY-9", "ZZ-3"]
-    plan = make_plan(leaf_clean, leaf_dedupe)
 
     print("=== Commerce pipeline: SKU normalize ===")
     print(f"input:    {input_data}")
-    print(f"cleaned:  {cleaned}")
-    print(f"output:   {deduped}")
+    print(f"cleaned:  {step1.data}")
+    print(f"output:   {step2.data}")
     print(f"expected: {expected}")
-    print(f"obs1:     status={obs1.status} latency_ms={obs1.latency_ms:.3f}")
-    print(f"obs2:     status={obs2.status} latency_ms={obs2.latency_ms:.3f}")
-    print(explain_result(conf1))
-    print(explain_result(conf2))
+    print(explain_result(step1.conformance))
+    print(explain_result(step2.conformance))
     print(f"plan.lock: {plan.content_hash[:16]}...")
-    print(f"clean hash:  {leaf_clean.content_hash[:16]}...")
-    print(f"dedupe hash: {leaf_dedupe.content_hash[:16]}...")
 
-    assert deduped == expected, f"output mismatch: {deduped} != {expected}"
+    assert step2.data == expected
     assert composite_out == expected
-    assert not hasattr(obs2, "proven_pure")
+    assert not hasattr(step2.observation, "proven_pure")
     print("PASS")
 
 

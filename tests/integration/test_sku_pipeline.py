@@ -16,7 +16,9 @@ from examples.commerce.sku_normalize import (
     build_dedupe_script,
     run_leaf,
     make_plan,
+    lock_pair,
 )
+from acid_engine.level3.script.runner import execute_plan
 
 
 def test_sku_pipeline_main():
@@ -82,3 +84,13 @@ def test_sku_type_fail():
     _, _, conf, _ = run_leaf(leaf, ["A"])
     assert not conf.ok
     assert conf.status == ConformanceStatus.FAIL
+
+
+def test_skus_via_execute_plan():
+    _, leaf_c, leaf_d = build_pipeline()
+    iface, plan = lock_pair(leaf_c, leaf_d)
+    step1 = execute_plan(iface, plan, leaf_c.script, ["  ab-01 ", "ab-01", 42])
+    assert step1.ok
+    step2 = execute_plan(iface, plan, leaf_d.script, step1.data)
+    assert step2.ok
+    assert step2.data == ["AB-01"]

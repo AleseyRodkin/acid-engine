@@ -7,9 +7,10 @@ from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level3.container.delta import ContainerDelta
-from acid_engine.level3.container.state import ExecutionState, ExecutionStatus
+from acid_engine.level3.container.state import ExecutionState
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level1.effects import EffectCollector
 
 
 def run_script(
@@ -21,7 +22,6 @@ def run_script(
     state = ExecutionState()
     state.mark_running()
     start = time.perf_counter()
-    effects: list[str] = []
     trace: list[str] = []
 
     if mode == ExecutionMode.NORMAL:
@@ -29,11 +29,14 @@ def run_script(
     else:
         trace.append("start:light")
 
+    collector = EffectCollector()
     try:
-        result = script.implementation(input_snapshot.data)
+        with collector:
+            result = script.implementation(input_snapshot.data)
         end = time.perf_counter()
         state.mark_completed()
         trace.append("completed")
+        effects = tuple(collector.effects) if mode == ExecutionMode.NORMAL else ()
 
         out_port = PortRef(
             module=script.contract_id.name,
@@ -53,7 +56,7 @@ def run_script(
             start=start,
             end=end,
             status="completed",
-            effects=tuple(effects) if mode == ExecutionMode.NORMAL else (),
+            effects=effects,
             trace=tuple(trace),
             input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
             output_hash=output_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
@@ -74,11 +77,12 @@ def run_script(
         end = time.perf_counter()
         state.mark_failed(str(e))
         trace.append(f"failed:{e}")
+        effects = tuple(collector.effects) if mode == ExecutionMode.NORMAL else ()
         obs = ExecutionObservation.create(
             start=start,
             end=end,
             status="failed",
-            effects=tuple(effects) if mode == ExecutionMode.NORMAL else (),
+            effects=effects,
             trace=tuple(trace),
             input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
             logger=logger,

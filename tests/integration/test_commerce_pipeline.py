@@ -20,9 +20,11 @@ from examples.commerce.order_amounts import (
     build_scale_script,
     run_leaf,
     make_plan,
+    lock_pair,
     filter_non_negative,
     scale_cents_to_units,
 )
+from acid_engine.level3.script.runner import execute_plan
 
 
 def test_commerce_pipeline_main():
@@ -95,3 +97,14 @@ def test_commerce_type_fail():
     _, _, conf, _ = run_leaf(leaf, [1, 2, 3])
     assert not conf.ok
     assert conf.status == ConformanceStatus.FAIL
+
+
+def test_orders_via_execute_plan():
+    _, leaf_f, leaf_s = build_pipeline()
+    iface, plan = lock_pair(leaf_f, leaf_s)
+    step1 = execute_plan(iface, plan, leaf_f.script, [15000, -200, True, 100])
+    assert step1.ok
+    assert step1.data == [15000, 100]
+    step2 = execute_plan(iface, plan, leaf_s.script, step1.data)
+    assert step2.ok
+    assert step2.data == [150.0, 1.0]

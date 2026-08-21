@@ -144,6 +144,21 @@ def check_conformance(
                         actual=msg,
                     ),
                 )
+    # pure=True + observed effects → FAIL (Observed ≠ claim of purity)
+    if policy.pure and obs.effects_observed:
+        return ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.OPERATIONAL,
+            message="pure policy violated: effects observed",
+            failure=FailureReason(
+                node_id=node_id,
+                contract_id=contract_id,
+                property_name="pure",
+                expected=True,
+                actual=list(obs.effects_observed),
+            ),
+        )
+
     # Operational: latency
     if policy.max_latency_ms is not None and obs.latency_ms > policy.max_latency_ms:
         return ConformanceResult(
