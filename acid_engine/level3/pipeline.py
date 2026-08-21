@@ -61,13 +61,9 @@ class Pipeline:
             return result
 
         elif isinstance(self.contract, InterfaceContract):
-            # Пока минимальная реализация: создаём заглушку модуля и возвращаем PASS
-            # В будущем здесь будет построение графа из module_hashes и их выполнение
-            from acid_engine.level2.conformance import ConformanceStatus, ConformanceLevel
-            return ConformanceResult(
-                status=ConformanceStatus.PASS,
-                level=ConformanceLevel.STRUCTURAL,
-                message="InterfaceContract executed (stub)"
+            # Нет исполнения — нет Observed. Нельзя PASS.
+            return ConformanceResult.skipped(
+                "InterfaceContract was not executed"
             )
 
         else:

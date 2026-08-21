@@ -72,3 +72,34 @@ def test_plan_lock_tracks_implementation_body():
         execution_mode=ExecutionMode.NORMAL,
     )
     assert plan_a.content_hash != plan_b.content_hash
+
+
+def test_stub_never_pass():
+    from acid_engine.level3.pipeline import Pipeline
+    from acid_engine.level3.interface.contract import InterfaceContract
+    from acid_engine.level3.orchestration.adapter import LocalAdapter
+    from acid_engine.level2.conformance import ConformanceStatus
+
+    iface = InterfaceContract(
+        contract_id=ContractId("test", "iface"),
+        version=Version(1, 0, 0),
+        inputs={},
+        outputs={},
+        constraints={},
+    )
+    pipe_result = Pipeline(iface).execute({"anything": 1})
+    assert pipe_result.status != ConformanceStatus.PASS
+    assert not pipe_result.ok
+
+    adapter = LocalAdapter()
+    plan = PlanLock.create(
+        plan_id="p",
+        interface_contract_hash="h",
+        resolved_policies={},
+        module_hashes={},
+        execution_mode=ExecutionMode.NORMAL,
+    )
+    adapter_result = adapter.get_result(adapter.submit_plan(plan))
+    assert adapter_result is not None
+    assert adapter_result.status != ConformanceStatus.PASS
+    assert not adapter_result.ok

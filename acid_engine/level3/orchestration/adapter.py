@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Optional
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level2.conformance import ConformanceResult
 
@@ -27,20 +27,15 @@ class OrchestratorAdapter(ABC):
 
 
 class LocalAdapter(OrchestratorAdapter):
-    """Заглушка для локального исполнения (без внешнего оркестратора)."""
+    """Placeholder. Не исполняет план и не имеет права возвращать PASS."""
 
     def submit_plan(self, plan: PlanLock) -> str:
         return f"local-{plan.plan_id}"
 
     def get_status(self, external_run_id: str) -> str:
-        return "completed"
+        return "not_executed"
 
     def get_result(self, external_run_id: str) -> Optional[ConformanceResult]:
-        from acid_engine.level2.conformance import (
-            ConformanceResult, ConformanceStatus, ConformanceLevel,
-        )
-        return ConformanceResult(
-            status=ConformanceStatus.PASS,
-            level=ConformanceLevel.OPERATIONAL,
-            message="Local execution (adapter placeholder)",
+        return ConformanceResult.skipped(
+            "LocalAdapter is a placeholder; no execution was observed"
         )

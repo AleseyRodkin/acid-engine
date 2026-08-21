@@ -34,6 +34,15 @@ class ConformanceResult:
     def ok(self) -> bool:
         return self.status == ConformanceStatus.PASS
 
+    @staticmethod
+    def skipped(message: str, level: ConformanceLevel = ConformanceLevel.STRUCTURAL) -> "ConformanceResult":
+        """No observation — not PASS. Facts were insufficient to judge."""
+        return ConformanceResult(
+            status=ConformanceStatus.SKIPPED,
+            level=level,
+            message=message,
+        )
+
 
 def check_conformance(
     required_output_type: str,

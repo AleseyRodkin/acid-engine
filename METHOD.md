@@ -36,7 +36,18 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 Пустые `effects_observed` ≠ доказательство чистоты.
 ИИ не арбитр.
 
+## Gate
+
+Нет исполнения → не PASS.
+`SKIPPED`, если фактов мало, чтобы судить.
+Заглушка не может PASS: неисполненный `InterfaceContract` в `Pipeline`,
+`LocalAdapter`-placeholder — даже на мусорном входе.
+
 ## CLI
 
 `main()` / CLI не содержат бизнес-оркестрации сверх:
 `load → resolve → execute` уже разрешённого контракта.
+
+`run` — walking skeleton.
+`run --script file.py` — грузит переменную `script` (`ScriptModule`) и исполняет.
+`validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
