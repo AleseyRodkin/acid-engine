@@ -103,3 +103,22 @@ def test_stub_never_pass():
     assert adapter_result is not None
     assert adapter_result.status != ConformanceStatus.PASS
     assert not adapter_result.ok
+
+
+def test_bool_not_int():
+    from acid_engine.level2.conformance import check_conformance, ConformanceStatus
+    from acid_engine.level3.container.observation import ExecutionObservation
+    from acid_engine.level2.specification import Policy
+    obs = ExecutionObservation.create(0, 0.001, "completed")
+    result = check_conformance("int", True, obs, Policy())
+    assert result.status == ConformanceStatus.FAIL
+    assert not result.ok
+
+
+def test_observation_no_stdout_by_default():
+    import io, contextlib
+    from acid_engine.level3.container.observation import ExecutionObservation
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        ExecutionObservation.create(0, 0.001, "completed")
+    assert buf.getvalue() == ""

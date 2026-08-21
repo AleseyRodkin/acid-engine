@@ -78,3 +78,27 @@ def test_composite_with_cycle():
     )
     with pytest.raises(RuntimeError, match="[Cc]ycle"):
         composite.execute(1)
+
+
+def test_composite_fan_in_forbidden():
+    """A→C, B→C: fan-in > 1 запрещён до merge-контракта."""
+    leaf_a = make_leaf("a", lambda x: x + 1)
+    leaf_b = make_leaf("b", lambda x: x * 2)
+    leaf_c = make_leaf("c", lambda x: x)
+    g = DependencyGraph()
+    g.add_node("a", payload=leaf_a)
+    g.add_node("b", payload=leaf_b)
+    g.add_node("c", payload=leaf_c)
+    g.add_edge("a", "c")
+    g.add_edge("b", "c")
+    composite = CompositeModule(
+        module_id="fan",
+        graph=g,
+        modules={"a": leaf_a, "b": leaf_b, "c": leaf_c},
+        contract_id=ContractId("test", "fan"),
+        version=Version(1, 0, 0),
+        input_node="a",
+        output_node="c",
+    )
+    with pytest.raises(RuntimeError, match="Fan-in"):
+        composite.execute(5)

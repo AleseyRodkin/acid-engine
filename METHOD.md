@@ -51,3 +51,17 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `run` — walking skeleton.
 `run --script file.py` — грузит переменную `script` (`ScriptModule`) и исполняет.
 `validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
+
+
+## Типы
+
+`bool ≠ int`. `True`/`False` не проходят как `int`.
+
+## Graph
+
+Fan-in > 1 в Composite запрещён, пока нет merge-контракта.
+Молча брать только `preds[0]` нельзя.
+
+## Observation
+
+Ядро не печатает в stdout. Лог observation — только opt-in через переданный logger.

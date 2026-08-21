@@ -44,6 +44,25 @@ class ConformanceResult:
         )
 
 
+def _type_matches(required: str, value: Any) -> bool:
+    """Structural type check. bool is not int (unlike isinstance)."""
+    if required == "int":
+        return type(value) is int
+    if required == "bool":
+        return type(value) is bool
+    if required == "float":
+        return type(value) in (int, float) and type(value) is not bool
+    if required == "str":
+        return type(value) is str
+    if required == "list":
+        return type(value) is list
+    if required in ("dict", "record"):
+        return type(value) is dict
+    if required == "None":
+        return value is None
+    return True
+
+
 def check_conformance(
     required_output_type: str,
     provided_data: Any,
@@ -52,22 +71,11 @@ def check_conformance(
     node_id: str = "",
     contract_id: str = "",
     schema: Any = None,
-    semantic_rules: Optional[Dict[str, Any]] = None,
-    invariants: Optional[tuple[Callable[[Any], bool], ...]] = None,
+    semantic_rules: Optional[dict[str, Any]] = None,
+    invariants: Optional[tuple] = None,
 ) -> ConformanceResult:
-    # Structural check
-    type_map = {
-        "int": int,
-        "float": (int, float),
-        "str": str,
-        "bool": bool,
-        "list": list,
-        "dict": dict,
-        "record": dict,
-        "None": type(None),
-    }
-    expected = type_map.get(required_output_type, object)
-    if not isinstance(provided_data, expected):
+    # Structural check — bool ≠ int
+    if not _type_matches(required_output_type, provided_data):
         return ConformanceResult(
             status=ConformanceStatus.FAIL,
             level=ConformanceLevel.STRUCTURAL,

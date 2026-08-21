@@ -63,8 +63,14 @@ class CompositeModule:
             preds = self.graph.predecessors(node_id)
             if not preds:
                 input_val = current_data
-            else:
+            elif len(preds) == 1:
                 input_val = node_outputs[preds[0]]
+            else:
+                # Нет merge-контракта: fan-in > 1 нельзя молча брать preds[0]
+                raise RuntimeError(
+                    f"Fan-in > 1 is not supported for node {node_id!r} "
+                    f"(predecessors={preds}). Provide a merge contract first."
+                )
 
             # Выполняем модуль в зависимости от его типа
             if isinstance(mod, LeafModule):
