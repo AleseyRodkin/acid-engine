@@ -57,7 +57,7 @@ STOL (лаборатория) — чужой проект: не стенд, не
 | 1 | `level2/blank.py` + `tests/unit/test_blank.py`. Identity без смены `_identity_dict` | хеш бланка = content_hash; 165 живы |
 | 2a | ArtifactRef рядом; `artifact` опционально; хеш как сейчас | `49a7cb3`+ : `artifact.py`, хеш без новых ключей |
 | 2b | Ссылка вместо fn. Нет языка python → не PASS. Битая ссылка → FAIL | resolve.py: python file+entry; unknown language FAIL; missing SKIPPED |
-| 3 | JSON-почерк, CLI `.json`, `.md` отказ | один шаг, два файла, один хеш |
+| 3 | JSON-почерк, CLI `.json`, `.md` отказ | blank_loader.py; JSON+py один хеш; max_latency_ms → float |
 | 4 | `Pipeline.execute` через `execute_plan` | нет публичного PASS без lock |
 | 5 | `examples/bones/` dict n:3→n:4 + .json + integration | без STOL |
 | 6 | `judge.py` фасад → `execute_plan` | один вход |

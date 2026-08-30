@@ -16,12 +16,18 @@ from acid_engine.level3.script.module import ScriptModule
 
 
 def load_script_from_file(path: str | Path) -> ScriptModule:
-    """Load a ScriptModule from a .py file that defines `script`."""
+    """Load ScriptModule from .py (`script`) or .json blank. Markdown не парсится."""
     source = Path(path)
     if not source.exists():
         raise FileNotFoundError(f"Script file not found: {source}")
-    if source.suffix != ".py":
-        raise ValueError(f"Script must be a .py file, got: {source}")
+    suffix = source.suffix.lower()
+    if suffix == ".md":
+        raise ValueError("markdown specs are not parsed")
+    if suffix == ".json":
+        from acid_engine.level2.blank_loader import load_script_blank
+        return load_script_blank(source)
+    if suffix != ".py":
+        raise ValueError(f"Script must be a .py or .json file, got: {source}")
     # unique name so repeated loads do not collide in sys.modules
     mod_name = f"acid_user_script_{source.resolve().stem}_{id(source)}"
     spec = importlib.util.spec_from_file_location(mod_name, str(source))
@@ -199,7 +205,7 @@ def main():
     p_val.set_defaults(func=cmd_validate)
 
     p_run = subparsers.add_parser("run", help="Запустить скрипт или walking skeleton")
-    p_run.add_argument("--script", help="Путь к .py со ScriptModule (переменная script)")
+    p_run.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
     p_run.add_argument(
         "--input",
         help='Вход: int, JSON (напр. \'[1,2,3]\') или строка. По умолчанию 3',
