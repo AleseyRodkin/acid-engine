@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Tuple
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
 from acid_engine.level2.serialization import content_hash_of
 from acid_engine.level2.implementation_canon import canonical_implementation
 from acid_engine.level2.base import Contract
 from acid_engine.level2.attributes import Attribute
+from acid_engine.level3.script.artifact import ArtifactRef
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +21,7 @@ class ScriptModule(Contract):
     output_type: str
     implementation: Callable[[Any], Any]
     name: str = ""
+    artifact: Optional[ArtifactRef] = None
 
     def get_entity(self) -> ContractId:
         return self.contract_id

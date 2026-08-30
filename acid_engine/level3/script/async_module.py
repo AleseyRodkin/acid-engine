@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, Optional
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
 from acid_engine.level2.serialization import content_hash_of
 from acid_engine.level2.implementation_canon import canonical_implementation
+from acid_engine.level3.script.artifact import ArtifactRef
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +22,7 @@ class AsyncScriptModule:
     output_type: str
     implementation: Callable[[Any], Coroutine[Any, Any, Any]]
     name: str = ""
+    artifact: Optional[ArtifactRef] = None
 
     def _identity_dict(self) -> dict:
         return {
