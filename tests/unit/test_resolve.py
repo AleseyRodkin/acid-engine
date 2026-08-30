@@ -6,10 +6,8 @@ from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.artifact import ArtifactRef, artifact_ref_from_callable
-from acid_engine.level3.script.runner import execute_plan
-from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
-from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level3.script.runner import execute_plan, lock_for_script
+from acid_engine.level2.conformance import ConformanceStatus
 
 
 BODY = '''def plus_one(x):
@@ -18,22 +16,7 @@ BODY = '''def plus_one(x):
 
 
 def _iface_plan(script):
-    iface = InterfaceContract(
-        contract_id=ContractId("t", "iface"),
-        version=Version(1, 0, 0),
-        inputs={"x": "int"},
-        outputs={"y": "int"},
-        constraints={},
-        module_hashes={script.name: script.content_hash},
-    )
-    plan = PlanLock.create(
-        plan_id="p",
-        interface_contract_hash=iface.content_hash,
-        resolved_policies={},
-        module_hashes={script.name: script.content_hash},
-        execution_mode=ExecutionMode.NORMAL,
-    )
-    return iface, plan
+    return lock_for_script(script)
 
 
 def _script(**kwargs):
@@ -127,3 +110,27 @@ def test_callable_still_preferred_over_artifact():
     result = execute_plan(iface, plan, script, 2)
     assert result.ok
     assert result.data == 3
+
+
+def test_materialize_artifact_hash_equals_callable():
+    from acid_engine.level3.script.resolve import materialize_script
+
+    def plus_one(x):
+        return x + 1
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "plus.py")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(BODY)
+        art = ArtifactRef(
+            language="python",
+            file=path,
+            entry="plus_one",
+            canon="ast",
+            body_hash="",
+        )
+        only_ref = _script(implementation=None, artifact=art)
+        native = _script(implementation=plus_one)
+        got = materialize_script(only_ref)
+        assert got.content_hash == native.content_hash
+        assert callable(got.implementation)

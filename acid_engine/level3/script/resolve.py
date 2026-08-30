@@ -62,6 +62,19 @@ def resolve_script(script) -> Tuple[Optional[Callable[..., Any]], Optional[str]]
     return fn, None
 
 
+def materialize_script(script):
+    """После резолва identity = тело fn. Не резолвится — скрипт как был."""
+    from dataclasses import replace
+
+    impl = getattr(script, "implementation", None)
+    if callable(impl):
+        return script
+    fn, _err = resolve_script(script)
+    if fn is None:
+        return script
+    return replace(script, implementation=fn)
+
+
 def _load_python_entry(path: Path, entry: str):
     mod_name = f"acid_artifact_{path.stem}_{abs(hash(str(path.resolve())))}"
     spec = importlib.util.spec_from_file_location(mod_name, str(path))

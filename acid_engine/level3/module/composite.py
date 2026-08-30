@@ -15,18 +15,28 @@ from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.conformance import ConformanceResult
 
 
 @dataclass(frozen=True, slots=True)
 class CompositeResult:
-    """Факт прогона графа: выход и наблюдения по узлам в порядке исполнения."""
+    """Факт прогона графа: данные, наблюдения, вердикт. Нет conformance — не PASS."""
 
     data: Any
     observations: tuple[ExecutionObservation, ...] = ()
+    conformance: Optional[ConformanceResult] = None
 
     @property
     def observation(self) -> Optional[ExecutionObservation]:
         return self.observations[-1] if self.observations else None
+
+    @property
+    def ok(self) -> bool:
+        return bool(self.conformance and self.conformance.ok)
+
+    @property
+    def status(self):
+        return None if self.conformance is None else self.conformance.status
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +86,13 @@ class CompositeModule:
         )
 
         if (plan is None) != (iface is None):
-            return CompositeResult(data=None, observations=())
+            return CompositeResult(
+                data=None,
+                observations=(),
+                conformance=ConformanceResult.skipped(
+                    "plan and iface must be provided together"
+                ),
+            )
 
         if detect_cycle(self.graph) is not None:
             raise RuntimeError("Cycle detected in composite module graph")
@@ -86,6 +102,7 @@ class CompositeModule:
 
         node_outputs: Dict[str, Any] = {}
         observations: list[ExecutionObservation] = []
+        last_conf: Optional[ConformanceResult] = None
         current_data = input_data
 
         for node_id in sorted_nodes:
@@ -110,7 +127,9 @@ class CompositeModule:
                     bound = bind_script_to_plan(leaf_plan, mod.script)
                     if bound is not None:
                         return CompositeResult(
-                            data=None, observations=tuple(observations)
+                            data=None,
+                            observations=tuple(observations),
+                            conformance=bound,
                         )
                     in_port = PortRef(module=node_id, direction="input", name="value")
                     input_snap = ContainerSnapshot.create(
@@ -131,31 +150,45 @@ class CompositeModule:
                         node_id=mod.script.name,
                         contract_id=str(mod.script.contract_id),
                     )
+                    last_conf = conf
                     if not conf.ok:
                         return CompositeResult(
                             data=None,
                             observations=tuple(observations),
+                            conformance=conf,
                         )
                     node_outputs[node_id] = out_snap.data
                 else:
                     step = execute_plan(leaf_iface, leaf_plan, mod.script, input_val)
                     if step.observation is not None:
                         observations.append(step.observation)
+                    last_conf = step.conformance
                     if not step.ok:
                         return CompositeResult(
                             data=step.data,
                             observations=tuple(observations),
+                            conformance=step.conformance,
                         )
                     node_outputs[node_id] = step.data
 
             elif isinstance(mod, CompositeModule):
                 nested = mod.execute(input_val, plan=plan, iface=iface)
-                node_outputs[node_id] = nested.data
                 observations.extend(nested.observations)
+                last_conf = nested.conformance
+                if not nested.ok:
+                    return CompositeResult(
+                        data=nested.data,
+                        observations=tuple(observations),
+                        conformance=nested.conformance,
+                    )
+                node_outputs[node_id] = nested.data
             else:
                 raise TypeError(f"Unknown module type for node {node_id}")
 
+        if last_conf is None:
+            last_conf = ConformanceResult.skipped("graph had no executed leaves")
         return CompositeResult(
             data=node_outputs[self.output_node],
             observations=tuple(observations),
+            conformance=last_conf,
         )

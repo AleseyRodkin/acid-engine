@@ -19,6 +19,9 @@ def judge_script(
     iface: Optional[InterfaceContract] = None,
 ) -> PipelineResult:
     """Вердикт. Без plan и iface — замок на текущее тело. Одно без другого — SKIPPED."""
+    from acid_engine.level3.script.resolve import materialize_script
+
+    script = materialize_script(script)
     if plan is None and iface is None:
         iface, plan = lock_for_script(script)
     elif plan is None or iface is None:

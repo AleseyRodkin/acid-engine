@@ -6,6 +6,7 @@ from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.module.composite import CompositeModule, CompositeResult
 from acid_engine.level3.graph.model import DependencyGraph
 from acid_engine.level3.script.runner import lock_for_script
+from acid_engine.level2.conformance import ConformanceStatus
 
 
 def make_leaf(name: str, func) -> LeafModule:
@@ -36,6 +37,7 @@ def test_composite_with_one_node():
     )
     result = composite.execute(5)
     assert isinstance(result, CompositeResult)
+    assert result.ok
     assert result.data == 10
     assert result.observation is not None
     assert result.observation.status == "completed"
@@ -59,6 +61,7 @@ def test_composite_two_nodes():
         output_node="times2",
     )
     result = composite.execute(3)
+    assert result.ok
     assert result.data == 8
     assert len(result.observations) == 2
     assert all(o.status == "completed" for o in result.observations)
@@ -129,6 +132,8 @@ def test_composite_external_plan_rejects_swapped_leaf():
     )
     iface, plan = lock_for_script(good.script)
     result = composite.execute(1, plan=plan, iface=iface)
+    assert not result.ok
+    assert result.status is not None
     assert result.data is None
     assert called == []
 
@@ -154,5 +159,7 @@ def test_composite_plan_without_iface_does_not_run():
     )
     _iface, plan = lock_for_script(leaf.script)
     result = composite.execute(1, plan=plan, iface=None)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
     assert result.data is None
     assert called == []

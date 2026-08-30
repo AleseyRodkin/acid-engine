@@ -28,6 +28,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 Замыкания и defaults входят в хеш: они часть того, что бежит.
 Разное тело → другой хеш. Подмена `x+1` на `x+100` при той же декларации
 ломает `content_hash` и `plan.lock`.
+После резолва (`materialize_script`) identity — канон тела fn, не dict ссылки.
 
 ## Наблюдение
 
@@ -103,7 +104,8 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 
 ## Composite
 
-`Composite.execute` возвращает `CompositeResult`: `data` + `observations` по узлам.
+`Composite.execute` возвращает `CompositeResult`: `data` + `observations` + `conformance`.
+Нет `conformance.ok` — не PASS.
 Внешний `plan`+`iface` — bind листьев к замку. Одно без другого — не исполнять.
 Без plan — self-lock листа (не замена чужого замка).
 

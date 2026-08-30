@@ -62,7 +62,9 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> Optional[Confor
 def lock_for_script(script: ScriptModule):
     """Заморозить plan.lock на текущее тело скрипта. Публичный PASS только после bind."""
     from acid_engine.level3.script.modes import ExecutionMode
+    from acid_engine.level3.script.resolve import materialize_script
 
+    script = materialize_script(script)
     iface = InterfaceContract(
         contract_id=script.contract_id,
         version=script.version,
@@ -90,6 +92,9 @@ def execute_plan(
     input_data: Any,
 ) -> PipelineResult:
     """Исполняет скрипт только если он совпадает с plan.lock."""
+    from acid_engine.level3.script.resolve import materialize_script
+
+    script = materialize_script(script)
     if plan.interface_contract_hash != iface.content_hash:
         return PipelineResult(
             conformance=ConformanceResult(
@@ -154,6 +159,9 @@ def replay_run(
     Хеш не совпал — FAIL, тело не запускается.
     Выход ≠ expected — FAIL.
     """
+    from acid_engine.level3.script.resolve import materialize_script
+
+    script = materialize_script(script)
     bound = bind_script_to_plan(plan, script)
     if bound is not None:
         return bound

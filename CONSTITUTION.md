@@ -10,7 +10,7 @@
 ## Сделано
 
 1–21. Контур до `judge_script` (хеш тела, SKIPPED, plan.lock, bones, JSON blank).
-22. Аудит: plan+iface вместе; obs.status в gate; Composite внешний lock;
-    нет fallback одного хеша; replay_from_record требует plan; resolve один раз.
+22. Аудит: plan+iface вместе; obs.status в gate; Composite внешний lock.
+23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
 
 Не делать: Rust без команды, STOL, SaaS, веб-превью ядра.
