@@ -62,6 +62,33 @@ class Pipeline:
                 data=input_data,
             )
             output_snap, obs, _delta, _state = run_script(self.contract, input_snap)
+            if obs.status == "skipped":
+                return PipelineResult(
+                    conformance=ConformanceResult.skipped(
+                        "no implementation and no artifact"
+                    ),
+                    data=None,
+                    observation=obs,
+                )
+            if obs.status == "failed" and _state.error_message:
+                from acid_engine.level3.script.resolve import (
+                    UNKNOWN_LANGUAGE,
+                    BROKEN_REF,
+                    BODY_HASH,
+                    unresolved_conformance,
+                )
+                code = _state.error_message
+                if (
+                    code.startswith(UNKNOWN_LANGUAGE)
+                    or code.startswith(BROKEN_REF)
+                    or code.startswith(BODY_HASH)
+                    or code == "missing_implementation"
+                ):
+                    return PipelineResult(
+                        conformance=unresolved_conformance(self.contract, code),
+                        data=None,
+                        observation=obs,
+                    )
             policy = (
                 self.contract.specification.policy
                 if hasattr(self.contract.specification, "policy")

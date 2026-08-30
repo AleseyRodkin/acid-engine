@@ -90,6 +90,11 @@ def execute_plan(
         return PipelineResult(conformance=bound)
 
     from acid_engine.level3.script.python_runtime import run_script
+    from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance
+
+    _fn, unresolved = resolve_script(script)
+    if unresolved is not None:
+        return PipelineResult(conformance=unresolved_conformance(script, unresolved))
 
     in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
     input_snap = ContainerSnapshot.create(
@@ -138,6 +143,11 @@ def replay_run(
         )
 
     from acid_engine.level3.script.python_runtime import run_script
+    from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance
+
+    _fn, unresolved = resolve_script(script)
+    if unresolved is not None:
+        return unresolved_conformance(script, unresolved)
 
     in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
     input_snap = ContainerSnapshot.create(

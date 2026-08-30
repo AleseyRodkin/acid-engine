@@ -19,7 +19,7 @@ class ScriptModule(Contract):
     specification: Specification
     input_type: str
     output_type: str
-    implementation: Callable[[Any], Any]
+    implementation: Optional[Callable[[Any], Any]] = None
     name: str = ""
     artifact: Optional[ArtifactRef] = None
 
@@ -33,6 +33,12 @@ class ScriptModule(Contract):
         return ("execute",)
 
     def _identity_dict(self) -> dict:
+        if self.implementation is not None:
+            impl = canonical_implementation(self.implementation)
+        elif self.artifact is not None:
+            impl = self.artifact.to_canonical_dict()
+        else:
+            impl = {"kind": "missing"}
         return {
             "contract_id": str(self.contract_id),
             "version": str(self.version),
@@ -40,7 +46,7 @@ class ScriptModule(Contract):
             "input_type": self.input_type,
             "output_type": self.output_type,
             "name": self.name,
-            "implementation": canonical_implementation(self.implementation),
+            "implementation": impl,
         }
 
     @property

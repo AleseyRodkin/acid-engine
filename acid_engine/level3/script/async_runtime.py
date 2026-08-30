@@ -12,6 +12,7 @@ from acid_engine.level3.container.state import ExecutionState, ExecutionStatus
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level1.effects import EffectCollector
+from acid_engine.level3.script.resolve import resolve_script
 
 
 async def run_async_script(
@@ -36,8 +37,47 @@ async def run_async_script(
         trace.append("start:light")
 
     try:
+        fn, unresolved = resolve_script(script)
+        if unresolved is not None:
+            end = time.perf_counter()
+            if unresolved == "missing_implementation":
+                state.mark_skipped()
+                status = "skipped"
+            else:
+                state.mark_failed(unresolved)
+                status = "failed"
+            obs = ExecutionObservation.create(
+                start=start,
+                end=end,
+                status=status,
+                effects=(),
+                trace=tuple(trace) + (f"{status}:{unresolved}",),
+                input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+                logger=logger,
+            )
+            delta = ContainerDelta(
+                input_cardinality=input_snapshot.cardinality,
+                output_cardinality=0,
+                input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+                output_hash="",
+                status=status,
+                latency_ms=obs.latency_ms,
+            )
+            out_port = PortRef(
+                module=script.contract_id.name,
+                direction="output",
+                name="result",
+            )
+            empty = ContainerSnapshot.create(
+                port_ref=out_port,
+                contract_id=script.contract_id,
+                contract_hash=script.content_hash,
+                data=None,
+                cardinality=0,
+            )
+            return empty, obs, delta, state
         with collector:
-            result = await script.implementation(input_snapshot.data)
+            result = await fn(input_snapshot.data)
         end = time.perf_counter()
         state.mark_completed()
         trace.append("completed")

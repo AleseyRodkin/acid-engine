@@ -11,6 +11,7 @@ from acid_engine.level3.container.state import ExecutionState
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level1.effects import EffectCollector
+from acid_engine.level3.script.resolve import resolve_script
 
 
 def run_script(
@@ -29,10 +30,52 @@ def run_script(
     else:
         trace.append("start:light")
 
+    fn, unresolved = resolve_script(script)
+    if unresolved is not None:
+        end = time.perf_counter()
+        if unresolved == "missing_implementation":
+            state.mark_skipped()
+            status = "skipped"
+            trace.append("skipped:no implementation")
+        else:
+            state.mark_failed(unresolved)
+            status = "failed"
+            trace.append(f"failed:{unresolved}")
+        obs = ExecutionObservation.create(
+            start=start,
+            end=end,
+            status=status,
+            effects=(),
+            trace=tuple(trace),
+            input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+            logger=logger,
+        )
+        delta = ContainerDelta(
+            input_cardinality=input_snapshot.cardinality,
+            output_cardinality=0,
+            input_hash=input_snapshot.content_hash if mode == ExecutionMode.NORMAL else "",
+            output_hash="",
+            status=status,
+            latency_ms=obs.latency_ms,
+        )
+        out_port = PortRef(
+            module=script.contract_id.name,
+            direction="output",
+            name="result",
+        )
+        empty = ContainerSnapshot.create(
+            port_ref=out_port,
+            contract_id=script.contract_id,
+            contract_hash=script.content_hash,
+            data=None,
+            cardinality=0,
+        )
+        return empty, obs, delta, state
+
     collector = EffectCollector()
     try:
         with collector:
-            result = script.implementation(input_snapshot.data)
+            result = fn(input_snapshot.data)
         end = time.perf_counter()
         state.mark_completed()
         trace.append("completed")

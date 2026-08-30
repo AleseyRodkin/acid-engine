@@ -13,6 +13,10 @@ def validate_implementation_requirements(script: ScriptModule) -> list[str]:
     errors: list[str] = []
     impl = script.implementation
     req = script.specification.implementation_requirements
+    if impl is None:
+        if req.required_methods or req.required_exports or req.required_signatures:
+            return ["Missing implementation"]
+        return errors
 
     # required_methods: check that impl has callable attributes with those names
     for method_name in req.required_methods:
