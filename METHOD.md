@@ -55,6 +55,12 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
 `judge_script`: plan и iface только вместе, иначе SKIPPED. Без обоих — замок на загруженное тело.
 
+## Rust judge
+
+Один вход: bind `plan.module_hashes` ↔ `script_hash`, затем verdict по observation.
+Те же статусы PASS/FAIL/SKIPPED. Нет observation после bind → не PASS.
+Не runtime и не WASM. Тело Python не исполняет.
+
 
 ## Типы
 

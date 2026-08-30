@@ -9,3 +9,4 @@ build/
 *.egg-info/
 script.py
 .hypothesis/
+rust/acid-judge/target/

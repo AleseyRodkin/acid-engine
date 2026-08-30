@@ -61,7 +61,7 @@ STOL (лаборатория) — чужой проект: не стенд, не
 | 4 | Крышка: Pipeline/Composite через execute_plan | нет публичного PASS без lock |
 | 5 | `examples/bones/` dict n:3→n:4 + .json + integration | n_plus_one.py/.json; хеш JSON=callable |
 | 6 | `judge.py` фасад → `execute_plan` | judge_script; CLI и Pipeline через него |
-| 7 | Rust только после стабильных 1–3 | тот же status на фикстурах |
+| 7 | Rust только после стабильных 1–3 | rust/acid-judge: bind+verdict; тот же status на bones/commerce |
 | 8 | Не делать: STOL, JS-тело, WASM, JSON Schema, proven_pure, SaaS, markdown parser | запрет |
 
 ### Фаза 1 — детали
