@@ -140,13 +140,8 @@ def cmd_validate(args):
         sys.exit(1)
 
 
-def _lock_for_script(script: ScriptModule):
-    from acid_engine.level3.script.runner import lock_for_script
-    return lock_for_script(script)
-
-
 def cmd_run(args):
-    """Walking skeleton или пользовательский скрипт через execute_plan / plan.lock."""
+    """Walking skeleton или пользовательский скрипт через judge_script."""
     if args.script:
         try:
             script = load_script_from_file(args.script)
@@ -154,10 +149,11 @@ def cmd_run(args):
             print(f"ERROR: Failed to load script: {e}")
             sys.exit(1)
         input_val = parse_cli_input(args.input, default=3)
-        from acid_engine.level3.script.runner import execute_plan
+        from acid_engine.judge import judge_script
+        from acid_engine.level3.script.runner import lock_for_script
 
-        iface, plan = _lock_for_script(script)
-        result = execute_plan(iface, plan, script, input_val)
+        result = judge_script(script, input_val)
+        _, plan = lock_for_script(script)
         print(explain_result(result.conformance))
         print(f"output: {result.data}")
         print(f"plan.lock: {plan.content_hash[:16]}...")

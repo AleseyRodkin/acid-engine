@@ -5,7 +5,8 @@ from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level2.conformance import explain_result
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.runner import execute_plan, lock_for_script
+from acid_engine.judge import judge_script
+from acid_engine.level3.script.runner import lock_for_script
 
 
 def bump_n(data: dict) -> dict:
@@ -35,9 +36,9 @@ def build_script() -> ScriptModule:
 
 def main() -> None:
     script = build_script()
-    iface, plan = lock_for_script(script)
     incoming = {"n": 3}
-    result = execute_plan(iface, plan, script, incoming)
+    result = judge_script(script, incoming)
+    _, plan = lock_for_script(script)
     expected = {"n": 4}
     print("=== bones: n_plus_one ===")
     print(f"input:    {incoming}")

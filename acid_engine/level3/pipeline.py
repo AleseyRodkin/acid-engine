@@ -54,7 +54,7 @@ class Pipeline:
         self.iface = iface
 
     def execute(self, input_data: Any) -> PipelineResult:
-        from acid_engine.level3.script.runner import execute_plan, lock_for_script
+        from acid_engine.judge import judge_script
 
         script = None
         if isinstance(self.contract, ScriptModule):
@@ -63,10 +63,9 @@ class Pipeline:
             script = self.contract.script
 
         if script is not None:
-            iface, plan = self.iface, self.plan
-            if iface is None or plan is None:
-                iface, plan = lock_for_script(script)
-            return execute_plan(iface, plan, script, input_data)
+            return judge_script(
+                script, input_data, plan=self.plan, iface=self.iface
+            )
 
         if isinstance(self.contract, InterfaceContract):
             return PipelineResult(

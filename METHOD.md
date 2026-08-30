@@ -48,7 +48,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `main()` / CLI не содержат бизнес-оркестрации сверх:
 `load → resolve → execute` уже разрешённого контракта.
 
-`run` — walking skeleton.
+`run --script` — через `judge_script` → `execute_plan`.
 `run --script file.py` — грузит переменную `script` (`ScriptModule`) и исполняет.
 `validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
 
