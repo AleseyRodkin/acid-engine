@@ -141,30 +141,8 @@ def cmd_validate(args):
 
 
 def _lock_for_script(script: ScriptModule):
-    """Заморозить plan.lock на тело загруженного скрипта (CLI path = execute_plan)."""
-    from acid_engine.level2.identity import Version
-    from acid_engine.level3.interface.contract import InterfaceContract
-    from acid_engine.level3.bootstrap.plan_lock import PlanLock
-    from acid_engine.level3.script.modes import ExecutionMode
-
-    iface = InterfaceContract(
-        contract_id=script.contract_id,
-        version=script.version if hasattr(script, "version") else Version(0, 1, 0),
-        inputs={"value": script.input_type},
-        outputs={"result": script.output_type},
-        constraints=script.specification.policy.to_canonical_dict()
-        if hasattr(script.specification, "policy")
-        else {},
-        module_hashes={script.name: script.content_hash},
-    )
-    plan = PlanLock.create(
-        plan_id=f"cli-{script.name}",
-        interface_contract_hash=iface.content_hash,
-        resolved_policies=iface.constraints,
-        module_hashes=iface.module_hashes,
-        execution_mode=ExecutionMode.NORMAL,
-    )
-    return iface, plan
+    from acid_engine.level3.script.runner import lock_for_script
+    return lock_for_script(script)
 
 
 def cmd_run(args):

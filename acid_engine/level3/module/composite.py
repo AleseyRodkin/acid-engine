@@ -13,7 +13,6 @@ from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.script.python_runtime import run_script
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,21 +86,41 @@ class CompositeModule:
                 )
 
             if isinstance(mod, LeafModule):
-                in_port = PortRef(module=node_id, direction="input", name="value")
-                input_snap = ContainerSnapshot.create(
-                    port_ref=in_port,
-                    contract_id=mod.contract_id,
-                    contract_hash=mod.content_hash,
-                    data=input_val,
+                from acid_engine.level3.script.runner import (
+                    execute_plan,
+                    lock_for_script,
+                    bind_script_to_plan,
                 )
+
+                leaf_iface, leaf_plan = lock_for_script(mod.script)
                 if isinstance(mod.script, AsyncScriptModule):
+                    bound = bind_script_to_plan(leaf_plan, mod.script)
+                    if bound is not None:
+                        return CompositeResult(
+                            data=None, observations=tuple(observations)
+                        )
+                    in_port = PortRef(module=node_id, direction="input", name="value")
+                    input_snap = ContainerSnapshot.create(
+                        port_ref=in_port,
+                        contract_id=mod.contract_id,
+                        contract_hash=mod.content_hash,
+                        data=input_val,
+                    )
                     out_snap, obs, _, _ = asyncio.run(
                         run_async_script(mod.script, input_snap)
                     )
+                    node_outputs[node_id] = out_snap.data
+                    observations.append(obs)
                 else:
-                    out_snap, obs, _, _ = run_script(mod.script, input_snap)
-                node_outputs[node_id] = out_snap.data
-                observations.append(obs)
+                    step = execute_plan(leaf_iface, leaf_plan, mod.script, input_val)
+                    if step.observation is not None:
+                        observations.append(step.observation)
+                    if not step.ok:
+                        return CompositeResult(
+                            data=step.data,
+                            observations=tuple(observations),
+                        )
+                    node_outputs[node_id] = step.data
 
             elif isinstance(mod, CompositeModule):
                 nested = mod.execute(input_val)

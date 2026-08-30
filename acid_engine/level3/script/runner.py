@@ -62,6 +62,30 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> Optional[Confor
     return None
 
 
+def lock_for_script(script: ScriptModule):
+    """Заморозить plan.lock на текущее тело скрипта. Публичный PASS только после bind."""
+    from acid_engine.level3.script.modes import ExecutionMode
+
+    iface = InterfaceContract(
+        contract_id=script.contract_id,
+        version=script.version,
+        inputs={"value": script.input_type},
+        outputs={"result": script.output_type},
+        constraints=script.specification.policy.to_canonical_dict()
+        if hasattr(script.specification, "policy")
+        else {},
+        module_hashes={script.name or script.contract_id.name: script.content_hash},
+    )
+    plan = PlanLock.create(
+        plan_id=f"lock-{script.name or script.contract_id.name}",
+        interface_contract_hash=iface.content_hash,
+        resolved_policies=iface.constraints,
+        module_hashes=iface.module_hashes,
+        execution_mode=ExecutionMode.NORMAL,
+    )
+    return iface, plan
+
+
 def execute_plan(
     iface: InterfaceContract,
     plan: PlanLock,

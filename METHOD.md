@@ -70,6 +70,7 @@ Fan-in > 1 в Composite запрещён, пока нет merge-контракт
 ## Pipeline
 
 `Pipeline.execute` возвращает `PipelineResult`: `data`, `observation`, `conformance`.
+`Pipeline.execute` для ScriptModule идёт через `execute_plan` / `plan.lock`.
 Interface без исполнения → SKIPPED, `data=None`, `observation=None`.
 
 ## CLI input

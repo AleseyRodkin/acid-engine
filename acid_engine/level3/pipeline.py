@@ -1,4 +1,4 @@
-"""Pipeline — замкнутый контур выполнения контракта (уровень 3)."""
+"""Pipeline — замкнутый контур: контракт → execute_plan → conformance."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,12 +8,9 @@ from acid_engine.level2.base import Contract
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.script.python_runtime import run_script
-from acid_engine.level2.conformance import check_conformance, ConformanceResult
-from acid_engine.level2.specification import Policy
+from acid_engine.level2.conformance import ConformanceResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,74 +39,36 @@ class PipelineResult:
 
 
 class Pipeline:
-    """Замкнутый контур: контракт → исполнение (если есть) → conformance."""
+    """Замкнутый контур. ScriptModule исполняется только через execute_plan / plan.lock."""
 
-    def __init__(self, contract: Contract, registry: Optional[Any] = None):
+    def __init__(
+        self,
+        contract: Contract,
+        registry: Optional[Any] = None,
+        plan: Optional[PlanLock] = None,
+        iface: Optional[InterfaceContract] = None,
+    ):
         self.contract = contract
         self.registry = registry
+        self.plan = plan
+        self.iface = iface
 
     def execute(self, input_data: Any) -> PipelineResult:
+        from acid_engine.level3.script.runner import execute_plan, lock_for_script
+
+        script = None
         if isinstance(self.contract, ScriptModule):
-            in_port = PortRef(
-                module=self.contract.contract_id.name,
-                direction="input",
-                name="value",
-            )
-            input_snap = ContainerSnapshot.create(
-                port_ref=in_port,
-                contract_id=self.contract.contract_id,
-                contract_hash=self.contract.content_hash,
-                data=input_data,
-            )
-            output_snap, obs, _delta, _state = run_script(self.contract, input_snap)
-            if obs.status == "skipped":
-                return PipelineResult(
-                    conformance=ConformanceResult.skipped(
-                        "no implementation and no artifact"
-                    ),
-                    data=None,
-                    observation=obs,
-                )
-            if obs.status == "failed" and _state.error_message:
-                from acid_engine.level3.script.resolve import (
-                    UNKNOWN_LANGUAGE,
-                    BROKEN_REF,
-                    BODY_HASH,
-                    unresolved_conformance,
-                )
-                code = _state.error_message
-                if (
-                    code.startswith(UNKNOWN_LANGUAGE)
-                    or code.startswith(BROKEN_REF)
-                    or code.startswith(BODY_HASH)
-                    or code == "missing_implementation"
-                ):
-                    return PipelineResult(
-                        conformance=unresolved_conformance(self.contract, code),
-                        data=None,
-                        observation=obs,
-                    )
-            policy = (
-                self.contract.specification.policy
-                if hasattr(self.contract.specification, "policy")
-                else Policy()
-            )
-            conf = check_conformance(
-                required_output_type=self.contract.output_type,
-                provided_data=output_snap.data,
-                obs=obs,
-                policy=policy,
-                node_id=self.contract.name,
-                contract_id=str(self.contract.contract_id),
-            )
-            return PipelineResult(
-                conformance=conf,
-                data=output_snap.data,
-                observation=obs,
-            )
+            script = self.contract
+        elif isinstance(self.contract, LeafModule):
+            script = self.contract.script
+
+        if script is not None:
+            iface, plan = self.iface, self.plan
+            if iface is None or plan is None:
+                iface, plan = lock_for_script(script)
+            return execute_plan(iface, plan, script, input_data)
 
         if isinstance(self.contract, InterfaceContract):
-            # Нет исполнения — нет Observed. Нельзя PASS.
             return PipelineResult(
                 conformance=ConformanceResult.skipped(
                     "InterfaceContract was not executed"
