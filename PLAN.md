@@ -59,7 +59,7 @@ STOL (лаборатория) — чужой проект: не стенд, не
 | 2b | Ссылка вместо fn. Нет языка python → не PASS. Битая ссылка → FAIL | resolve.py: python file+entry; unknown language FAIL; missing SKIPPED |
 | 3 | JSON-почерк, CLI `.json`, `.md` отказ | blank_loader.py; JSON+py один хеш; max_latency_ms → float |
 | 4 | Крышка: Pipeline/Composite через execute_plan | нет публичного PASS без lock |
-| 5 | `examples/bones/` dict n:3→n:4 + .json + integration | без STOL |
+| 5 | `examples/bones/` dict n:3→n:4 + .json + integration | n_plus_one.py/.json; хеш JSON=callable |
 | 6 | `judge.py` фасад → `execute_plan` | один вход |
 | 7 | Rust только после стабильных 1–3 | тот же status на фикстурах |
 | 8 | Не делать: STOL, JS-тело, WASM, JSON Schema, proven_pure, SaaS, markdown parser | запрет |
