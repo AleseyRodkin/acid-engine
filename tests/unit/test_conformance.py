@@ -1,12 +1,9 @@
 import io
 import contextlib
-import pytest
 from acid_engine.level2.conformance import (
     check_conformance,
     ConformanceStatus,
-    ConformanceLevel,
 )
-from acid_engine.level2.failure import FailureReason
 from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level2.specification import Policy
 
@@ -45,8 +42,23 @@ def test_bool_ok_for_bool():
 
 
 def test_latency_violation():
-    obs = ExecutionObservation.create(0, 0.1, "completed", input_hash="a", output_hash="b")  # 100ms
+    obs = ExecutionObservation.create(0, 0.1, "completed", input_hash="a", output_hash="b")
     policy = Policy(max_latency_ms=50)
     result = check_conformance("int", 1, obs, policy)
     assert not result.ok
     assert "Latency" in result.message
+
+
+def test_failed_observation_is_not_pass():
+    obs = ExecutionObservation.create(0, 0.001, "failed")
+    result = check_conformance("int", 42, obs, Policy())
+    assert not result.ok
+    assert result.status == ConformanceStatus.FAIL
+    assert result.failure.property_name == "status"
+
+
+def test_skipped_observation_is_skipped():
+    obs = ExecutionObservation.create(0, 0.001, "skipped")
+    result = check_conformance("int", 42, obs, Policy())
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok

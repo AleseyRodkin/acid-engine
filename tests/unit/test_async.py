@@ -1,4 +1,3 @@
-import pytest
 import asyncio
 from acid_engine.level3.script.async_module import AsyncScriptModule
 from acid_engine.level3.script.async_runtime import run_async_script
@@ -11,14 +10,13 @@ from acid_engine.level3.module.composite import CompositeModule
 from acid_engine.level3.graph.model import DependencyGraph
 
 
-@pytest.mark.asyncio
-async def test_async_script():
+def test_async_script():
     async def async_inc(x):
         return x + 1
 
     script = AsyncScriptModule(
         contract_id=ContractId("test", "async_inc"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         specification=Specification(),
         input_type="int",
         output_type="int",
@@ -27,9 +25,14 @@ async def test_async_script():
     )
     in_port = PortRef(module="test", direction="input", name="val")
     input_snap = ContainerSnapshot.create(in_port, script.contract_id, script.content_hash, 5)
-    out_snap, obs, delta, state = await run_async_script(script, input_snap)
+
+    async def _run():
+        return await run_async_script(script, input_snap)
+
+    out_snap, obs, delta, state = asyncio.run(_run())
     assert out_snap.data == 6
     assert obs.status == "completed"
+
 
 def test_composite_with_async_leaf():
     async def async_double(x):
@@ -37,7 +40,7 @@ def test_composite_with_async_leaf():
 
     script = AsyncScriptModule(
         contract_id=ContractId("test", "async_double"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         specification=Specification(),
         input_type="int",
         output_type="int",
@@ -52,7 +55,7 @@ def test_composite_with_async_leaf():
         graph=g,
         modules={"leaf": leaf},
         contract_id=ContractId("test", "comp"),
-        version=Version(1,0,0),
+        version=Version(1, 0, 0),
         input_node="leaf",
         output_node="leaf",
     )

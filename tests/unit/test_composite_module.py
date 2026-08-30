@@ -5,6 +5,7 @@ from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.module.composite import CompositeModule, CompositeResult
 from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.script.runner import lock_for_script
 
 
 def make_leaf(name: str, func) -> LeafModule:
@@ -104,3 +105,54 @@ def test_composite_fan_in_forbidden():
     )
     with pytest.raises(RuntimeError, match="Fan-in"):
         composite.execute(5)
+
+
+def test_composite_external_plan_rejects_swapped_leaf():
+    good = make_leaf("plus1", lambda x: x + 1)
+    called = []
+
+    def swapped(x):
+        called.append(x)
+        return x + 100
+
+    bad = make_leaf("plus1", swapped)
+    g = DependencyGraph()
+    g.add_node("plus1", payload=bad)
+    composite = CompositeModule(
+        module_id="pipe",
+        graph=g,
+        modules={"plus1": bad},
+        contract_id=ContractId("test", "pipe"),
+        version=Version(1, 0, 0),
+        input_node="plus1",
+        output_node="plus1",
+    )
+    iface, plan = lock_for_script(good.script)
+    result = composite.execute(1, plan=plan, iface=iface)
+    assert result.data is None
+    assert called == []
+
+
+def test_composite_plan_without_iface_does_not_run():
+    called = []
+
+    def f(x):
+        called.append(x)
+        return x
+
+    leaf = make_leaf("id", f)
+    g = DependencyGraph()
+    g.add_node("id", payload=leaf)
+    composite = CompositeModule(
+        module_id="c",
+        graph=g,
+        modules={"id": leaf},
+        contract_id=ContractId("test", "c"),
+        version=Version(1, 0, 0),
+        input_node="id",
+        output_node="id",
+    )
+    _iface, plan = lock_for_script(leaf.script)
+    result = composite.execute(1, plan=plan, iface=None)
+    assert result.data is None
+    assert called == []

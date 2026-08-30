@@ -13,6 +13,8 @@ from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.interface.contract import InterfaceContract
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,10 +59,24 @@ class CompositeModule:
             "output_node": self.output_node,
         }
 
-    def execute(self, input_data: Any) -> CompositeResult:
+    def execute(
+        self,
+        input_data: Any,
+        plan: Optional[PlanLock] = None,
+        iface: Optional[InterfaceContract] = None,
+    ) -> CompositeResult:
         import asyncio
+        from acid_engine.level2.conformance import check_conformance
         from acid_engine.level3.script.async_module import AsyncScriptModule
         from acid_engine.level3.script.async_runtime import run_async_script
+        from acid_engine.level3.script.runner import (
+            execute_plan,
+            lock_for_script,
+            bind_script_to_plan,
+        )
+
+        if (plan is None) != (iface is None):
+            return CompositeResult(data=None, observations=())
 
         if detect_cycle(self.graph) is not None:
             raise RuntimeError("Cycle detected in composite module graph")
@@ -86,13 +102,10 @@ class CompositeModule:
                 )
 
             if isinstance(mod, LeafModule):
-                from acid_engine.level3.script.runner import (
-                    execute_plan,
-                    lock_for_script,
-                    bind_script_to_plan,
-                )
-
-                leaf_iface, leaf_plan = lock_for_script(mod.script)
+                if plan is not None and iface is not None:
+                    leaf_iface, leaf_plan = iface, plan
+                else:
+                    leaf_iface, leaf_plan = lock_for_script(mod.script)
                 if isinstance(mod.script, AsyncScriptModule):
                     bound = bind_script_to_plan(leaf_plan, mod.script)
                     if bound is not None:
@@ -109,8 +122,21 @@ class CompositeModule:
                     out_snap, obs, _, _ = asyncio.run(
                         run_async_script(mod.script, input_snap)
                     )
-                    node_outputs[node_id] = out_snap.data
                     observations.append(obs)
+                    conf = check_conformance(
+                        required_output_type=mod.script.output_type,
+                        provided_data=out_snap.data,
+                        obs=obs,
+                        policy=mod.script.specification.policy,
+                        node_id=mod.script.name,
+                        contract_id=str(mod.script.contract_id),
+                    )
+                    if not conf.ok:
+                        return CompositeResult(
+                            data=None,
+                            observations=tuple(observations),
+                        )
+                    node_outputs[node_id] = out_snap.data
                 else:
                     step = execute_plan(leaf_iface, leaf_plan, mod.script, input_val)
                     if step.observation is not None:
@@ -123,7 +149,7 @@ class CompositeModule:
                     node_outputs[node_id] = step.data
 
             elif isinstance(mod, CompositeModule):
-                nested = mod.execute(input_val)
+                nested = mod.execute(input_val, plan=plan, iface=iface)
                 node_outputs[node_id] = nested.data
                 observations.extend(nested.observations)
             else:

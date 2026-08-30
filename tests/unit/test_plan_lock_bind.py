@@ -108,6 +108,28 @@ def test_execute_plan_fails_on_interface_mismatch():
     assert result.failure.property_name == "interface_contract_hash"
 
 
+def test_bind_wrong_key_is_skipped_not_fallback():
+    script = _script(lambda x: x + 1, name="scale")
+    iface = InterfaceContract(
+        contract_id=ContractId("t", "iface"),
+        version=Version(1, 0, 0),
+        inputs={"x": "int"},
+        outputs={"y": "int"},
+        constraints={},
+        module_hashes={"unrelated": script.content_hash},
+    )
+    plan = PlanLock.create(
+        plan_id="p",
+        interface_contract_hash=iface.content_hash,
+        resolved_policies={},
+        module_hashes={"unrelated": script.content_hash},
+        execution_mode=ExecutionMode.NORMAL,
+    )
+    result = execute_plan(iface, plan, script, 1)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
+
+
 def test_replay_requires_lock_hash():
     script = _script(lambda x: x * 2)
     plan = PlanLock.create(

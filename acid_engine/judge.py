@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from acid_engine.level2.conformance import ConformanceResult
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.pipeline import PipelineResult
@@ -17,7 +18,13 @@ def judge_script(
     plan: Optional[PlanLock] = None,
     iface: Optional[InterfaceContract] = None,
 ) -> PipelineResult:
-    """Вердикт по скрипту. Без plan — замок на текущее тело, затем bind до run."""
-    if plan is None or iface is None:
+    """Вердикт. Без plan и iface — замок на текущее тело. Одно без другого — SKIPPED."""
+    if plan is None and iface is None:
         iface, plan = lock_for_script(script)
+    elif plan is None or iface is None:
+        return PipelineResult(
+            conformance=ConformanceResult.skipped(
+                "plan and iface must be provided together"
+            )
+        )
     return execute_plan(iface, plan, script, input_data)

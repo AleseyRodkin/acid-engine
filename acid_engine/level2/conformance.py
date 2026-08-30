@@ -74,6 +74,23 @@ def check_conformance(
     semantic_rules: Optional[dict[str, Any]] = None,
     invariants: Optional[tuple] = None,
 ) -> ConformanceResult:
+    # Нет completed — нет права PASS. failed/skipped не маскировать type-check.
+    if obs.status == "skipped":
+        return ConformanceResult.skipped("execution was skipped")
+    if obs.status != "completed":
+        return ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.OPERATIONAL,
+            message="execution did not complete",
+            failure=FailureReason(
+                node_id=node_id,
+                contract_id=contract_id,
+                property_name="status",
+                expected="completed",
+                actual=obs.status,
+            ),
+        )
+
     # Structural check — bool ≠ int
     if not _type_matches(required_output_type, provided_data):
         return ConformanceResult(

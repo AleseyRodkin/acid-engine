@@ -8,13 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level2.conformance import (
-    ConformanceResult,
-    ConformanceStatus,
-    ConformanceLevel,
-    check_conformance,
-)
-from acid_engine.level2.failure import FailureReason
+from acid_engine.level2.conformance import ConformanceResult
 
 
 @dataclass
@@ -57,48 +51,18 @@ def replay_from_record(
     record: RunRecord,
     script,
     expected_output: Optional[Any] = None,
+    plan=None,
 ) -> ConformanceResult:
     """
     Переигрывает скрипт на input из записи и сверяет выход с фактом.
-
-    Факт = expected_output, если передан, иначе record.output_data.
-    Несовпадение → FAIL. Совпадение → check_conformance (тип/policy).
+    Без plan.lock — SKIPPED. Не обходит bind.
     """
-    from acid_engine.level3.script.python_runtime import run_script
-    from acid_engine.level3.container.port import PortRef
-    from acid_engine.level3.container.snapshot import ContainerSnapshot
-
-    target = expected_output if expected_output is not None else record.output_data
-
-    in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
-    input_snap = ContainerSnapshot.create(
-        port_ref=in_port,
-        contract_id=script.contract_id,
-        contract_hash=script.content_hash,
-        data=record.input_data,
-    )
-    out_snap, obs, _, _ = run_script(script, input_snap)
-
-    if out_snap.data != target:
-        return ConformanceResult(
-            status=ConformanceStatus.FAIL,
-            level=ConformanceLevel.OPERATIONAL,
-            message="history replay output mismatch",
-            failure=FailureReason(
-                node_id=script.name,
-                contract_id=str(script.contract_id),
-                property_name="output",
-                expected=target,
-                actual=out_snap.data,
-                detail=f"run_id={record.run_id}",
-            ),
+    if plan is None:
+        return ConformanceResult.skipped(
+            "replay_from_record without plan.lock is not a fact"
         )
 
-    return check_conformance(
-        required_output_type=script.output_type,
-        provided_data=out_snap.data,
-        obs=obs,
-        policy=script.specification.policy,
-        node_id=script.name,
-        contract_id=str(script.contract_id),
-    )
+    from acid_engine.level3.script.runner import replay_run
+
+    target = expected_output if expected_output is not None else record.output_data
+    return replay_run(plan, script, record.input_data, expected_output=target)

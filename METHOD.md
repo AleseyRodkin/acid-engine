@@ -40,6 +40,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 
 Нет исполнения → не PASS.
 `SKIPPED`, если фактов мало, чтобы судить.
+`obs.status != completed` → не PASS (`failed` → FAIL, `skipped` → SKIPPED).
 Заглушка не может PASS: неисполненный `InterfaceContract` в `Pipeline`,
 `LocalAdapter`-placeholder — даже на мусорном входе.
 
@@ -51,6 +52,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `run --script` — через `judge_script` → `execute_plan`.
 `run --script file.py` — грузит переменную `script` (`ScriptModule`) и исполняет.
 `validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
+`judge_script`: plan и iface только вместе, иначе SKIPPED. Без обоих — замок на загруженное тело.
 
 
 ## Типы
@@ -102,9 +104,15 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 ## Composite
 
 `Composite.execute` возвращает `CompositeResult`: `data` + `observations` по узлам.
+Внешний `plan`+`iface` — bind листьев к замку. Одно без другого — не исполнять.
+Без plan — self-lock листа (не замена чужого замка).
 
 ## CLI run
 
-`run --script` идёт через `execute_plan` / `plan.lock` на тело загруженного скрипта.
+`run --script` идёт через `judge_script` / `plan.lock` на тело загруженного скрипта.
 Не обходит lock прямым `run_script`.
+
+## History
+
+`replay_from_record` без `plan` → SKIPPED. С `plan` → `replay_run`.
 

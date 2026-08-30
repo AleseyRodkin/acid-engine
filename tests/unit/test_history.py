@@ -9,6 +9,7 @@ from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.runner import lock_for_script
 
 
 def _script(impl, name="double"):
@@ -43,27 +44,28 @@ def test_history_store_and_find():
 
 def test_replay_from_record_ok():
     script = _script(lambda x: x * 2)
+    _iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    result = replay_from_record(record, script)
+    result = replay_from_record(record, script, plan=plan)
     assert result.ok
     assert result.status == ConformanceStatus.PASS
 
 
 def test_replay_from_record_uses_record_output_as_fact():
     script = _script(lambda x: x * 2)
+    _iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
-    # record claims 10; script would produce 10 — pass
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    assert replay_from_record(record, script).ok
+    assert replay_from_record(record, script, plan=plan).ok
 
 
 def test_replay_from_record_mismatch_is_fail():
     script = _script(lambda x: x * 2)
+    _iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
-    # history claims 999, script produces 10
     record = RunRecord("r1", "hash", 0.0, 5, 999, obs, True)
-    result = replay_from_record(record, script)
+    result = replay_from_record(record, script, plan=plan)
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "output"
@@ -71,20 +73,38 @@ def test_replay_from_record_mismatch_is_fail():
 
 def test_replay_from_record_explicit_expected():
     script = _script(lambda x: x * 2)
+    _iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    assert replay_from_record(record, script, expected_output=10).ok
-    bad = replay_from_record(record, script, expected_output=999)
+    assert replay_from_record(record, script, expected_output=10, plan=plan).ok
+    bad = replay_from_record(record, script, expected_output=999, plan=plan)
     assert not bad.ok
     assert bad.status == ConformanceStatus.FAIL
 
 
-def test_replay_swapped_body_fails_against_record():
-    good = _script(lambda x: x * 2)
-    bad = _script(lambda x: x * 100)
+def test_replay_from_record_without_plan_is_skipped():
+    script = _script(lambda x: x * 2)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    assert replay_from_record(record, good).ok
-    swapped = replay_from_record(record, bad)
-    assert not swapped.ok
-    assert swapped.failure.actual == 500
+    result = replay_from_record(record, script)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
+
+
+def test_replay_swapped_body_fails_against_record():
+    good = _script(lambda x: x * 2)
+    called = []
+
+    def swapped(x):
+        called.append(x)
+        return x * 100
+
+    bad = _script(swapped)
+    _iface, plan = lock_for_script(good)
+    obs = ExecutionObservation.create(0, 0.001, "completed")
+    record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
+    assert replay_from_record(record, good, plan=plan).ok
+    result = replay_from_record(record, bad, plan=plan)
+    assert not result.ok
+    assert result.status == ConformanceStatus.FAIL
+    assert called == []

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, Callable, Optional
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.container.observation import ExecutionObservation
@@ -19,6 +19,7 @@ def run_script(
     input_snapshot: ContainerSnapshot,
     mode: ExecutionMode = ExecutionMode.NORMAL,
     logger=None,
+    fn: Optional[Callable[..., Any]] = None,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     state = ExecutionState()
     state.mark_running()
@@ -30,7 +31,9 @@ def run_script(
     else:
         trace.append("start:light")
 
-    fn, unresolved = resolve_script(script)
+    unresolved = None
+    if fn is None:
+        fn, unresolved = resolve_script(script)
     if unresolved is not None:
         end = time.perf_counter()
         if unresolved == "missing_implementation":

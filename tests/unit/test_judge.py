@@ -47,6 +47,22 @@ def test_judge_swapped_body_fail_without_run():
     assert called == []
 
 
+def test_judge_plan_without_iface_does_not_run():
+    good = _script(lambda x: x + 1)
+    called = []
+
+    def swapped(x):
+        called.append(x)
+        return 0
+
+    bad = _script(swapped)
+    _iface, plan = lock_for_script(good)
+    result = judge_script(bad, 1, plan=plan, iface=None)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
+    assert called == []
+
+
 def test_judge_missing_is_skipped():
     script = ScriptModule(
         contract_id=ContractId("t", "empty"),

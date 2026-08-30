@@ -23,9 +23,6 @@ def _locked_hash_for(plan: PlanLock, script: ScriptModule) -> tuple[Optional[str
     for key in (script.name, script.contract_id.name, str(script.contract_id)):
         if key and key in hashes:
             return hashes[key], key
-    if len(hashes) == 1:
-        key, value = next(iter(hashes.items()))
-        return value, key
     return None, ""
 
 
@@ -116,7 +113,7 @@ def execute_plan(
     from acid_engine.level3.script.python_runtime import run_script
     from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance
 
-    _fn, unresolved = resolve_script(script)
+    fn, unresolved = resolve_script(script)
     if unresolved is not None:
         return PipelineResult(conformance=unresolved_conformance(script, unresolved))
 
@@ -128,7 +125,7 @@ def execute_plan(
         data=input_data,
     )
     output_snap, obs, _delta, _state = run_script(
-        script, input_snap, mode=plan.execution_mode,
+        script, input_snap, mode=plan.execution_mode, fn=fn,
     )
     conf = check_conformance(
         required_output_type=script.output_type,
@@ -169,7 +166,7 @@ def replay_run(
     from acid_engine.level3.script.python_runtime import run_script
     from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance
 
-    _fn, unresolved = resolve_script(script)
+    fn, unresolved = resolve_script(script)
     if unresolved is not None:
         return unresolved_conformance(script, unresolved)
 
@@ -181,7 +178,7 @@ def replay_run(
         data=input_data,
     )
     output_snap, obs, _delta, _state = run_script(
-        script, input_snap, mode=plan.execution_mode,
+        script, input_snap, mode=plan.execution_mode, fn=fn,
     )
     if output_snap.data != expected_output:
         return ConformanceResult(
