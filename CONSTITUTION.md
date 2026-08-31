@@ -12,11 +12,12 @@
 1–21. Контур до `judge_script` (хеш тела, SKIPPED, plan.lock, bones, JSON blank).
 22. Аудит: plan+iface вместе; obs.status в gate; Composite внешний lock.
 23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
-24. `rust/acid-judge` bind+verdict (зеркало, не worker).
+24. `rust/acid-judge` bind → python worker → verdict. Зеркало без worker.
 25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
 26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE помечен как не план.
+27. Worker: `acid_engine.worker` identify/run, без PASS/FAIL.
 
-Фазы 1–6 закрыты. Фаза 7 не закрыта: бинарник не запускает Python-рабочего
-и не является арбитром снаружи процесса.
+Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
+Без worker — зеркало observation. Worker не пишет вердикт.
 
 Не делать: STOL, JS/WASM, proven_pure, SaaS, markdown parser, веб-превью ядра.

@@ -62,11 +62,12 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 
 ## Rust judge
 
-Один вход: bind `plan.module_hashes` ↔ `script_hash`, затем verdict по observation.
-Те же статусы PASS/FAIL/SKIPPED. Нет observation после bind → не PASS.
-Не runtime и не WASM. Тело Python не исполняет.
-Это зеркало вердикта, не арбитр снаружи процесса. Фаза 7 не закрыта.
-cargo ≥ 1.78 (lockfile v4).
+Один вход: bind `plan.module_hashes` ↔ хеш тела, который worker identify вернул.
+С `worker`: identify → bind → `python -m acid_engine.worker` run → verdict.
+Несовпадение хеша → FAIL, тело не run.
+Без `worker`: зеркало по готовому observation. Нет observation после bind → не PASS.
+Worker не пишет PASS/FAIL. Автор тела не патчит судью.
+Не runtime и не WASM. cargo ≥ 1.78 (lockfile v4).
 
 
 

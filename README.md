@@ -24,8 +24,8 @@
   `run --script` без `--plan` → SKIPPED. `lock --script` пишет JSON замка.
 - Фикстура: `examples/bones/` `{n: 3}` → `{n: 4}`.
 - Пайплайны: `examples/commerce/order_amounts.py`, `sku_normalize.py`.
-- Rust `rust/acid-judge` — bind+verdict по готовому observation, тело не исполняет.
-  Фаза 7 не закрыта: это не арбитр снаружи процесса. cargo ≥ 1.78.
+- Rust `rust/acid-judge`: с `worker` — bind → `python -m acid_engine.worker` → verdict.
+  Без `worker` — зеркало по observation, тело не исполняет.
 
 Python ≥ 3.11, **runtime-зависимостей нет**.
 

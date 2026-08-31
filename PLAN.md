@@ -16,8 +16,8 @@ ARCHITECTURE.md не план (хвост «ОС» до сужения 21.08).
 5 фикстура bones → 6 вход судьи → 7 Rust-судья
 ```
 
-Очередь работ по костям кончается на 7. Седьмая не закрыта, пока бинарник
-не делает `bind → run python worker → verdict` и пока toolchain не один.
+Очередь работ по костям кончается на 7. Седьмая: бинарник делает
+`bind → run python worker → verdict`. Без worker остаётся зеркало observation.
 Нет фазы «написать запрет в код».
 
 ## Форма продукта
@@ -65,7 +65,7 @@ STOL (лаборатория) — чужой проект: не стенд, не
 | 4 | Крышка: Pipeline/Composite через execute_plan | нет публичного PASS без lock |
 | 5 | `examples/bones/` dict n:3→n:4 + .json + integration | n_plus_one.py/.json; хеш JSON=callable |
 | 6 | `judge.py` фасад → `execute_plan` | judge_script; CLI и Pipeline через него |
-| 7 | Rust только после стабильных 1–3 | **не закрыта**: bind+verdict без worker; lockfile v4, cargo ≥ 1.78 |
+| 7 | Rust только после стабильных 1–3 | bind → python worker → verdict; без worker — зеркало; cargo ≥ 1.78 |
 
 ## Не делать (это не фаза и не код)
 

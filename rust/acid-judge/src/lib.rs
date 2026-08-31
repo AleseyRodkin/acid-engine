@@ -1,12 +1,27 @@
-//! Bind plan.lock and emit PASS/FAIL/SKIPPED. Does not run Python.
+//! External judge: bind plan.lock, run a Python worker, then verdict.
+//! Without `worker`, observation-only mirror (no execution).
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct Observation {
     #[serde(default)]
     pub status: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct WorkerSpec {
+    #[serde(default)]
+    pub python: Option<String>,
+    #[serde(default)]
+    pub script: String,
+    #[serde(default)]
+    pub input: Option<Value>,
+    #[serde(default)]
+    pub cwd: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -23,14 +38,18 @@ pub struct Request {
     pub pure: bool,
     #[serde(default)]
     pub effects: Vec<String>,
+    #[serde(default)]
+    pub worker: Option<WorkerSpec>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct Response {
     pub status: String,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub property: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<Value>,
 }
 
 impl Response {
@@ -39,6 +58,7 @@ impl Response {
             status: "SKIPPED".into(),
             message: message.into(),
             property: None,
+            data: None,
         }
     }
     fn fail(message: impl Into<String>, property: &str) -> Self {
@@ -46,6 +66,7 @@ impl Response {
             status: "FAIL".into(),
             message: message.into(),
             property: Some(property.into()),
+            data: None,
         }
     }
     fn pass(message: impl Into<String>) -> Self {
@@ -53,11 +74,35 @@ impl Response {
             status: "PASS".into(),
             message: message.into(),
             property: None,
+            data: None,
         }
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Default)]
+struct WorkerOut {
+    #[serde(default)]
+    script_name: Option<String>,
+    #[serde(default)]
+    script_hash: String,
+    #[serde(default)]
+    contract_id: Option<String>,
+    #[serde(default)]
+    output_type: Option<String>,
+    #[serde(default)]
+    pure: bool,
+    #[serde(default)]
+    data: Option<Value>,
+    #[serde(default)]
+    effects: Vec<String>,
+    #[serde(default)]
+    observation: Option<Observation>,
+}
+
 pub fn judge(req: &Request) -> Response {
+    if let Some(worker) = req.worker.as_ref() {
+        return judge_with_worker(req, worker);
+    }
     let bound = bind(req);
     if bound.status != "BOUND" {
         return bound;
@@ -66,6 +111,119 @@ pub fn judge(req: &Request) -> Response {
         None => Response::skipped("bound but not executed"),
         Some(obs) => verdict(req, obs),
     }
+}
+
+fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
+    if worker.script.trim().is_empty() {
+        return Response::fail("worker.script is empty", "worker");
+    }
+    let ident = match spawn_worker(worker, "identify", None) {
+        Ok(v) => v,
+        Err(e) => return Response::fail(e, "worker"),
+    };
+    if ident.script_hash.is_empty() {
+        return Response::fail("worker identify returned no script_hash", "worker");
+    }
+    if let Some(claimed) = req.script_hash.as_deref() {
+        if !claimed.is_empty() && claimed != ident.script_hash {
+            return Response::fail(
+                "worker identity hash != request script_hash",
+                "script_hash",
+            );
+        }
+    }
+    let mut bound_req = req.clone();
+    bound_req.script_hash = Some(ident.script_hash.clone());
+    bound_req.script_name = ident
+        .script_name
+        .clone()
+        .or(bound_req.script_name.clone());
+    bound_req.contract_id = ident
+        .contract_id
+        .clone()
+        .or(bound_req.contract_id.clone());
+    bound_req.pure = ident.pure;
+    if bound_req.output_type.is_none() {
+        bound_req.output_type = ident.output_type.clone();
+    }
+    let bound = bind(&bound_req);
+    if bound.status != "BOUND" {
+        return bound;
+    }
+    let ran = match spawn_worker(worker, "run", worker.input.clone()) {
+        Ok(v) => v,
+        Err(e) => return Response::fail(e, "worker"),
+    };
+    if ran.script_hash != ident.script_hash {
+        return Response::fail("worker run hash != identify hash", "script_hash");
+    }
+    let Some(obs) = ran.observation.clone() else {
+        return Response::skipped("bound but worker returned no observation");
+    };
+    bound_req.data = ran.data.clone();
+    bound_req.effects = ran.effects.clone();
+    if let Some(t) = ran.output_type.clone().or(ident.output_type.clone()) {
+        bound_req.output_type = Some(t);
+    }
+    let mut resp = verdict(&bound_req, &obs);
+    if resp.status == "PASS" {
+        resp.data = ran.data;
+    }
+    resp
+}
+
+fn spawn_worker(
+    worker: &WorkerSpec,
+    op: &str,
+    input: Option<Value>,
+) -> Result<WorkerOut, String> {
+    let python = worker.python.as_deref().unwrap_or("python3");
+    let cwd = worker.cwd.as_deref().unwrap_or(".");
+    let mut payload = serde_json::Map::new();
+    payload.insert("op".into(), Value::String(op.into()));
+    payload.insert("script".into(), Value::String(worker.script.clone()));
+    if op == "run" {
+        payload.insert("input".into(), input.unwrap_or(Value::Null));
+    }
+    let body = Value::Object(payload);
+    let mut pythonpath = cwd.to_string();
+    if let Ok(existing) = std::env::var("PYTHONPATH") {
+        if !existing.is_empty() {
+            pythonpath = format!("{pythonpath}:{existing}");
+        }
+    }
+    let mut child = Command::new(python)
+        .arg("-m")
+        .arg("acid_engine.worker")
+        .current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .env("PYTHONPATH", pythonpath)
+        .spawn()
+        .map_err(|e| format!("spawn worker: {e}"))?;
+    {
+        let stdin = child
+            .stdin
+            .as_mut()
+            .ok_or_else(|| "worker stdin closed".to_string())?;
+        stdin
+            .write_all(body.to_string().as_bytes())
+            .map_err(|e| format!("write worker: {e}"))?;
+    }
+    let out = child
+        .wait_with_output()
+        .map_err(|e| format!("wait worker: {e}"))?;
+    if !out.status.success() {
+        let err = String::from_utf8_lossy(&out.stderr);
+        return Err(format!(
+            "worker exit {}: {}",
+            out.status.code().unwrap_or(-1),
+            err.trim()
+        ));
+    }
+    let text = String::from_utf8_lossy(&out.stdout);
+    serde_json::from_str(text.trim()).map_err(|e| format!("worker json: {e}"))
 }
 
 pub fn bind(req: &Request) -> Response {
@@ -107,6 +265,7 @@ pub fn bind(req: &Request) -> Response {
         status: "BOUND".into(),
         message: "bound".into(),
         property: None,
+        data: None,
     }
 }
 
@@ -264,5 +423,16 @@ mod tests {
             ..Default::default()
         });
         assert_eq!(r.status, "SKIPPED");
+    }
+
+    #[test]
+    fn empty_worker_script_fails() {
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker: Some(WorkerSpec::default()),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("worker"));
     }
 }
