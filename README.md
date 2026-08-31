@@ -13,9 +13,12 @@ Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS
 | `judge` | bind до run + вердикт |
 | `receipt` | `judge … --receipt FILE` — Observation + PASS/FAIL/SKIPPED, без `proven_pure` |
 
+`locks --index` — сверка живого тела с замком в git. Не исполняет, не hosted.
+
 ```bash
 PYTHONPATH=. python -m acid_engine lock --script FILE --out LOCK.json
 PYTHONPATH=. python -m acid_engine judge --script FILE --plan LOCK.json --input '...'
+PYTHONPATH=. python -m acid_engine locks --index locks/index.json
 ```
 
 `judge` = нынешний `run --script --plan`. Без `--plan` → SKIPPED, не PASS.

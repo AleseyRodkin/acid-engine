@@ -62,6 +62,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `--plan` — JSON замка (`lock --script`). Markdown-спеки не парсятся.
 `judge --receipt FILE` пишет `acid.receipt.v1`: hashes, output, observation, verdict.
 Нет `proven_pure`, нет callable. Без `--plan` receipt всё равно пишется — статус SKIPPED.
+`locks --index` сверяет живое тело с `plan.lock`. Не исполняет. Несовпадение → FAIL.
 
 
 ## Rust judge

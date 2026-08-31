@@ -220,6 +220,64 @@ def cmd_judge(args: argparse.Namespace) -> None:
     cmd_run(args)
 
 
+def cmd_locks(args: argparse.Namespace) -> None:
+    """Сверка живого тела с plan.lock по индексу. Не исполняет, не hosted."""
+    from acid_engine.level3.script.resolve import materialize_script
+    from acid_engine.level3.script.runner import bind_script_to_plan, load_script_lock
+
+    index_path = Path(args.index)
+    if not index_path.is_file():
+        print(f"ERROR: index not found: {index_path}")
+        sys.exit(1)
+    raw = json.loads(index_path.read_text(encoding="utf-8"))
+    entries = raw.get("entries")
+    if not isinstance(entries, list) or not entries:
+        print("ERROR: index has no entries")
+        sys.exit(1)
+    failed = 0
+    for i, item in enumerate(entries):
+        if not isinstance(item, dict):
+            print(f"ERROR: entry {i} is not an object")
+            sys.exit(1)
+        ident = str(item.get("id") or i)
+        script_rel = item.get("script")
+        plan_rel = item.get("plan")
+        if not plan_rel:
+            print(f"[FAIL] {ident} lock not passed")
+            failed += 1
+            continue
+        if not script_rel:
+            print(f"[FAIL] {ident} script required")
+            failed += 1
+            continue
+        script_path = Path(str(script_rel))
+        plan_path = Path(str(plan_rel))
+        if not script_path.is_file():
+            print(f"[FAIL] {ident} script missing: {script_path}")
+            failed += 1
+            continue
+        if not plan_path.is_file():
+            print(f"[FAIL] {ident} plan missing: {plan_path}")
+            failed += 1
+            continue
+        try:
+            script = materialize_script(load_script_from_file(script_path))
+            _iface, plan = load_script_lock(json.loads(plan_path.read_text(encoding="utf-8")))
+        except Exception as e:
+            print(f"[FAIL] {ident} {e}")
+            failed += 1
+            continue
+        bound = bind_script_to_plan(plan, script)
+        if bound is None:
+            print(f"[BOUND] {ident}")
+            continue
+        status = bound.status.value if hasattr(bound.status, "value") else str(bound.status)
+        print(f"[{status}] {ident} {bound.message}")
+        failed += 1
+    if failed:
+        sys.exit(1)
+
+
 def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
     parser.add_argument(
@@ -268,6 +326,13 @@ def main() -> None:
     p_lock.add_argument("--script", required=True, help="Путь к .py или .json blank")
     p_lock.add_argument("--out", required=True, help="Куда писать JSON замка")
     p_lock.set_defaults(func=cmd_lock)
+
+    p_locks = subparsers.add_parser(
+        "locks",
+        help="Сверить живые тела с plan.lock по индексу (не исполняет)",
+    )
+    p_locks.add_argument("--index", required=True, help="locks/index.json")
+    p_locks.set_defaults(func=cmd_locks)
 
     args = parser.parse_args()
     args.func(args)

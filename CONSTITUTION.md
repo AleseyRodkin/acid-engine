@@ -23,6 +23,7 @@
 31. C2: `locks/index.json` + `.github/workflows/acid-judge.yml`. Без plan не судит.
 32. C3: пять tools в `examples/tools/` + plan.json; индекс bones+tools.
 33. C4: Claude Code PreToolUse, только bind. MCP нет. Pre не PASS.
+34. C5: `acid_engine locks --index`. Сверка тела с замком, не исполнение.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

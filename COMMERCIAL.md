@@ -41,7 +41,7 @@
 | C2 | GitHub Action + `locks/index.json` | workflow + index; подмена тела не PASS | hosted SaaS |
 | C3 | 5 tools в `examples/tools/` | `.py`+`.json`+`.plan.json`; index bones+tools | сущность «новость» в ядре |
 | C4 | один hook | PreToolUse bind; deny на чужой хеш; pre ≠ PASS | оба harness сразу |
-| C5 | реестр замков в git | одна команда сверки | Governance $40k |
+| C5 | реестр замков в git | `locks --index`; сверка, не hosted | Governance $40k |
 | C6 | подпись receipt | verify локальным ключом | до стабильных C1–C2 |
 | C7 | ниша B/C, API=CLI, один судья | только решение владельца | самовольно |
 
