@@ -1,15 +1,14 @@
 import tempfile
-from pathlib import Path
 
-from acid_engine.level1.data_plane import InMemoryDataPlane, FileSystemDataPlane
+from acid_engine.level1.data_plane import FileSystemDataPlane, InMemoryDataPlane
 from acid_engine.level1.effects import EffectCollector, record_effect
+from acid_engine.level2.conformance import ConformanceStatus, check_conformance
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-from acid_engine.level2.conformance import check_conformance, ConformanceStatus
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.python_runtime import run_script
+from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.python_runtime import run_script
 
 
 def test_inmemory_store_records_effect():

@@ -1,6 +1,8 @@
 """Numeric constraint strategies."""
 from __future__ import annotations
+
 from typing import Any
+
 from acid_engine.level2.strategies.base import ConstraintStrategy
 
 
@@ -22,7 +24,7 @@ class MinValueStrategy(ConstraintStrategy):
             return True
         if provided is None:
             return False
-        return provided <= required
+        return bool(provided <= required)
 
 
 class MaxValueStrategy(ConstraintStrategy):
@@ -43,4 +45,5 @@ class MaxValueStrategy(ConstraintStrategy):
             return True
         if provided is None:
             return False
-        return provided >= required
+        ge = provided >= required
+        return bool(ge)

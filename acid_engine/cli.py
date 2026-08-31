@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from acid_engine.level2.conformance import check_conformance, explain_result
+from acid_engine.level2.specification import Policy
 from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
-from acid_engine.level2.specification import Policy
 from acid_engine.level3.script.module import ScriptModule
 
 
@@ -57,7 +57,7 @@ def parse_cli_input(raw: str | None, default: Any = 3) -> Any:
         return raw
 
 
-def cmd_init(args):
+def cmd_init(args: argparse.Namespace) -> None:
     """Создаёт шаблон ScriptModule (.py). Markdown-спеки не создаём — не парсятся."""
     target = Path(args.path or "script.py")
     if target.suffix == ".md":
@@ -88,7 +88,7 @@ script = ScriptModule(
     print(f"Script created: {target}")
 
 
-def cmd_validate(args):
+def cmd_validate(args: argparse.Namespace) -> None:
     """Проверка внешней команды по .py-контракту (переменная contract)."""
     spec_path = Path(args.spec)
     if not spec_path.exists():
@@ -140,7 +140,7 @@ def cmd_validate(args):
         sys.exit(1)
 
 
-def cmd_run(args):
+def cmd_run(args: argparse.Namespace) -> None:
     """Walking skeleton или пользовательский скрипт через judge_script."""
     if args.script:
         try:
@@ -164,7 +164,7 @@ def cmd_run(args):
         ws_main()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(prog="acid-engine", description="AcidEngine CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 

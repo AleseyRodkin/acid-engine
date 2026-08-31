@@ -6,18 +6,18 @@
 """
 from __future__ import annotations
 
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level2.conformance import check_conformance, explain_result
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.module.composite import CompositeModule
-from acid_engine.level3.graph.model import DependencyGraph
-from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
-from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level3.module.composite import CompositeModule
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level3.script.runner import execute_plan
 

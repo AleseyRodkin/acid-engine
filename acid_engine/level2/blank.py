@@ -1,10 +1,10 @@
 """Бланк костей: JSON-safe identity без callable и без content_hash внутри identity."""
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from acid_engine.level2.serialization import content_hash_of
-
 
 SCHEMA_SCRIPT = "acid.blank.script.v1"
 
@@ -22,12 +22,13 @@ _SCRIPT_IDENTITY_KEYS = frozenset(
 _ENVELOPE_KEYS = frozenset({"schema", "kind", "identity"})
 
 
-def script_identity_blank(script) -> dict[str, Any]:
+def script_identity_blank(script: Any) -> dict[str, Any]:
     """Identity скрипта = `_identity_dict` (без content_hash). Хеш совпадает."""
-    return script._identity_dict()
+    ident: dict[str, Any] = script._identity_dict()
+    return ident
 
 
-def script_identity_envelope(script) -> dict[str, Any]:
+def script_identity_envelope(script: Any) -> dict[str, Any]:
     """Обёртка. schema/kind не входят в content_hash identity."""
     return {
         "schema": SCHEMA_SCRIPT,
@@ -54,10 +55,11 @@ def parse_script_identity_blank(obj: Mapping[str, Any]) -> dict[str, Any]:
     extra = set(ident) - _SCRIPT_IDENTITY_KEYS
     if extra:
         raise ValueError(f"unknown key: {sorted(extra)[0]}")
-    return ident
+    out: dict[str, Any] = dict(ident)
+    return out
 
 
-def container_blank(snapshot) -> dict[str, Any]:
+def container_blank(snapshot: Any) -> dict[str, Any]:
     return {
         "port_ref": str(snapshot.port_ref),
         "contract_id": str(snapshot.contract_id),
@@ -68,7 +70,7 @@ def container_blank(snapshot) -> dict[str, Any]:
     }
 
 
-def plan_blank(plan) -> dict[str, Any]:
+def plan_blank(plan: Any) -> dict[str, Any]:
     """Тело замка без created_at (он не входит в хеш PlanLock)."""
     return {
         "plan_id": plan.plan_id,
@@ -81,7 +83,7 @@ def plan_blank(plan) -> dict[str, Any]:
     }
 
 
-def graph_blank(graph) -> dict[str, Any]:
+def graph_blank(graph: Any) -> dict[str, Any]:
     """Узлы и рёбра без payload (callable не сериализуется)."""
     return {
         "nodes": sorted(graph.nodes.keys()),
@@ -91,7 +93,7 @@ def graph_blank(graph) -> dict[str, Any]:
     }
 
 
-def observation_blank(obs) -> dict[str, Any]:
+def observation_blank(obs: Any) -> dict[str, Any]:
     """Факт прогона. run_id не входит — это идентификатор записи, не identity скрипта."""
     return {
         "status": obs.status,
@@ -103,7 +105,7 @@ def observation_blank(obs) -> dict[str, Any]:
     }
 
 
-def conformance_blank(result) -> dict[str, Any]:
+def conformance_blank(result: Any) -> dict[str, Any]:
     failure = None
     if result.failure is not None:
         f = result.failure

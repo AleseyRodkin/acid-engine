@@ -5,13 +5,12 @@ import sys
 import tempfile
 from pathlib import Path
 
+from acid_engine.cli import load_script_from_file
 from acid_engine.level2.blank_loader import load_script_blank
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.serialization import content_hash_of
 from acid_engine.level2.specification import Specification
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.cli import load_script_from_file
-
 
 PY_BODY = """def plus_one(x):
     return x + 1

@@ -1,10 +1,10 @@
 from functools import partial
 
-from acid_engine.level2.serialization import canonical_serialize, content_hash_of
 from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.serialization import canonical_serialize, content_hash_of
 from acid_engine.level2.specification import Specification
-from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.async_module import AsyncScriptModule
+from acid_engine.level3.script.module import ScriptModule
 
 
 def test_same_object_same_hash():

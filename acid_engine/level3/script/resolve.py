@@ -2,18 +2,18 @@
 from __future__ import annotations
 
 import importlib.util
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple
+from typing import Any
 
 from acid_engine.level2.conformance import (
+    ConformanceLevel,
     ConformanceResult,
     ConformanceStatus,
-    ConformanceLevel,
 )
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level2.implementation_canon import canonical_implementation
 from acid_engine.level2.serialization import content_hash_of
-
 
 MISSING = "missing_implementation"
 UNKNOWN_LANGUAGE = "unknown_language"
@@ -21,7 +21,7 @@ BROKEN_REF = "broken_ref"
 BODY_HASH = "body_hash"
 
 
-def resolve_script(script) -> Tuple[Optional[Callable[..., Any]], Optional[str]]:
+def resolve_script(script: Any) -> tuple[Callable[..., Any] | None, str | None]:
     """
     (fn, None) — можно вызывать.
     (None, code) — не исполнять. code: missing_implementation | unknown_language:... | broken_ref:... | body_hash:...
@@ -62,7 +62,7 @@ def resolve_script(script) -> Tuple[Optional[Callable[..., Any]], Optional[str]]
     return fn, None
 
 
-def materialize_script(script):
+def materialize_script(script: Any) -> Any:
     """После резолва identity = тело fn. Не резолвится — скрипт как был."""
     from dataclasses import replace
 
@@ -75,7 +75,7 @@ def materialize_script(script):
     return replace(script, implementation=fn)
 
 
-def _load_python_entry(path: Path, entry: str):
+def _load_python_entry(path: Path, entry: str) -> Any:
     mod_name = f"acid_artifact_{path.stem}_{abs(hash(str(path.resolve())))}"
     spec = importlib.util.spec_from_file_location(mod_name, str(path))
     if spec is None or spec.loader is None:
@@ -88,7 +88,7 @@ def _load_python_entry(path: Path, entry: str):
     return obj
 
 
-def unresolved_conformance(script, code: str) -> ConformanceResult:
+def unresolved_conformance(script: Any, code: str) -> ConformanceResult:
     node = getattr(script, "name", "") or ""
     cid = str(getattr(script, "contract_id", ""))
     if code == MISSING:

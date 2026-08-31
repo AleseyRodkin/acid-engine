@@ -1,8 +1,9 @@
+import os
 import subprocess
 import sys
-from pathlib import Path
 import tempfile
-import os
+from pathlib import Path
+
 
 def _run_cli(*args):
     result = subprocess.run(

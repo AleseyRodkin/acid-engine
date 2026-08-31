@@ -1,17 +1,17 @@
 """Асинхронный раннер для AsyncScriptModule."""
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
-from acid_engine.level3.script.async_module import AsyncScriptModule
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.container.delta import ContainerDelta
-from acid_engine.level3.container.state import ExecutionState, ExecutionStatus
-from acid_engine.level3.container.port import PortRef
-from acid_engine.level3.script.modes import ExecutionMode
+
 from acid_engine.level1.effects import EffectCollector
+from acid_engine.level3.container.delta import ContainerDelta
+from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.container.state import ExecutionState
+from acid_engine.level3.script.async_module import AsyncScriptModule
+from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.resolve import resolve_script
 
 
@@ -19,7 +19,7 @@ async def run_async_script(
     script: AsyncScriptModule,
     input_snapshot: ContainerSnapshot,
     mode: ExecutionMode = ExecutionMode.NORMAL,
-    logger=None,
+    logger: Any = None,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
     Выполняет асинхронный ScriptModule.
@@ -76,6 +76,7 @@ async def run_async_script(
                 cardinality=0,
             )
             return empty, obs, delta, state
+        assert fn is not None
         with collector:
             result = await fn(input_snapshot.data)
         end = time.perf_counter()

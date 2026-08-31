@@ -2,8 +2,9 @@
 """
 Запуск самоописания AcidEngine.
 """
-from acid_engine.self_describe import build_self_contract
 import json
+
+from acid_engine.self_describe import build_self_contract
 
 
 def main():

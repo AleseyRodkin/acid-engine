@@ -2,20 +2,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
-from acid_engine.level3.graph.model import DependencyGraph
-from acid_engine.level3.graph.cycle import detect_cycle
-from acid_engine.level3.graph.rank import compute_rank
+from acid_engine.level2.conformance import ConformanceResult, ConformanceStatus
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.serialization import content_hash_of
-from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.graph.cycle import detect_cycle
+from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.graph.rank import compute_rank
 from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level2.conformance import ConformanceResult
+from acid_engine.level3.module.leaf import LeafModule
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,10 +24,10 @@ class CompositeResult:
 
     data: Any
     observations: tuple[ExecutionObservation, ...] = ()
-    conformance: Optional[ConformanceResult] = None
+    conformance: ConformanceResult | None = None
 
     @property
-    def observation(self) -> Optional[ExecutionObservation]:
+    def observation(self) -> ExecutionObservation | None:
         return self.observations[-1] if self.observations else None
 
     @property
@@ -35,7 +35,7 @@ class CompositeResult:
         return bool(self.conformance and self.conformance.ok)
 
     @property
-    def status(self):
+    def status(self) -> ConformanceStatus | None:
         return None if self.conformance is None else self.conformance.status
 
 
@@ -44,7 +44,7 @@ class CompositeModule:
     """Модуль, реализованный как граф модулей (Leaf или Composite)."""
     module_id: str
     graph: DependencyGraph
-    modules: Dict[str, Any]
+    modules: dict[str, Any]
     contract_id: ContractId
     version: Version
     input_node: str
@@ -54,7 +54,7 @@ class CompositeModule:
     def content_hash(self) -> str:
         return content_hash_of(self.to_canonical_dict())
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "kind": "composite",
             "module_id": self.module_id,
@@ -72,17 +72,18 @@ class CompositeModule:
     def execute(
         self,
         input_data: Any,
-        plan: Optional[PlanLock] = None,
-        iface: Optional[InterfaceContract] = None,
+        plan: PlanLock | None = None,
+        iface: InterfaceContract | None = None,
     ) -> CompositeResult:
         import asyncio
+
         from acid_engine.level2.conformance import check_conformance
         from acid_engine.level3.script.async_module import AsyncScriptModule
         from acid_engine.level3.script.async_runtime import run_async_script
         from acid_engine.level3.script.runner import (
+            bind_script_to_plan,
             execute_plan,
             lock_for_script,
-            bind_script_to_plan,
         )
 
         if (plan is None) != (iface is None):
@@ -100,9 +101,9 @@ class CompositeModule:
         ranks = compute_rank(self.graph)
         sorted_nodes = sorted(self.graph.nodes.keys(), key=lambda n: ranks[n])
 
-        node_outputs: Dict[str, Any] = {}
+        node_outputs: dict[str, Any] = {}
         observations: list[ExecutionObservation] = []
-        last_conf: Optional[ConformanceResult] = None
+        last_conf: ConformanceResult | None = None
         current_data = input_data
 
         for node_id in sorted_nodes:

@@ -3,28 +3,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-from acid_engine.level2.conformance import check_conformance, ConformanceStatus
-from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.container.port import PortRef
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.script.python_runtime import run_script
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
-from acid_engine.level3.script.modes import ExecutionMode
-
-from examples.commerce.order_amounts import (
-    build_pipeline,
-    build_filter_script,
-    build_scale_script,
-    run_leaf,
-    make_plan,
-    lock_pair,
-    filter_non_negative,
-    scale_cents_to_units,
-)
+from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import execute_plan
+from examples.commerce.order_amounts import (
+    build_filter_script,
+    build_pipeline,
+    build_scale_script,
+    lock_pair,
+    make_plan,
+    run_leaf,
+)
 
 
 def test_commerce_pipeline_main():

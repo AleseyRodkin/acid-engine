@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class Origin(str, Enum):
@@ -31,7 +31,7 @@ class Attribute:
     mutability: Mutability = Mutability.EDITABLE
     value_kind: ValueKind = ValueKind.FACTUAL
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "value": self.value,
@@ -45,13 +45,13 @@ class Attribute:
 class AttributeSet:
     attributes: tuple[Attribute, ...] = field(default_factory=tuple)
 
-    def get(self, name: str) -> Optional[Attribute]:
+    def get(self, name: str) -> Attribute | None:
         for a in self.attributes:
             if a.name == name:
                 return a
         return None
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         # Сортируем атрибуты по имени для детерминированной сериализации
         sorted_attrs = sorted(self.attributes, key=lambda a: a.name)
         return {

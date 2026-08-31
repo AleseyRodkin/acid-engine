@@ -1,10 +1,11 @@
 """Базовый класс контракта — единая грамматика для всех сущностей."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Tuple, Any
-from acid_engine.level2.identity import ContractId
+from dataclasses import dataclass
+from typing import Any
+
 from acid_engine.level2.attributes import Attribute
+from acid_engine.level2.identity import ContractId
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,13 +20,13 @@ class Contract:
     def get_entity(self) -> ContractId:
         raise NotImplementedError("Subclasses must implement get_entity()")
 
-    def get_characteristics(self) -> Tuple[Attribute, ...]:
+    def get_characteristics(self) -> tuple[Attribute, ...]:
         return ()
 
-    def get_actions(self) -> Tuple[str, ...]:
+    def get_actions(self) -> tuple[str, ...]:
         return ()
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "entity": str(self.get_entity()),
             "characteristics": [a.to_canonical_dict() for a in self.get_characteristics()],

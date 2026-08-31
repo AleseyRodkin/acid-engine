@@ -1,10 +1,11 @@
 """Mechanical derive operations: map, filter."""
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
+from acid_engine.level2.identity import ContractId
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification
 
 
 def derive_map(

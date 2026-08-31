@@ -1,9 +1,10 @@
-import pytest
 import tempfile
 from pathlib import Path
+
+import pytest
+from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.loader import DictLoader, PythonLoader, load_contract
 from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level2.identity import ContractId, Version
 
 
 def test_dict_loader():

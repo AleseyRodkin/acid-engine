@@ -1,11 +1,10 @@
-import json
 import os
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from acid_engine.cli import parse_cli_input, load_script_from_file
+from acid_engine.cli import load_script_from_file, parse_cli_input
 
 
 def test_parse_cli_input_int():

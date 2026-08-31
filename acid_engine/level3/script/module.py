@@ -1,14 +1,16 @@
 """ScriptModule — минимальная исполняемая единица."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Tuple
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification
-from acid_engine.level2.serialization import content_hash_of
-from acid_engine.level2.implementation_canon import canonical_implementation
-from acid_engine.level2.base import Contract
+from typing import Any
+
 from acid_engine.level2.attributes import Attribute
+from acid_engine.level2.base import Contract
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.implementation_canon import canonical_implementation
+from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level2.specification import Specification
 from acid_engine.level3.script.artifact import ArtifactRef
 
 
@@ -19,20 +21,20 @@ class ScriptModule(Contract):
     specification: Specification
     input_type: str
     output_type: str
-    implementation: Optional[Callable[[Any], Any]] = None
+    implementation: Callable[[Any], Any] | None = None
     name: str = ""
-    artifact: Optional[ArtifactRef] = None
+    artifact: ArtifactRef | None = None
 
     def get_entity(self) -> ContractId:
         return self.contract_id
 
-    def get_characteristics(self) -> Tuple[Attribute, ...]:
+    def get_characteristics(self) -> tuple[Attribute, ...]:
         return ()
 
-    def get_actions(self) -> Tuple[str, ...]:
+    def get_actions(self) -> tuple[str, ...]:
         return ("execute",)
 
-    def _identity_dict(self) -> dict:
+    def _identity_dict(self) -> dict[str, Any]:
         if self.implementation is not None:
             impl = canonical_implementation(self.implementation)
         elif self.artifact is not None:
@@ -53,7 +55,7 @@ class ScriptModule(Contract):
     def content_hash(self) -> str:
         return content_hash_of(self._identity_dict())
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         body = self._identity_dict()
         body["content_hash"] = self.content_hash
         return body

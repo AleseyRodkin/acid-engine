@@ -1,7 +1,7 @@
-import pytest
-from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level2.identity import ContractId
+from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
+
 
 def test_run_external_success():
     cid = ContractId("test", "echo")

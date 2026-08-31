@@ -1,12 +1,11 @@
-import pytest
-from acid_engine.level0.live_code import LiveCodeView
-from acid_engine.level0.human_readable import HumanReadableView
 from acid_engine.level0.ai_reference import AIReferenceView
+from acid_engine.level0.human_readable import HumanReadableView
+from acid_engine.level0.live_code import LiveCodeView
 from acid_engine.level2.identity import ContractId
-from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level2.specification import Specification
-from acid_engine.level2.base import Contract
 from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.script.module import ScriptModule
+
 
 def test_live_code_view():
     view = LiveCodeView(lambda x: x + 1)

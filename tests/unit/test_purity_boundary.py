@@ -1,12 +1,11 @@
 """Тест эпистемической границы: Observed не равно Proven для pure."""
-import pytest
-from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level2.conformance import check_conformance
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-from acid_engine.level3.script.python_runtime import run_script
+from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level2.conformance import check_conformance
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.python_runtime import run_script
 
 
 def test_purity_is_not_proven_by_single_observation():
@@ -64,7 +63,7 @@ def test_purity_boundary_with_hidden_side_effect():
     # Функция с "спящим" side effect
     def func_with_hidden_branch(x):
         if x > 1_000_000:          # не сработает при малых x
-            import requests         # потенциальный сетевой вызов
+            import requests  # потенциальный сетевой вызов
             requests.get("http://example.com")
         return x + 1
 

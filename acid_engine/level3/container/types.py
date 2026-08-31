@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -11,7 +11,7 @@ class RecordField:
     type_tag: str  # "int", "float", "str", "bool", "list", "record"
     optional: bool = False
     default: Any = None  # значение по умолчанию, если поле отсутствует
-    schema: Optional[RecordSchema] = None  # используется, если type_tag == "record"
+    schema: RecordSchema | None = None  # используется, если type_tag == "record"
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,7 +19,7 @@ class RecordSchema:
     """Описание структуры record с возможной вложенностью."""
     fields: tuple[RecordField, ...] = field(default_factory=tuple)
 
-    def validate(self, data: Any, apply_defaults: bool = True) -> tuple[bool, Optional[dict]]:
+    def validate(self, data: Any, apply_defaults: bool = True) -> tuple[bool, dict[str, Any] | None]:
         """
         Валидирует данные и, если apply_defaults=True, возвращает 
         заполненный словарь с учётом default-значений.
@@ -66,7 +66,7 @@ class RecordSchema:
             return False
         return True
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "fields": [
                 {

@@ -8,11 +8,10 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from acid_engine.judge import judge_script
 from acid_engine.level2.conformance import ConformanceStatus
 from examples.bones.n_plus_one import build_script
-from examples.commerce.order_amounts import build_filter_script, lock_pair, build_pipeline
+from examples.commerce.order_amounts import build_pipeline, lock_pair
 
 ROOT = Path(__file__).resolve().parents[2]
 CRATE = ROOT / "rust" / "acid-judge"

@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import subprocess
 import time
-from typing import Any, Optional
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.container.delta import ContainerDelta
-from acid_engine.level3.container.state import ExecutionState, ExecutionStatus
-from acid_engine.level3.container.port import PortRef
+from typing import Any
+
 from acid_engine.level2.identity import ContractId
+from acid_engine.level3.container.delta import ContainerDelta
+from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.container.state import ExecutionState
 from acid_engine.level3.script.modes import ExecutionMode
 
 
@@ -19,9 +20,9 @@ def run_external(
     contract_hash: str,
     input_data: Any = None,
     mode: ExecutionMode = ExecutionMode.NORMAL,
-    logger=None,
-    timeout: Optional[float] = None,
-    stdin_data: Optional[str] = None,       # данные для stdin процесса
+    logger: Any = None,
+    timeout: float | None = None,
+    stdin_data: str | None = None,       # данные для stdin процесса
     text_mode: bool = True,                 # text mode (str) или bytes
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
@@ -45,17 +46,12 @@ def run_external(
     trace: list[str] = [f"start_external:{command[0]}"]
 
     try:
-        kwargs = {
-            "capture_output": True,
-            "text": text_mode,
-        }
-        if stdin_data is not None:
-            kwargs["input"] = stdin_data
-
         proc = subprocess.run(
             command,
             timeout=timeout,
-            **kwargs,
+            capture_output=True,
+            text=text_mode,
+            input=stdin_data,
         )
         end = time.perf_counter()
 
@@ -102,7 +98,7 @@ def run_external(
         )
         return output_snapshot, obs, delta, state
 
-    except subprocess.TimeoutExpired as e:
+    except subprocess.TimeoutExpired:
         end = time.perf_counter()
         state.mark_failed(f"timeout after {timeout}s")
         trace.append("timeout")

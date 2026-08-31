@@ -1,8 +1,7 @@
-import pytest
-from examples.atomic_storage.storage import AtomicStorage
-from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
+from acid_engine.level3.script.module import ScriptModule
+from examples.atomic_storage.storage import AtomicStorage
 
 
 def make_module(name: str) -> ScriptModule:

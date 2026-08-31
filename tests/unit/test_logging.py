@@ -1,7 +1,8 @@
-import tempfile
 import os
-from acid_engine.services.logging.logger import ExecutionLogger
+import tempfile
+
 from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.services.logging.logger import ExecutionLogger
 
 
 def test_logger_writes_and_reads():

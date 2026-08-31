@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 import re
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class SemanticPredicate:
@@ -170,7 +169,7 @@ class InvariantPredicate(SemanticPredicate):
         except Exception as e:
             return False, f"Invariant check raised: {e}"
 
-PREDICATES: Dict[str, SemanticPredicate] = {
+PREDICATES: dict[str, SemanticPredicate] = {
     "equals": EqualsPredicate(),
     "contains": ContainsPredicate(),
     "matches": MatchesPredicate(),
@@ -197,7 +196,7 @@ def check_semantic(
 
 
 def check_semantic_rules(
-    rules: Dict[str, Any],
+    rules: dict[str, Any],
     provided_data: Any,
 ) -> list[tuple[bool, str, str]]:
     """

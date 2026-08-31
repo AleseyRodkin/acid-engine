@@ -2,15 +2,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from acid_engine.level2.base import Contract
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level2.conformance import ConformanceResult
+from acid_engine.level2.failure import FailureReason
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level2.conformance import ConformanceResult
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.script.module import ScriptModule
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,14 +20,14 @@ class PipelineResult:
 
     conformance: ConformanceResult
     data: Any = None
-    observation: Optional[ExecutionObservation] = None
+    observation: ExecutionObservation | None = None
 
     @property
     def ok(self) -> bool:
         return self.conformance.ok
 
     @property
-    def status(self):
+    def status(self) -> Any:
         return self.conformance.status
 
     @property
@@ -34,7 +35,7 @@ class PipelineResult:
         return self.conformance.message
 
     @property
-    def failure(self):
+    def failure(self) -> FailureReason | None:
         return self.conformance.failure
 
 
@@ -44,9 +45,9 @@ class Pipeline:
     def __init__(
         self,
         contract: Contract,
-        registry: Optional[Any] = None,
-        plan: Optional[PlanLock] = None,
-        iface: Optional[InterfaceContract] = None,
+        registry: Any | None = None,
+        plan: PlanLock | None = None,
+        iface: InterfaceContract | None = None,
     ):
         self.contract = contract
         self.registry = registry

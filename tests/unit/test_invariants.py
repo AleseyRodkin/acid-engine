@@ -1,16 +1,17 @@
-import pytest
 from acid_engine.level2.conformance import check_conformance
 from acid_engine.level2.semantic import check_semantic
-from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level2.specification import Policy
+from acid_engine.level3.container.observation import ExecutionObservation
 
 
 def test_invariant_predicate_pass():
-    inv = lambda x: x > 0
+    def inv(x):
+        return x > 0
     assert check_semantic("invariant", 5, inv)[0]
 
 def test_invariant_predicate_fail():
-    inv = lambda x: x > 10
+    def inv(x):
+        return x > 10
     assert not check_semantic("invariant", 5, inv)[0]
 
 def test_conformance_with_invariants():

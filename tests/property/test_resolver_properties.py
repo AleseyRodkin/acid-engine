@@ -1,9 +1,10 @@
 """Property-based tests for ConstraintResolver strategies."""
-from hypothesis import given, strategies as st, assume, settings
 from acid_engine.level2.resolver import ConstraintResolver, ResolveConflict
-from acid_engine.level2.strategies.numeric import MinValueStrategy, MaxValueStrategy
-from acid_engine.level2.strategies.set_ops import IntersectionStrategy, UnionStrategy
 from acid_engine.level2.strategies.boolean_policy import BooleanStrengthenStrategy
+from acid_engine.level2.strategies.numeric import MaxValueStrategy, MinValueStrategy
+from acid_engine.level2.strategies.set_ops import IntersectionStrategy, UnionStrategy
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
 
 # --- Numeric strategies ---

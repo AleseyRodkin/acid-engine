@@ -1,10 +1,9 @@
 """ExecutionObservation — facts of a concrete run."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-import time
 import uuid
-from typing import Optional
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,7 +27,7 @@ class ExecutionObservation:
         trace: tuple[str, ...] = (),
         input_hash: str = "",
         output_hash: str = "",
-        logger=None,  # ExecutionLogger или None
+        logger: Any = None,
     ) -> ExecutionObservation:
         obs = ExecutionObservation(
             run_id=str(uuid.uuid4()),

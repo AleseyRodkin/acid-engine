@@ -1,12 +1,15 @@
-import pytest
-from acid_engine.level2.specification import (
-    Parameters, Policy, ImplementationRequirements, Specification,
-)
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import (
+    ImplementationRequirements,
+    Parameters,
+    Policy,
+    Specification,
+)
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.python_runtime import run_script
+
 
 def test_specification_serialization():
     params = Parameters({"threshold": 0.8})
@@ -18,7 +21,7 @@ def test_specification_serialization():
     spec = Specification(parameters=params, policy=policy, implementation_requirements=impl_req)
     d = spec.to_canonical_dict()
     assert d["parameters"]["values"] == {"threshold": 0.8}
-    assert d["policy"]["pure"] == True
+    assert d["policy"]["pure"] is True
     assert d["implementation_requirements"]["required_methods"] == ["transform"]
 
 def test_script_module_creation():

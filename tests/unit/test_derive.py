@@ -1,11 +1,10 @@
-import pytest
-from acid_engine.derive.operations import derive_map, derive_filter
+from acid_engine.derive.operations import derive_filter, derive_map
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.python_runtime import run_script
 
 
 def test_derive_map():

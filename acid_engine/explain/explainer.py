@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from acid_engine.level2.conformance import ConformanceResult
-from acid_engine.level2.failure import FailureReason
 from acid_engine.level2.resolver import ResolveConflict
 
 

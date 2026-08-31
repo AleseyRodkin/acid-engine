@@ -9,14 +9,15 @@ import ast
 import functools
 import inspect
 import textwrap
+from collections.abc import Callable, Iterator
 from types import CodeType
-from typing import Any, Callable, Optional, Set
+from typing import Any
 
 
 def canonical_implementation(
     fn: Callable[..., Any],
     *,
-    _seen: Optional[Set[int]] = None,
+    _seen: set[int] | None = None,
 ) -> dict[str, Any]:
     """Stable, JSON-safe fingerprint of the callable that will actually run."""
     seen = set(_seen or ())
@@ -63,7 +64,7 @@ def _callable_body(fn: Callable[..., Any]) -> dict[str, Any]:
     }
 
 
-def _ast_dump(fn: Callable[..., Any]) -> Optional[str]:
+def _ast_dump(fn: Callable[..., Any]) -> str | None:
     try:
         raw = inspect.getsource(fn)
     except (OSError, TypeError):
@@ -81,17 +82,18 @@ def _ast_dump(fn: Callable[..., Any]) -> Optional[str]:
     return ast.dump(node, annotate_fields=True, include_attributes=False)
 
 
-def _parse_source(raw: str) -> Optional[ast.AST]:
+def _parse_source(raw: str) -> ast.AST | None:
     src = textwrap.dedent(raw).strip().rstrip(",")
     for candidate in _source_candidates(src):
         try:
-            return ast.parse(candidate)
+            parsed: ast.AST = ast.parse(candidate)
+            return parsed
         except SyntaxError:
             continue
     return None
 
 
-def _source_candidates(src: str):
+def _source_candidates(src: str) -> Iterator[str]:
     yield src
     yield f"_ = {src}"
     if "=" in src:
@@ -101,14 +103,14 @@ def _source_candidates(src: str):
         yield f"_ = {rhs}"
 
 
-def _first_callable_node(tree: ast.AST) -> Optional[ast.AST]:
+def _first_callable_node(tree: ast.AST) -> ast.AST | None:
     for node in ast.walk(tree):
         if isinstance(node, (ast.Lambda, ast.FunctionDef, ast.AsyncFunctionDef)):
             return node
     return None
 
 
-def _closure_canon(fn: Callable[..., Any], seen: Set[int]) -> list[dict[str, Any]]:
+def _closure_canon(fn: Callable[..., Any], seen: set[int]) -> list[dict[str, Any]]:
     closure = getattr(fn, "__closure__", None)
     code = getattr(fn, "__code__", None)
     if not closure or not isinstance(code, CodeType):
@@ -152,7 +154,7 @@ def _const_canon(value: Any) -> Any:
     return {"kind": "repr", "type": type(value).__name__, "repr": repr(value)}
 
 
-def _jsonable(value: Any, seen: Set[int]) -> Any:
+def _jsonable(value: Any, seen: set[int]) -> Any:
     if isinstance(value, (bool, int, float, str)) or value is None:
         return value
     if isinstance(value, bytes):

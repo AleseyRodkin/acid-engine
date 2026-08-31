@@ -1,36 +1,46 @@
 # AcidEngine 0.1.0
 
-Hard gate для Python-функции под контрактом.
+Жёсткий gate для шага под контрактом: тело бежит, судья сравнивает факт с обещанием.
 
 Код пишет человек или ИИ. Арбитр — проверяемый контракт, не модель.
 Система не имеет права утверждать больше, чем наблюдала.
-`Observed ≠ Proven`: один чистый прогон не доказывает `pure`.
+`Observed ≠ Proven`.
 
-Это не операционная система разработки, не self-hosting и не замена Pydantic/Pandera.
+Это не операционная система разработки, не SaaS, не self-hosting
+и не замена Pydantic/Pandera. Версия пакета — **0.1.0** (не «v3»).
 
-## Что сейчас работает
+Закон, который исполняет рантайм: [METHOD.md](METHOD.md).
+Очередь костей: [PLAN.md](PLAN.md). Лицензия: [LICENSE](LICENSE) (MIT).
 
-- `ScriptModule`: CONSTRAINTS / INPUT / OUTPUT / IMPLEMENTATION
-- `content_hash` покрывает декларацию **и тело реализации**
-- `run` → Observed → структурная/операционная проверка → PASS / FAIL
-- Walking skeleton: вход `3` → выход `4`
-- Первый реальный пайплайн (слой A): `examples/commerce/order_amounts.py` — filter → scale сумм заказа, plan.lock, Observed, gate
-- Второй: `examples/commerce/sku_normalize.py` — clean → dedupe SKU каталога
-- `Pipeline(ScriptModule)` исполняет и проверяет
-- Нет исполнения → не PASS (`InterfaceContract` в Pipeline, `LocalAdapter` → SKIPPED)
+## Что есть
+
+Четыре кости + судья: Contract, Container, Script, Graph; Judge.
+
+- Хеш `ScriptModule` покрывает декларацию **и тело** (AST, иначе байткод).
+- `judge_script` → `execute_plan` / `plan.lock` **до** run. Нет исполнения → не PASS.
+- Мало фактов → SKIPPED. Подмена тела → FAIL, fn не вызывается.
+- `bool ≠ int`. `pure=True` + эффекты → FAIL. Пустые effects ≠ proven pure.
+- CLI: `.py` (переменная `script`) или `.json` blank. Markdown не парсится.
+- Фикстура: `examples/bones/` `{n: 3}` → `{n: 4}`.
+- Пайплайны: `examples/commerce/order_amounts.py`, `sku_normalize.py`.
+- Опционально: Rust-судья `rust/acid-judge` — тот же PASS/FAIL/SKIPPED, тело не исполняет.
+
+Python ≥ 3.11, **runtime-зависимостей нет**.
 
 ```bash
-python -m acid_engine run
-python -m acid_engine run --script path.py --input 3
-python -m acid_engine validate contract.py echo hello
+PYTHONPATH=. python -m pytest tests -q --ignore=tests/property
+PYTHONPATH=. python -m acid_engine run --script examples/bones/n_plus_one.json --input '{"n": 3}'
+cargo test --manifest-path rust/acid-judge/Cargo.toml
 ```
 
-`run --script` грузит переменную `script` из `.py`.
-`validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
+Dev: `pip install -e ".[dev]"` — pytest, ruff, mypy.
 
-См. [METHOD.md](METHOD.md) — закон. Если правила нет в рантайме, его нет в METHOD и его нельзя писать сюда.
+```bash
+ruff check acid_engine tests examples
+mypy acid_engine
+```
 
 ## Чего в 0.1 нет
 
-Профили сборки (Library/CLI/SaaS/Embedded), DSL, AI-context, aggregator,
-`validate spec.md`, формальная верификация, `proven_pure`.
+Профили Library/CLI/SaaS/Embedded, DSL, AI-context, aggregator,
+`validate spec.md`, формальная верификация, `proven_pure`, WASM, JS-тело, STOL.

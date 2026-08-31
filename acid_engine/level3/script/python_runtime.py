@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Optional
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level3.container.delta import ContainerDelta
-from acid_engine.level3.container.state import ExecutionState
-from acid_engine.level3.container.port import PortRef
-from acid_engine.level3.script.modes import ExecutionMode
+from collections.abc import Callable
+from typing import Any
+
 from acid_engine.level1.effects import EffectCollector
+from acid_engine.level3.container.delta import ContainerDelta
+from acid_engine.level3.container.observation import ExecutionObservation
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.container.state import ExecutionState
+from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.resolve import resolve_script
 
 
@@ -18,8 +20,8 @@ def run_script(
     script: ScriptModule,
     input_snapshot: ContainerSnapshot,
     mode: ExecutionMode = ExecutionMode.NORMAL,
-    logger=None,
-    fn: Optional[Callable[..., Any]] = None,
+    logger: Any = None,
+    fn: Callable[..., Any] | None = None,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     state = ExecutionState()
     state.mark_running()
@@ -75,6 +77,7 @@ def run_script(
         )
         return empty, obs, delta, state
 
+    assert fn is not None
     collector = EffectCollector()
     try:
         with collector:

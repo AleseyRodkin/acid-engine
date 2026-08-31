@@ -1,10 +1,11 @@
-import pytest
 import tempfile
 from pathlib import Path
-from acid_engine.level4.registry import ContractRegistry
-from acid_engine.level3.script.module import ScriptModule
+
+import pytest
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level4.registry import ContractRegistry
 
 
 def make_script(name: str) -> ScriptModule:

@@ -1,18 +1,21 @@
 """Ссылочное представление для ИИ (уровень 0)."""
 from __future__ import annotations
-from typing import Any, Optional, Dict, List
+
+from typing import Any
+
 from acid_engine.level2.identity import ContractId
+
 
 class AIReferenceView:
     """
     Хранит ссылку на атом (ContractId) и умеет собирать контекст.
     В будущем будет обращаться к ContractRegistry.
     """
-    def __init__(self, contract_id: ContractId, registry: Optional[Any] = None):
+    def __init__(self, contract_id: ContractId, registry: Any | None = None):
         self.contract_id = contract_id
         self.registry = registry
 
-    def describe(self) -> Dict[str, Any]:
+    def describe(self) -> dict[str, Any]:
         """Возвращает структурированное описание атома."""
         desc = {
             "contract_id": str(self.contract_id),

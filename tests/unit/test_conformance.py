@@ -1,11 +1,12 @@
-import io
 import contextlib
+import io
+
 from acid_engine.level2.conformance import (
-    check_conformance,
     ConformanceStatus,
+    check_conformance,
 )
-from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level2.specification import Policy
+from acid_engine.level3.container.observation import ExecutionObservation
 
 
 def test_pass_int():

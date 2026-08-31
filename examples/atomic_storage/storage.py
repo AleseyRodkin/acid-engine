@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Dict, List, Optional
-from acid_engine.level4.registry import ContractRegistry
-from acid_engine.level3.script.module import ScriptModule
+
+from acid_engine.level1.data_plane import DataPlane, InMemoryDataPlane
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level1.data_plane import InMemoryDataPlane, DataPlane
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level4.registry import ContractRegistry
 
 
 class AtomicStorage:
@@ -15,10 +14,10 @@ class AtomicStorage:
     Постоянное хранилище ScriptModule с версионированием и поиском.
     Использует DataPlane для хранения данных (по умолчанию in-memory).
     """
-    def __init__(self, data_plane: Optional[DataPlane] = None):
+    def __init__(self, data_plane: DataPlane | None = None):
         self.registry = ContractRegistry()
         self.data_plane = data_plane or InMemoryDataPlane()
-        self._index: Dict[str, List[str]] = {}  # contract_id -> list of hashes
+        self._index: dict[str, list[str]] = {}  # contract_id -> list of hashes
 
     def store(self, module: ScriptModule) -> None:
         """Сохраняет модуль в хранилище и реестре."""
@@ -34,7 +33,7 @@ class AtomicStorage:
         # Регистрируем в реестре
         self.registry.register(module)
 
-    def load(self, contract_id: ContractId, version_hash: Optional[str] = None) -> ScriptModule:
+    def load(self, contract_id: ContractId, version_hash: str | None = None) -> ScriptModule:
         """Загружает модуль по идентификатору и (опционально) версии."""
         key = str(contract_id)
         if version_hash is None:
@@ -56,11 +55,11 @@ class AtomicStorage:
             name=d.get("name", "")
         )
 
-    def list_versions(self, contract_id: ContractId) -> List[str]:
+    def list_versions(self, contract_id: ContractId) -> list[str]:
         """Возвращает список хешей всех версий модуля."""
         return self._index.get(str(contract_id), [])
 
-    def search_by_hash(self, content_hash: str) -> Optional[ContractId]:
+    def search_by_hash(self, content_hash: str) -> ContractId | None:
         """Ищет модуль по хешу содержимого."""
         for cid, hashes in self._index.items():
             if content_hash in hashes:

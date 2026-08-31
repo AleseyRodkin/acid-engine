@@ -1,15 +1,15 @@
-from acid_engine.level4.history import (
-    RunRecord,
-    HistoryStore,
-    replay_from_record,
-    find_record,
-)
-from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level2.conformance import ConformanceStatus
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.container.observation import ExecutionObservation
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import lock_for_script
+from acid_engine.level4.history import (
+    HistoryStore,
+    RunRecord,
+    find_record,
+    replay_from_record,
+)
 
 
 def _script(impl, name="double"):

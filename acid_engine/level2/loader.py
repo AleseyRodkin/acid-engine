@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+
 from acid_engine.level3.interface.contract import InterfaceContract
 
 
@@ -53,7 +53,12 @@ class PythonLoader(ContractLoader):
         spec.loader.exec_module(module)
         if not hasattr(module, "contract"):
             raise ValueError(f"Module {source} does not define 'contract'")
-        return module.contract
+        obj = module.contract
+        if not isinstance(obj, InterfaceContract):
+            raise TypeError(
+                f"{source}: 'contract' is {type(obj)!r}, expected InterfaceContract"
+            )
+        return obj
 
 
 def load_contract(source: str | Path, loaders: list[ContractLoader] | None = None) -> InterfaceContract:

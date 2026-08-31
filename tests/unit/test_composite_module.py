@@ -1,12 +1,12 @@
 import pytest
+from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.module.composite import CompositeModule, CompositeResult
 from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.module.composite import CompositeModule, CompositeResult
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import lock_for_script
-from acid_engine.level2.conformance import ConformanceStatus
 
 
 def make_leaf(name: str, func) -> LeafModule:

@@ -8,9 +8,7 @@ from acid_engine.level2.blank_loader import load_script_blank
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level3.pipeline import Pipeline
 from acid_engine.level3.script.runner import execute_plan, lock_for_script
-
 from examples.bones.n_plus_one import build_script, bump_n
-
 
 ROOT = Path(__file__).parent.parent.parent
 BONES = ROOT / "examples" / "bones"

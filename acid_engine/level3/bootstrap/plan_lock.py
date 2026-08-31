@@ -1,11 +1,12 @@
 """Immutable plan.lock."""
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
+
 from acid_engine.level2.serialization import content_hash_of
 from acid_engine.level3.script.modes import ExecutionMode
-import time
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,8 +14,8 @@ class PlanLock:
     plan_id: str
     created_at: float
     interface_contract_hash: str
-    resolved_policies: Dict[str, Any]
-    module_hashes: Dict[str, str]
+    resolved_policies: dict[str, Any]
+    module_hashes: dict[str, str]
     execution_mode: ExecutionMode
     content_hash: str
 
@@ -22,8 +23,8 @@ class PlanLock:
     def create(
         plan_id: str,
         interface_contract_hash: str,
-        resolved_policies: Dict[str, Any],
-        module_hashes: Dict[str, str],
+        resolved_policies: dict[str, Any],
+        module_hashes: dict[str, str],
         execution_mode: ExecutionMode = ExecutionMode.NORMAL,
     ) -> PlanLock:
         body = {
@@ -44,7 +45,7 @@ class PlanLock:
             content_hash=ch,
         )
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "plan_id": self.plan_id,
             "created_at": self.created_at,

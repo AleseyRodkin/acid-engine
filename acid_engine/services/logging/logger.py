@@ -4,7 +4,8 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any
+
 from acid_engine.level3.container.observation import ExecutionObservation
 
 
@@ -14,7 +15,7 @@ class ExecutionLogger:
     def __init__(self, log_path: str | Path = "execution_log.jsonl"):
         self.log_path = Path(log_path)
 
-    def log(self, obs: ExecutionObservation, extra: Optional[dict] = None) -> None:
+    def log(self, obs: ExecutionObservation, extra: dict[str, Any] | None = None) -> None:
         entry = {
             "run_id": obs.run_id,
             "timestamp": time.time(),
@@ -29,11 +30,11 @@ class ExecutionLogger:
         with open(self.log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    def read_all(self) -> list[dict]:
+    def read_all(self) -> list[dict[str, Any]]:
         if not self.log_path.exists():
             return []
         records = []
-        with open(self.log_path, "r", encoding="utf-8") as f:
+        with open(self.log_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:

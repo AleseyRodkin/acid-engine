@@ -1,6 +1,8 @@
 """Человекочитаемое представление (уровень 0)."""
 from __future__ import annotations
+
 from typing import Any
+
 
 class HumanReadableView:
     """Рендерит контракты и графы в текстовом виде."""
@@ -12,7 +14,7 @@ class HumanReadableView:
             return self._render_graph(entity)
         return str(entity)
 
-    def _render_script(self, script) -> str:
+    def _render_script(self, script: Any) -> str:
         lines = [
             f"=== Script: {script.name or script.contract_id.name} ===",
             "Спецификация:",
@@ -24,7 +26,7 @@ class HumanReadableView:
         ]
         return "\n".join(lines)
 
-    def _render_graph(self, graph) -> str:
+    def _render_graph(self, graph: Any) -> str:
         from acid_engine.level3.graph.cycle import detect_cycle
         lines = ["=== Graph ==="]
         for edge in graph.edges:

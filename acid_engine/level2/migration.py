@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+from acid_engine.level2.compatibility import CompatibilityKind, compare_types
 from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level2.compatibility import compare_types, CompatibilityKind
 
 
 class MigrationAction(str, Enum):
@@ -19,8 +20,8 @@ class MigrationAction(str, Enum):
 class MigrationStep:
     action: MigrationAction
     target: str            # "inputs.x", "outputs.y", "constraints.z"
-    old_value: Optional[Any] = None
-    new_value: Optional[Any] = None
+    old_value: Any | None = None
+    new_value: Any | None = None
     reversible: bool = True
     note: str = ""
 
@@ -38,7 +39,7 @@ class MigrationPlan:
             for s in self.steps
         )
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "old_hash": self.old_hash,
             "new_hash": self.new_hash,
@@ -58,7 +59,7 @@ class MigrationPlan:
 
 def plan_migration(old: InterfaceContract, new: InterfaceContract) -> MigrationPlan:
     """Строит план миграции между двумя версиями InterfaceContract."""
-    steps: List[MigrationStep] = []
+    steps: list[MigrationStep] = []
 
     # Сравниваем inputs
     all_input_keys = set(old.inputs.keys()) | set(new.inputs.keys())
@@ -77,7 +78,7 @@ def plan_migration(old: InterfaceContract, new: InterfaceContract) -> MigrationP
                 target=f"inputs.{k}",
                 old_value=old_type,
             ))
-        elif old_type != new_type:
+        elif old_type is not None and new_type is not None and old_type != new_type:
             compat = compare_types(old_type, new_type)
             steps.append(MigrationStep(
                 action=MigrationAction.CHANGE_TYPE,
@@ -105,7 +106,7 @@ def plan_migration(old: InterfaceContract, new: InterfaceContract) -> MigrationP
                 target=f"outputs.{k}",
                 old_value=old_type,
             ))
-        elif old_type != new_type:
+        elif old_type is not None and new_type is not None and old_type != new_type:
             compat = compare_types(old_type, new_type)
             steps.append(MigrationStep(
                 action=MigrationAction.CHANGE_TYPE,

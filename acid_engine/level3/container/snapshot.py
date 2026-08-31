@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Tuple
-from acid_engine.level2.identity import ContractId
-from acid_engine.level3.container.port import PortRef
-from acid_engine.level2.serialization import content_hash_of
+from typing import Any
+
 from acid_engine.level2.base import Contract
-from acid_engine.level2.attributes import Attribute
+from acid_engine.level2.identity import ContractId
+from acid_engine.level2.serialization import content_hash_of
+from acid_engine.level3.container.port import PortRef
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,7 +23,7 @@ class ContainerSnapshot(Contract):
     def get_entity(self) -> ContractId:
         return self.contract_id
 
-    def get_actions(self) -> Tuple[str, ...]:
+    def get_actions(self) -> tuple[str, ...]:
         return ("store", "load", "validate")
 
     @staticmethod
@@ -46,7 +46,7 @@ class ContainerSnapshot(Contract):
             provenance=provenance,
         )
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "port_ref": str(self.port_ref),
             "contract_id": str(self.contract_id),

@@ -1,6 +1,8 @@
 """Set constraint strategies."""
 from __future__ import annotations
+
 from typing import Any
+
 from acid_engine.level2.strategies.base import ConstraintStrategy
 
 

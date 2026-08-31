@@ -1,14 +1,12 @@
 import os
 import tempfile
 
+from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-from acid_engine.level2.conformance import ConformanceStatus
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.artifact import ArtifactRef
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.artifact import ArtifactRef, artifact_ref_from_callable
 from acid_engine.level3.script.runner import execute_plan, lock_for_script
-from acid_engine.level2.conformance import ConformanceStatus
-
 
 BODY = '''def plus_one(x):
     return x + 1

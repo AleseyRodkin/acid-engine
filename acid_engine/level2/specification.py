@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,7 +13,7 @@ class Parameters:
     def get(self, key: str, default: Any = None) -> Any:
         return self.values.get(key, default)
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {"values": dict(sorted(self.values.items()))}
 
 
@@ -21,13 +21,13 @@ class Parameters:
 class Policy:
     """Execution and governance policy."""
     pure: bool = False
-    max_latency_ms: Optional[float] = None
+    max_latency_ms: float | None = None
     history: str = "none"  # none | compact | full
     network: str = "forbidden"  # forbidden | allowed
     security: str = "restricted"
-    quality_gate: Optional[float] = None
+    quality_gate: float | None = None
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "pure": self.pure,
             "max_latency_ms": self.max_latency_ms,
@@ -48,7 +48,7 @@ class ImplementationRequirements:
     required_exports: tuple[str, ...] = ()
     required_signatures: tuple[str, ...] = ()
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "required_methods": list(self.required_methods),
             "required_exports": list(self.required_exports),
@@ -64,7 +64,7 @@ class Specification:
         default_factory=ImplementationRequirements
     )
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "parameters": self.parameters.to_canonical_dict(),
             "policy": self.policy.to_canonical_dict(),

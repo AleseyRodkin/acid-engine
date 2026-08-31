@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from acid_engine.level3.script.module import ScriptModule
+from typing import Any
+
 from acid_engine.level2.identity import ContractId
+from acid_engine.level3.script.module import ScriptModule
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,7 +22,7 @@ class LeafModule:
     def content_hash(self) -> str:
         return self.script.content_hash
 
-    def to_canonical_dict(self) -> dict:
+    def to_canonical_dict(self) -> dict[str, Any]:
         return {
             "kind": "leaf",
             "module_id": self.module_id,

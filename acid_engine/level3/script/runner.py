@@ -1,24 +1,24 @@
 """Исполнение по замороженному плану. plan.lock связывает тело реализации."""
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
-from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.port import PortRef
 from acid_engine.level2.conformance import (
+    ConformanceLevel,
     ConformanceResult,
     ConformanceStatus,
-    ConformanceLevel,
     check_conformance,
 )
 from acid_engine.level2.failure import FailureReason
-from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.pipeline import PipelineResult
+from acid_engine.level3.script.module import ScriptModule
 
 
-def _locked_hash_for(plan: PlanLock, script: ScriptModule) -> tuple[Optional[str], str]:
+def _locked_hash_for(plan: PlanLock, script: ScriptModule) -> tuple[str | None, str]:
     hashes = plan.module_hashes
     for key in (script.name, script.contract_id.name, str(script.contract_id)):
         if key and key in hashes:
@@ -26,7 +26,7 @@ def _locked_hash_for(plan: PlanLock, script: ScriptModule) -> tuple[Optional[str
     return None, ""
 
 
-def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> Optional[ConformanceResult]:
+def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> ConformanceResult | None:
     """
     None = bound, можно исполнять.
     SKIPPED = в lock нет факта, чем сверять.
@@ -59,7 +59,7 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> Optional[Confor
     return None
 
 
-def lock_for_script(script: ScriptModule):
+def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
     """Заморозить plan.lock на текущее тело скрипта. Публичный PASS только после bind."""
     from acid_engine.level3.script.modes import ExecutionMode
     from acid_engine.level3.script.resolve import materialize_script
@@ -151,7 +151,7 @@ def replay_run(
     plan: PlanLock,
     script: ScriptModule,
     input_data: Any,
-    expected_output: Optional[Any] = None,
+    expected_output: Any | None = None,
 ) -> ConformanceResult:
     """
     Replay по plan.lock.

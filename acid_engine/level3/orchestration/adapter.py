@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
+
 from acid_engine.level2.conformance import ConformanceResult
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
 
 
 class OrchestratorAdapter(ABC):
@@ -21,7 +21,7 @@ class OrchestratorAdapter(ABC):
         ...
 
     @abstractmethod
-    def get_result(self, external_run_id: str) -> Optional[ConformanceResult]:
+    def get_result(self, external_run_id: str) -> ConformanceResult | None:
         """Получить результат выполнения, если готов."""
         ...
 
@@ -35,7 +35,7 @@ class LocalAdapter(OrchestratorAdapter):
     def get_status(self, external_run_id: str) -> str:
         return "not_executed"
 
-    def get_result(self, external_run_id: str) -> Optional[ConformanceResult]:
+    def get_result(self, external_run_id: str) -> ConformanceResult | None:
         return ConformanceResult.skipped(
             "LocalAdapter is a placeholder; no execution was observed"
         )

@@ -1,12 +1,12 @@
 from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification
 from acid_engine.level2.implementation_canon import canonical_implementation
-from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level2.specification import Specification
 from acid_engine.level3.script.artifact import (
-    ArtifactRef,
     CANON_KINDS,
+    ArtifactRef,
     artifact_ref_from_callable,
 )
+from acid_engine.level3.script.module import ScriptModule
 
 
 def plus_one(x):

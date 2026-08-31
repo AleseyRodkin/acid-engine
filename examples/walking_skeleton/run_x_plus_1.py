@@ -1,18 +1,21 @@
 """Walking skeleton: Script(x+1) через judge_script / plan.lock."""
 from __future__ import annotations
 
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.conformance import explain_result
-from acid_engine.level2.specification import (
-    Specification, Parameters, Policy, ImplementationRequirements,
-)
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.interface.contract import InterfaceContract
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
-from acid_engine.level3.script.modes import ExecutionMode
-from acid_engine.level2.resolver import ConstraintResolver
 from acid_engine.judge import judge_script
+from acid_engine.level2.conformance import explain_result
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.resolver import ConstraintResolver
+from acid_engine.level2.specification import (
+    ImplementationRequirements,
+    Parameters,
+    Policy,
+    Specification,
+)
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.interface.contract import InterfaceContract
+from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.script.modes import ExecutionMode
+from acid_engine.level3.script.module import ScriptModule
 
 
 def build_script() -> ScriptModule:

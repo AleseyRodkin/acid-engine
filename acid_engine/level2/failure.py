@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,7 +13,7 @@ class FailureReason:
     expected: Any
     actual: Any
     detail: str = ""
-    plan_lock_ref: Optional[str] = None
+    plan_lock_ref: str | None = None
 
     def human(self) -> str:
         return (

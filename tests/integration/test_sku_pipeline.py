@@ -4,21 +4,20 @@ import subprocess
 import sys
 from pathlib import Path
 
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
 from acid_engine.level2.conformance import ConformanceStatus
-from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.module.leaf import LeafModule
-
+from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.runner import execute_plan
 from examples.commerce.sku_normalize import (
-    build_pipeline,
     build_clean_script,
     build_dedupe_script,
-    run_leaf,
-    make_plan,
+    build_pipeline,
     lock_pair,
+    make_plan,
+    run_leaf,
 )
-from acid_engine.level3.script.runner import execute_plan
 
 
 def test_sku_pipeline_main():

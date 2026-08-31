@@ -1,5 +1,6 @@
 """Execution modes: normal vs light."""
 from __future__ import annotations
+
 from enum import Enum
 
 

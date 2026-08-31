@@ -1,6 +1,5 @@
-import pytest
-from acid_engine.level3.graph.model import DependencyGraph
 from acid_engine.level3.graph.cycle import detect_cycle
+from acid_engine.level3.graph.model import DependencyGraph
 from acid_engine.level3.graph.rank import compute_rank
 
 

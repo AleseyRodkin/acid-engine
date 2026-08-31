@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any
+
 from acid_engine.level2.strategies.base import ConstraintStrategy
-from acid_engine.level2.strategies.numeric import MinValueStrategy, MaxValueStrategy
-from acid_engine.level2.strategies.set_ops import IntersectionStrategy, UnionStrategy
 from acid_engine.level2.strategies.boolean_policy import BooleanStrengthenStrategy
+from acid_engine.level2.strategies.numeric import MaxValueStrategy, MinValueStrategy
+from acid_engine.level2.strategies.set_ops import IntersectionStrategy, UnionStrategy
 from acid_engine.level2.strategies.string_enum import StringEnumStrategy
+
 
 @dataclass
 class ResolveConflict(Exception):
@@ -24,7 +26,7 @@ class ResolveConflict(Exception):
         )
 
 
-DEFAULT_STRATEGIES: Dict[str, ConstraintStrategy] = {
+DEFAULT_STRATEGIES: dict[str, ConstraintStrategy] = {
     "max_latency_ms": MinValueStrategy(),
     "min_quality": MaxValueStrategy(),
     "quality_gate": MaxValueStrategy(),
@@ -43,7 +45,7 @@ class ConstraintResolver:
     Declared + Inherited + Defaults → Effective.
     Single public entry point; strategies are pluggable.
     """
-    strategies: Dict[str, ConstraintStrategy] = field(
+    strategies: dict[str, ConstraintStrategy] = field(
         default_factory=lambda: dict(DEFAULT_STRATEGIES)
     )
 
@@ -80,10 +82,10 @@ class ConstraintResolver:
 
     def resolve_policy(
         self,
-        parent_policy: dict,
-        child_policy: dict,
-        defaults: Optional[dict] = None,
-    ) -> dict:
+        parent_policy: dict[str, Any],
+        child_policy: dict[str, Any],
+        defaults: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         defaults = defaults or {}
         keys = set(parent_policy) | set(child_policy) | set(defaults)
         result = {}

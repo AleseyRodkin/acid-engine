@@ -1,14 +1,14 @@
 """Conformance levels and result types."""
 from __future__ import annotations
 
-from typing import Any, Optional
-from enum import Enum
 from dataclasses import dataclass
-from typing import Any, Optional
+from enum import Enum
+from typing import Any
+
 from acid_engine.level2.failure import FailureReason
-from acid_engine.level3.container.observation import ExecutionObservation
-from acid_engine.level2.specification import Policy
 from acid_engine.level2.semantic import check_semantic
+from acid_engine.level2.specification import Policy
+from acid_engine.level3.container.observation import ExecutionObservation
 
 
 class ConformanceLevel(str, Enum):
@@ -28,14 +28,14 @@ class ConformanceResult:
     status: ConformanceStatus
     level: ConformanceLevel
     message: str = ""
-    failure: Optional[FailureReason] = None
+    failure: FailureReason | None = None
 
     @property
     def ok(self) -> bool:
         return self.status == ConformanceStatus.PASS
 
     @staticmethod
-    def skipped(message: str, level: ConformanceLevel = ConformanceLevel.STRUCTURAL) -> "ConformanceResult":
+    def skipped(message: str, level: ConformanceLevel = ConformanceLevel.STRUCTURAL) -> ConformanceResult:
         """No observation — not PASS. Facts were insufficient to judge."""
         return ConformanceResult(
             status=ConformanceStatus.SKIPPED,
@@ -71,8 +71,8 @@ def check_conformance(
     node_id: str = "",
     contract_id: str = "",
     schema: Any = None,
-    semantic_rules: Optional[dict[str, Any]] = None,
-    invariants: Optional[tuple] = None,
+    semantic_rules: dict[str, Any] | None = None,
+    invariants: tuple[Any, ...] | None = None,
 ) -> ConformanceResult:
     # Нет completed — нет права PASS. failed/skipped не маскировать type-check.
     if obs.status == "skipped":

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping, Optional, Union
+from typing import Any
 
 from acid_engine.level2.blank import SCHEMA_SCRIPT
 from acid_engine.level2.identity import ContractId, Version
@@ -35,7 +36,7 @@ _AUTHORING_KEYS = frozenset(
 _IMPL_KEYS = frozenset({"language", "file", "entry", "canon", "body_hash"})
 
 
-def load_script_blank(path: Union[str, Path]) -> ScriptModule:
+def load_script_blank(path: str | Path) -> ScriptModule:
     source = Path(path)
     if source.suffix.lower() == ".md":
         raise ValueError("markdown specs are not parsed")
@@ -50,7 +51,7 @@ def load_script_blank(path: Union[str, Path]) -> ScriptModule:
 def script_from_authoring_dict(
     data: Mapping[str, Any],
     *,
-    base_dir: Optional[Path] = None,
+    base_dir: Path | None = None,
 ) -> ScriptModule:
     extra = set(data) - _AUTHORING_KEYS
     if extra:

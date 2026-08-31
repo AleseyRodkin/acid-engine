@@ -1,8 +1,8 @@
 """ExecutionState — current status of execution, separate from data."""
 from __future__ import annotations
-from enum import Enum
+
 from dataclasses import dataclass
-from typing import Optional
+from enum import Enum
 
 
 class ExecutionStatus(str, Enum):
@@ -17,7 +17,7 @@ class ExecutionStatus(str, Enum):
 class ExecutionState:
     """Mutable runtime status (not part of immutable snapshot)."""
     status: ExecutionStatus = ExecutionStatus.PENDING
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
     def mark_running(self) -> None:
         self.status = ExecutionStatus.RUNNING

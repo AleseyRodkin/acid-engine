@@ -1,12 +1,12 @@
 import pytest
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.container.port import PortRef
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
+from acid_engine.level3.container.port import PortRef
+from acid_engine.level3.container.snapshot import ContainerSnapshot
+from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.module.leaf import LeafModule
 
 
 def test_container_snapshot_immutable():
@@ -75,10 +75,10 @@ def test_plan_lock_tracks_implementation_body():
 
 
 def test_stub_never_pass():
-    from acid_engine.level3.pipeline import Pipeline
+    from acid_engine.level2.conformance import ConformanceStatus
     from acid_engine.level3.interface.contract import InterfaceContract
     from acid_engine.level3.orchestration.adapter import LocalAdapter
-    from acid_engine.level2.conformance import ConformanceStatus
+    from acid_engine.level3.pipeline import Pipeline
 
     iface = InterfaceContract(
         contract_id=ContractId("test", "iface"),
@@ -106,9 +106,9 @@ def test_stub_never_pass():
 
 
 def test_bool_not_int():
-    from acid_engine.level2.conformance import check_conformance, ConformanceStatus
-    from acid_engine.level3.container.observation import ExecutionObservation
+    from acid_engine.level2.conformance import ConformanceStatus, check_conformance
     from acid_engine.level2.specification import Policy
+    from acid_engine.level3.container.observation import ExecutionObservation
     obs = ExecutionObservation.create(0, 0.001, "completed")
     result = check_conformance("int", True, obs, Policy())
     assert result.status == ConformanceStatus.FAIL
@@ -116,7 +116,9 @@ def test_bool_not_int():
 
 
 def test_observation_no_stdout_by_default():
-    import io, contextlib
+    import contextlib
+    import io
+
     from acid_engine.level3.container.observation import ExecutionObservation
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -125,10 +127,10 @@ def test_observation_no_stdout_by_default():
 
 
 def test_execute_plan_rejects_swapped_body():
-    from acid_engine.level3.script.runner import execute_plan
-    from acid_engine.level3.interface.contract import InterfaceContract
     from acid_engine.level2.conformance import ConformanceStatus
     from acid_engine.level2.specification import Policy
+    from acid_engine.level3.interface.contract import InterfaceContract
+    from acid_engine.level3.script.runner import execute_plan
 
     def plus_one(x):
         return x + 1

@@ -1,8 +1,9 @@
 """ArtifactRef — ссылка на тело рядом с callable. В фазе 2a не входит в хеш."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 from acid_engine.level2.implementation_canon import canonical_implementation
 from acid_engine.level2.serialization import content_hash_of

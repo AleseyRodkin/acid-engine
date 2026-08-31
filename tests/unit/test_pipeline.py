@@ -1,10 +1,10 @@
+from acid_engine.level2.conformance import ConformanceStatus
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.pipeline import Pipeline, PipelineResult
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.script.runner import lock_for_script
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-from acid_engine.level2.conformance import ConformanceStatus
 
 
 def _script(impl, name="increment"):

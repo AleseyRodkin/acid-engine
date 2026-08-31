@@ -1,5 +1,6 @@
 """ContainerDelta — minimal change summary between input and output."""
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 

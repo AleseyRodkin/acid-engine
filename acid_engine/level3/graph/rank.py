@@ -1,16 +1,15 @@
 """Compute dependency rank for nodes (assuming DAG)."""
 from __future__ import annotations
 
-from typing import Dict
 from acid_engine.level3.graph.model import DependencyGraph
 
 
-def compute_rank(graph: DependencyGraph) -> Dict[str, int]:
+def compute_rank(graph: DependencyGraph) -> dict[str, int]:
     """
     rank(node) = 0 if no deps else 1 + max(rank(deps))
     Assumes DAG (call detect_cycle first).
     """
-    ranks: Dict[str, int] = {}
+    ranks: dict[str, int] = {}
 
     def rank_of(n: str) -> int:
         if n in ranks:

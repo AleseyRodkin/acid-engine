@@ -1,11 +1,9 @@
 """Наблюдаемые эффекты прогона. ContextVar-коллектор, не proof of purity."""
 from __future__ import annotations
 
-from contextvars import ContextVar
-from typing import Optional
+from contextvars import ContextVar, Token
 
-
-_current: ContextVar[Optional["EffectCollector"]] = ContextVar(
+_current: ContextVar[EffectCollector | None] = ContextVar(
     "acid_effect_collector", default=None
 )
 
@@ -17,14 +15,15 @@ class EffectCollector:
 
     def __init__(self) -> None:
         self._effects: list[str] = []
-        self._token = None
+        self._token: Token[EffectCollector | None] | None = None
 
-    def __enter__(self) -> "EffectCollector":
+    def __enter__(self) -> EffectCollector:
         self._token = _current.set(self)
         return self
 
-    def __exit__(self, *exc) -> None:
-        _current.reset(self._token)
+    def __exit__(self, *exc: object) -> None:
+        if self._token is not None:
+            _current.reset(self._token)
         self._token = None
 
     def record(self, effect: str) -> None:
