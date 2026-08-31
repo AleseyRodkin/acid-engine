@@ -41,6 +41,7 @@ PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json
 ```bash
 PYTHONPATH=. python -m pytest tests -q --ignore=tests/property --ignore=tests/unit/test_async.py
 PYTHONPATH=. python locks/ci_judge.py
+cargo test --locked --manifest-path rust/acid-judge/Cargo.toml
 ```
 
 CI: [.github/workflows/acid-judge.yml](.github/workflows/acid-judge.yml) судит [locks/index.json](locks/index.json). Job падает, если tool не PASS. Receipt — artifact. Без `plan` в индексе не судит.
@@ -58,6 +59,7 @@ mypy acid_engine
 - `plan.lock` до run. Несовпадение → FAIL, тело не запускается.
 - Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`.
 - Worker не пишет PASS/FAIL. `judge_script` без plan+iface → SKIPPED (self-lock не вердикт). `lock --script` только снимает JSON.
+- Бинарь `acid-judge` без `worker` не судит: SKIPPED. Observation без worker — не вердикт.
 
 Пять tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — в [locks/index.json](locks/index.json) вместе с bones.
 

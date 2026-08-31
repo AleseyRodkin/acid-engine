@@ -1,5 +1,5 @@
 //! External judge: bind plan.lock, run a Python worker, then verdict.
-//! Without `worker`, observation-only mirror (no execution).
+//! Without `worker` the binary does not judge: SKIPPED, not PASS.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -109,14 +109,7 @@ pub fn judge(req: &Request) -> Response {
     if let Some(worker) = req.worker.as_ref() {
         return judge_with_worker(req, worker);
     }
-    let bound = bind(req);
-    if bound.status != "BOUND" {
-        return bound;
-    }
-    match &req.observation {
-        None => Response::skipped("bound but not executed"),
-        Some(obs) => verdict(req, obs),
-    }
+    Response::skipped("no worker: observation-only is not a verdict")
 }
 
 fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
@@ -233,7 +226,7 @@ fn spawn_worker(
     serde_json::from_str(text.trim()).map_err(|e| format!("worker json: {e}"))
 }
 
-pub fn bind(req: &Request) -> Response {
+fn bind(req: &Request) -> Response {
     if req.module_hashes.is_empty() {
         return Response::skipped("plan.lock has no module_hashes; cannot bind implementation");
     }
@@ -335,36 +328,7 @@ mod tests {
     }
 
     #[test]
-    fn mismatch_fail_not_pass() {
-        let r = judge(&Request {
-            module_hashes: hashes("s", "aaa"),
-            script_name: Some("s".into()),
-            script_hash: Some("bbb".into()),
-            observation: Some(Observation {
-                status: "completed".into(),
-                ..Default::default()
-            }),
-            output_type: Some("int".into()),
-            data: Some(json!(1)),
-            ..Default::default()
-        });
-        assert_eq!(r.status, "FAIL");
-        assert_eq!(r.property.as_deref(), Some("module_hash"));
-    }
-
-    #[test]
-    fn bound_without_obs_is_skipped() {
-        let r = judge(&Request {
-            module_hashes: hashes("s", "aaa"),
-            script_name: Some("s".into()),
-            script_hash: Some("aaa".into()),
-            ..Default::default()
-        });
-        assert_eq!(r.status, "SKIPPED");
-    }
-
-    #[test]
-    fn bones_dict_pass() {
+    fn hashes_and_completed_obs_without_worker_is_skipped() {
         let r = judge(&Request {
             module_hashes: hashes("n_plus_one", "h"),
             script_name: Some("n_plus_one".into()),
@@ -379,7 +343,38 @@ mod tests {
             effects: vec![],
             ..Default::default()
         });
-        assert_eq!(r.status, "PASS");
+        assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn mismatch_hash_without_worker_is_skipped_not_fail() {
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            script_name: Some("s".into()),
+            script_hash: Some("bbb".into()),
+            observation: Some(Observation {
+                status: "completed".into(),
+                ..Default::default()
+            }),
+            output_type: Some("int".into()),
+            data: Some(json!(1)),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "FAIL");
+        assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn bound_without_obs_is_skipped() {
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            script_name: Some("s".into()),
+            script_hash: Some("aaa".into()),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "SKIPPED");
     }
 
     #[test]

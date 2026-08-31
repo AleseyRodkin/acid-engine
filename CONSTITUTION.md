@@ -5,14 +5,14 @@
 
 ## Снимок 31.08.2026
 
-Сборка из zip `8e1b2a7`. Фазы 1–6 закрыты. Аудит-фиксы после фазы 6.
+Сборка после C7 (API=CLI) / контур H. Не zip `8e1b2a7`.
 
 ## Сделано
 
 1–21. Контур до `judge_script` (хеш тела, SKIPPED, plan.lock, bones, JSON blank).
 22. Аудит: plan+iface вместе; obs.status в gate; Composite внешний lock.
 23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
-24. `rust/acid-judge` bind → python worker → verdict. Зеркало без worker.
+24. `rust/acid-judge` bind → python worker → verdict. Без worker SKIPPED.
 25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
 26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE помечен как не план.
 27. Worker: `acid_engine.worker` identify/run, без PASS/FAIL.
@@ -26,8 +26,9 @@
 34. C5: `acid_engine locks --index`. Сверка тела с замком, не исполнение.
 35. C6: Ed25519 на каноне receipt. `receipt --verify`. Не Sigstore.
 36. C7: API=CLI. `judge_script` / Pipeline без plan+iface → SKIPPED. Self-lock не вердикт.
+37. H1–H5: бинарь без worker → SKIPPED. Observation без worker не вердикт.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
-Без worker — зеркало observation. Worker не пишет вердикт.
+Без worker — SKIPPED. Worker не пишет вердикт.
 
 Не делать: STOL, JS/WASM, proven_pure, SaaS, markdown parser, веб-превью ядра.

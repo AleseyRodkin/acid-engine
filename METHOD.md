@@ -71,14 +71,11 @@ Self-lock не вердикт. В том числе в библиотеке.
 
 ## Rust judge
 
-## Rust judge
-
-Один вход: bind `plan.module_hashes` ↔ хеш тела, который worker identify вернул.
-С `worker`: identify → bind → `python -m acid_engine.worker` run → verdict.
-Несовпадение хеша → FAIL, тело не run.
-Вердикт Rust: status, output_type, pure, latency. Semantic/schema/invariants —
-только Python `check_conformance`. Это не два полных судьи на одном JSON.
-Без `worker`: зеркало по готовому observation. Нет observation после bind → не PASS.
+Один вход бинаря: нужен worker.
+identify → bind → run worker → verdict.
+Нет worker → SKIPPED. Observation без worker — не вердикт.
+После run: status, output_type, pure, latency.
+Semantic/schema/invariants — только Python.
 Worker не пишет PASS/FAIL. Автор тела не патчит судью.
 Не runtime и не WASM. cargo ≥ 1.75, lockfile v3.
 
