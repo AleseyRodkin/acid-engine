@@ -1,6 +1,11 @@
 """Кость: dict {n: 3} → {n: 4}. Один шаг через execute_plan."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from acid_engine.judge import judge_script
 from acid_engine.level2.conformance import explain_result
 from acid_engine.level2.identity import ContractId, Version

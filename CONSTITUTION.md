@@ -14,6 +14,7 @@
 23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
 24. `rust/acid-judge` bind+verdict (зеркало, не worker).
 25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
+26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE помечен как не план.
 
 Фазы 1–6 закрыты. Фаза 7 не закрыта: бинарник не запускает Python-рабочего
 и не является арбитром снаружи процесса.

@@ -84,6 +84,12 @@ Fan-in > 1 в Composite запрещён, пока нет merge-контракт
 Ядро не печатает в stdout. Лог observation — только opt-in через переданный logger.
 
 
+## Blank
+
+`container_blank` несёт `data`. Без data шаг из бланка не собрать.
+`parse_container_blank` сверяет `content_hash` с data. Несовпадение — ошибка.
+
+
 ## Pipeline
 
 `Pipeline.execute` возвращает `PipelineResult`: `data`, `observation`, `conformance`.

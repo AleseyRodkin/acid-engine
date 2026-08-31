@@ -3,6 +3,10 @@
 Запуск самоописания AcidEngine.
 """
 import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from acid_engine.self_describe import build_self_contract
 

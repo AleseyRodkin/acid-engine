@@ -3,6 +3,7 @@ from acid_engine.level2.blank import (
     container_blank,
     graph_blank,
     observation_blank,
+    parse_container_blank,
     parse_script_identity_blank,
     plan_blank,
     script_identity_blank,
@@ -23,6 +24,7 @@ from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.graph.model import DependencyGraph
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.runner import execute_plan, lock_for_script
 
 
 def _script(impl, name="plus"):
@@ -116,8 +118,67 @@ def test_container_blank_stable():
     a = container_blank(snap)
     b = container_blank(snap)
     assert a == b
+    assert a["data"] == 3
     assert content_hash_of(a) == content_hash_of(b)
     canonical_serialize(a)
+
+
+def test_container_blank_roundtrip_runs_step():
+    script = _script(plus_one)
+    snap = ContainerSnapshot.create(
+        port_ref=PortRef("m", "input", "value"),
+        contract_id=ContractId("t", "plus"),
+        contract_hash=script.content_hash,
+        data=3,
+    )
+    restored = parse_container_blank(container_blank(snap))
+    assert restored.data == 3
+    assert restored.content_hash == snap.content_hash
+    iface, plan = lock_for_script(script)
+    result = execute_plan(iface, plan, script, restored.data)
+    assert result.ok
+    assert result.data == 4
+
+
+def test_container_blank_bones_dict_roundtrip():
+    snap = ContainerSnapshot.create(
+        port_ref=PortRef("n_plus_one", "input", "value"),
+        contract_id=ContractId("bones", "n_plus_one"),
+        contract_hash="h",
+        data={"n": 3},
+    )
+    restored = parse_container_blank(container_blank(snap))
+    assert restored.data == {"n": 3}
+
+
+def test_container_blank_missing_data_or_bad_hash_is_error():
+    snap = ContainerSnapshot.create(
+        port_ref=PortRef("m", "input", "value"),
+        contract_id=ContractId("t", "plus"),
+        contract_hash="abc",
+        data=3,
+    )
+    blank = container_blank(snap)
+    del blank["data"]
+    try:
+        parse_container_blank(blank)
+        assert False
+    except ValueError as e:
+        assert "data" in str(e)
+    bad = container_blank(snap)
+    bad["content_hash"] = "0" * 64
+    try:
+        parse_container_blank(bad)
+        assert False
+    except ValueError as e:
+        assert "content_hash" in str(e)
+    extra = container_blank(snap)
+    extra["extra_field"] = 1
+    try:
+        parse_container_blank(extra)
+        assert False
+    except ValueError as e:
+        assert "unknown key" in str(e)
 
 
 def test_plan_blank_stable_and_matches_lock_hash():

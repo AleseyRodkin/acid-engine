@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from acid_engine.level2.conformance import check_conformance, explain_result
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Policy, Specification

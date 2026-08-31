@@ -19,6 +19,17 @@ _SCRIPT_IDENTITY_KEYS = frozenset(
         "implementation",
     }
 )
+_CONTAINER_KEYS = frozenset(
+    {
+        "port_ref",
+        "contract_id",
+        "contract_hash",
+        "content_hash",
+        "cardinality",
+        "provenance",
+        "data",
+    }
+)
 _ENVELOPE_KEYS = frozenset({"schema", "kind", "identity"})
 
 
@@ -60,6 +71,7 @@ def parse_script_identity_blank(obj: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def container_blank(snapshot: Any) -> dict[str, Any]:
+    """JSON-safe снимок включая data. Без data шаг из бланка не собрать."""
     return {
         "port_ref": str(snapshot.port_ref),
         "contract_id": str(snapshot.contract_id),
@@ -67,7 +79,35 @@ def container_blank(snapshot: Any) -> dict[str, Any]:
         "content_hash": snapshot.content_hash,
         "cardinality": snapshot.cardinality,
         "provenance": snapshot.provenance,
+        "data": snapshot.data,
     }
+
+
+def parse_container_blank(obj: Mapping[str, Any]) -> Any:
+    """Собрать ContainerSnapshot из бланка. content_hash должен совпасть с data."""
+    from acid_engine.level2.identity import ContractId
+    from acid_engine.level3.container.port import PortRef
+    from acid_engine.level3.container.snapshot import ContainerSnapshot
+
+    if not isinstance(obj, Mapping):
+        raise TypeError(f"container blank must be a mapping, got {type(obj)!r}")
+    extra = set(obj) - _CONTAINER_KEYS
+    if extra:
+        raise ValueError(f"unknown key: {sorted(extra)[0]}")
+    if "data" not in obj:
+        raise ValueError("container blank without data cannot rebuild a step")
+    snap = ContainerSnapshot.create(
+        port_ref=PortRef.parse(str(obj["port_ref"])),
+        contract_id=ContractId.parse(str(obj["contract_id"])),
+        contract_hash=str(obj["contract_hash"]),
+        data=obj["data"],
+        cardinality=int(obj.get("cardinality", 1)),
+        provenance=str(obj.get("provenance") or ""),
+    )
+    expected = str(obj["content_hash"])
+    if snap.content_hash != expected:
+        raise ValueError("container blank content_hash does not match data")
+    return snap
 
 
 def plan_blank(plan: Any) -> dict[str, Any]:
