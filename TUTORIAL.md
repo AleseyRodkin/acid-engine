@@ -1,249 +1,73 @@
-# AcidEngine Tutorial
+# Tutorial
 
-В этом руководстве вы шаг за шагом освоите AcidEngine — проверяемый контрактный контур вокруг Python-функции (версия 0.1).
+Это не закон. Актуальный контур — [README.md](README.md). METHOD не переписывать по этому файлу.
 
-## 1. Установка
+Демо: залочить тело, прогнать `judge`, подменить формулу, увидеть FAIL и receipt.
 
-```bash
-cd acid-engine-2.0
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
+## 1. Bones с `--plan`
 
-## 2. Первый контракт: ScriptModule
-
-Создайте файл `my_script.py`:
-
-```python
-from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-
-script = ScriptModule(
-    contract_id=ContractId("demo", "increment"),
-    version=Version(1, 0, 0),
-    specification=Specification(
-        policy=Policy(
-            pure=True,
-            max_latency_ms=100
-        )
-    ),
-    input_type="int",
-    output_type="int",
-    implementation=lambda x: x + 1,
-    name="increment",
-)
-```
-
-Запустите его через CLI:
+Из корня репозитория:
 
 ```bash
-python -m acid_engine run --script my_script.py --input 5
+PYTHONPATH=. python -m acid_engine judge \
+  --script examples/bones/n_plus_one.json \
+  --plan examples/bones/n_plus_one.plan.json \
+  --input '{"n": 3}' \
+  --receipt /tmp/bones.receipt.json
 ```
 
-Вывод покажет `PASS` и результат `6`.
+Код 0, PASS, `{n: 4}`. Receipt без `proven_pure`.
 
-## 3. Семантические предикаты
-
-Добавим проверку, что результат равен `6`.
-
-Измените `my_script.py`, добавив `semantic_rules` в контракт:
-
-```python
-# ... (предыдущий код)
-
-# Но CLI run пока не поддерживает семантические правила напрямую,
-# поэтому используем Python API:
-
-import time
-
-from acid_engine.level3.script.python_runtime import run_script
-from acid_engine.level3.container.port import PortRef
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level2.conformance import check_conformance
-
-# Выполнение
-in_port = PortRef("demo", "input", "value")
-snap = ContainerSnapshot.create(
-    in_port,
-    script.contract_id,
-    script.content_hash,
-    5
-)
-
-out_snap, obs, _, _ = run_script(script, snap)
-
-# Проверка с equals
-result = check_conformance(
-    required_output_type="int",
-    provided_data=out_snap.data,
-    obs=obs,
-    policy=script.specification.policy,
-    semantic_rules={"equals": 6}
-)
-
-print(result.message)  # PASS
-```
-
-## 4. Композитный модуль и граф
-
-Создайте два скрипта: `double.py` и `add_ten.py`, затем объедините их в граф.
-
-### `double.py`
-
-```python
-script = ScriptModule(
-    contract_id=ContractId("demo", "double"),
-    version=Version(1, 0, 0),
-    specification=Specification(
-        policy=Policy(pure=True)
-    ),
-    input_type="int",
-    output_type="int",
-    implementation=lambda x: x * 2,
-    name="double",
-)
-```
-
-### `add_ten.py`
-
-```python
-script = ScriptModule(
-    contract_id=ContractId("demo", "add_ten"),
-    version=Version(1, 0, 0),
-    specification=Specification(
-        policy=Policy(pure=True)
-    ),
-    input_type="int",
-    output_type="int",
-    implementation=lambda x: x + 10,
-    name="add_ten",
-)
-```
-
-Постройте граф и выполните:
-
-```python
-from acid_engine.level3.module.leaf import LeafModule
-from acid_engine.level3.module.composite import CompositeModule
-from acid_engine.level3.graph.model import DependencyGraph
-from acid_engine.level3.container.port import PortRef
-from acid_engine.level3.container.snapshot import ContainerSnapshot
-from acid_engine.level3.script.python_runtime import run_script
-from acid_engine.level2.conformance import check_conformance
-from acid_engine.level2.identity import ContractId, Version
-from acid_engine.level2.specification import Specification, Policy
-from acid_engine.level3.script.module import ScriptModule
-
-# Загружаем скрипты.
-# В реальности это может выполняться через PythonLoader.
-script_double = ScriptModule(
-    ContractId("d", "d"),
-    Version(1, 0, 0),
-    Specification(),
-    "int",
-    "int",
-    lambda x: x * 2
-)
-
-script_add = ScriptModule(
-    ContractId("a", "a"),
-    Version(1, 0, 0),
-    Specification(),
-    "int",
-    "int",
-    lambda x: x + 10
-)
-
-leaf_double = LeafModule("double", script_double)
-leaf_add = LeafModule("add_ten", script_add)
-
-g = DependencyGraph()
-g.add_node("double")
-g.add_node("add_ten")
-g.add_edge("double", "add_ten")
-
-composite = CompositeModule(
-    module_id="pipeline",
-    graph=g,
-    modules={
-        "double": leaf_double,
-        "add_ten": leaf_add
-    },
-    contract_id=ContractId("demo", "pipeline"),
-    version=Version(1, 0, 0),
-    input_node="double",
-    output_node="add_ten",
-)
-
-result = composite.execute(3)
-
-print(result)  # 3 * 2 + 10 = 16
-```
-
-## 5. Использование CLI
-
-AcidEngine предоставляет следующие команды.
-
-### `init`
-
-Пишет черновик markdown и опционально шаблон `.py` со `script`.
-Markdown **не парсится** как контракт.
+Без `--plan` это не вердикт:
 
 ```bash
-python -m acid_engine init --script my_script.py
+PYTHONPATH=. python -m acid_engine judge \
+  --script examples/bones/n_plus_one.json \
+  --input '{"n": 3}'
 ```
 
-### `run`
+Код ≠ 0, SKIPPED. Self-lock не PASS.
 
-Выполнить скрипт или walking skeleton:
+## 2. Lock `compute_amount`
+
+Формула: `cents * qty`. Вход `{"cents": 1999, "qty": 2}` → `{"cents": 3998}`.
 
 ```bash
-python -m acid_engine run \
-    --script my_script.py \
-    --input 10
+PYTHONPATH=. python -m acid_engine lock \
+  --script examples/tools/compute_amount.py \
+  --out examples/tools/compute_amount.plan.json
 ```
 
-### `validate`
+`lock` пишет JSON замка, не ставит PASS.
 
-Проверить внешнюю команду по контракту.
+Честный прогон:
 
-На текущем этапе поддерживаются Python-контракты, см. раздел `ExternalRunner`.
-
-## 6. Внешний раннер
-
-Запустите произвольную внешнюю команду и проверьте её результат:
-
-```python
-from acid_engine.level3.script.external_runner import run_external
-from acid_engine.level2.identity import ContractId
-from acid_engine.level2.specification import Policy
-from acid_engine.level2.conformance import check_conformance
-
-cid = ContractId("demo", "echo_test")
-
-out_snap, obs, _, _ = run_external(
-    command=["echo", "hello"],
-    contract_id=cid,
-    contract_hash="hash",
-)
-
-result = check_conformance(
-    required_output_type="dict",
-    provided_data=out_snap.data,
-    obs=obs,
-    policy=Policy(),
-    semantic_rules={"contains": "hello"}
-)
-
-print(result.message)
+```bash
+PYTHONPATH=. python -m acid_engine judge \
+  --script examples/tools/compute_amount.py \
+  --plan examples/tools/compute_amount.plan.json \
+  --input '{"cents": 1999, "qty": 2}' \
+  --receipt /tmp/amount-ok.receipt.json
 ```
 
-## Заключение
+PASS, `{"cents": 3998}`.
 
-В 0.1 есть: ScriptModule, исполнение, observation, проверка типа и latency,
-линейный композит, CLI `run` / `run --script` / `validate` для `.py`.
+## 3. Подмена тела
 
-Нет: self-hosting как продукта, AI-context, профилей сборки, парсера markdown-спек.
-Заглушка не PASS. ИИ не арбитр. Закон — [METHOD.md](METHOD.md).
+В `examples/tools/compute_amount.py` заменить `cents * qty` на `cents * qty + 1`. JSON и `plan.json` не трогать.
+
+```bash
+PYTHONPATH=. python -m acid_engine judge \
+  --script examples/tools/compute_amount.py \
+  --plan examples/tools/compute_amount.plan.json \
+  --input '{"cents": 1999, "qty": 2}' \
+  --receipt /tmp/amount-bad.receipt.json
+```
+
+FAIL `module_hash`. Тело не исполняется. В receipt статус FAIL, поле `property`: `module_hash`. Не переснимать plan под новое тело — это уже другой замок.
+
+Вернуть формулу `cents * qty`. Сломанное тело не коммитить.
+
+## Чего здесь нет
+
+Граф, `run` без `--plan` как успех, `judge_script` / Pipeline / Composite без пары plan+iface, semantic через ручной `run_script`, уровни 0–4.

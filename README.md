@@ -30,6 +30,7 @@ PYTHONPATH=. python -m acid_engine receipt --verify FILE --sig FILE.sig.json --p
 ```bash
 PYTHONPATH=. python -m acid_engine lock --help
 PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}' --receipt /tmp/bones.receipt.json
+PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --input '{"n": 3}'
 ```
 
 Коротко, почему не PASS: тело не то / не было исполнения / pure но effects / тип не совпал / замок не передан.
