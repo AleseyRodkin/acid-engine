@@ -16,6 +16,8 @@
 25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
 26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE помечен как не план.
 27. Worker: `acid_engine.worker` identify/run, без PASS/FAIL.
+28. Канон AST — `unparse`. Витринный `n_plus_one.plan.json` = живое тело.
+    cargo ≥ 1.75, lockfile v3. Rust verdict: type/status/pure/latency.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

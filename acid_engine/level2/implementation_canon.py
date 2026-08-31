@@ -76,10 +76,9 @@ def _ast_dump(fn: Callable[..., Any]) -> str | None:
     if node is None:
         return None
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        fields = {name: getattr(node, name) for name in node._fields}
-        fields["name"] = ""
-        node = type(node)(**fields)
-    return ast.dump(node, annotate_fields=True, include_attributes=False)
+        node.name = "_"
+    # unparse, не ast.dump: поля узла растут с версией CPython (3.12 type_params).
+    return ast.unparse(node)
 
 
 def _parse_source(raw: str) -> ast.AST | None:

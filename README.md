@@ -25,7 +25,7 @@
 - Фикстура: `examples/bones/` `{n: 3}` → `{n: 4}`.
 - Пайплайны: `examples/commerce/order_amounts.py`, `sku_normalize.py`.
 - Rust `rust/acid-judge`: с `worker` — bind → `python -m acid_engine.worker` → verdict.
-  Без `worker` — зеркало по observation, тело не исполняет.
+  Без `worker` — зеркало по observation. cargo ≥ 1.75, lockfile v3.
 
 Python ≥ 3.11, **runtime-зависимостей нет**.
 

@@ -10,6 +10,8 @@ use std::process::{Command, Stdio};
 pub struct Observation {
     #[serde(default)]
     pub status: String,
+    #[serde(default)]
+    pub latency_ms: Option<f64>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -40,6 +42,8 @@ pub struct Request {
     pub effects: Vec<String>,
     #[serde(default)]
     pub worker: Option<WorkerSpec>,
+    #[serde(default)]
+    pub max_latency_ms: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -92,6 +96,8 @@ struct WorkerOut {
     #[serde(default)]
     pure: bool,
     #[serde(default)]
+    max_latency_ms: Option<f64>,
+    #[serde(default)]
     data: Option<Value>,
     #[serde(default)]
     effects: Vec<String>,
@@ -143,6 +149,7 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
         .clone()
         .or(bound_req.contract_id.clone());
     bound_req.pure = ident.pure;
+    bound_req.max_latency_ms = ident.max_latency_ms.or(bound_req.max_latency_ms);
     if bound_req.output_type.is_none() {
         bound_req.output_type = ident.output_type.clone();
     }
@@ -284,6 +291,15 @@ fn verdict(req: &Request, obs: &Observation) -> Response {
     if req.pure && !req.effects.is_empty() {
         return Response::fail("pure policy violated: effects observed", "pure");
     }
+    if let Some(limit) = req.max_latency_ms {
+        match obs.latency_ms {
+            None => return Response::skipped("no latency fact"),
+            Some(ms) if ms > limit => {
+                return Response::fail("Latency exceeded", "max_latency_ms")
+            }
+            _ => {}
+        }
+    }
     Response::pass("Provided satisfies Required (structural+operational)")
 }
 
@@ -326,6 +342,7 @@ mod tests {
             script_hash: Some("bbb".into()),
             observation: Some(Observation {
                 status: "completed".into(),
+                ..Default::default()
             }),
             output_type: Some("int".into()),
             data: Some(json!(1)),
@@ -354,6 +371,7 @@ mod tests {
             script_hash: Some("h".into()),
             observation: Some(Observation {
                 status: "completed".into(),
+                ..Default::default()
             }),
             output_type: Some("dict".into()),
             data: Some(json!({"n": 4})),
@@ -374,6 +392,7 @@ mod tests {
             },
             &Observation {
                 status: "completed".into(),
+                ..Default::default()
             },
         );
         assert_eq!(r.status, "FAIL");
@@ -390,6 +409,7 @@ mod tests {
             },
             &Observation {
                 status: "failed".into(),
+                ..Default::default()
             },
         );
         assert_eq!(r.status, "FAIL");
@@ -408,10 +428,46 @@ mod tests {
             },
             &Observation {
                 status: "completed".into(),
+                ..Default::default()
             },
         );
         assert_eq!(r.status, "FAIL");
         assert_eq!(r.property.as_deref(), Some("pure"));
+    }
+
+    #[test]
+    fn latency_over_limit_fail() {
+        let r = verdict(
+            &Request {
+                output_type: Some("int".into()),
+                data: Some(json!(1)),
+                max_latency_ms: Some(1.0),
+                ..Default::default()
+            },
+            &Observation {
+                status: "completed".into(),
+                latency_ms: Some(50.0),
+            },
+        );
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("max_latency_ms"));
+    }
+
+    #[test]
+    fn max_latency_without_fact_is_skipped() {
+        let r = verdict(
+            &Request {
+                output_type: Some("int".into()),
+                data: Some(json!(1)),
+                max_latency_ms: Some(1.0),
+                ..Default::default()
+            },
+            &Observation {
+                status: "completed".into(),
+                latency_ms: None,
+            },
+        );
+        assert_eq!(r.status, "SKIPPED");
     }
 
     #[test]

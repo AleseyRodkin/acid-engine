@@ -22,7 +22,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 
 Канон тела (один):
 
-1. AST исходника, если исходник читается и парсится;
+1. AST исходника через `ast.unparse` (не `ast.dump`: поля узла растут с CPython);
 2. иначе байткод того, что реально исполняется.
 
 Замыкания и defaults входят в хеш: они часть того, что бежит.
@@ -65,9 +65,11 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 Один вход: bind `plan.module_hashes` ↔ хеш тела, который worker identify вернул.
 С `worker`: identify → bind → `python -m acid_engine.worker` run → verdict.
 Несовпадение хеша → FAIL, тело не run.
+Вердикт Rust: status, output_type, pure, latency. Semantic/schema/invariants —
+только Python `check_conformance`. Это не два полных судьи на одном JSON.
 Без `worker`: зеркало по готовому observation. Нет observation после bind → не PASS.
 Worker не пишет PASS/FAIL. Автор тела не патчит судью.
-Не runtime и не WASM. cargo ≥ 1.78 (lockfile v4).
+Не runtime и не WASM. cargo ≥ 1.75, lockfile v3.
 
 
 

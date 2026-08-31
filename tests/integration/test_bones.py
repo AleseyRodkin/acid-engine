@@ -55,6 +55,18 @@ def test_json_and_py_same_hash_and_run():
     assert step.data == {"n": 4}
 
 
+def test_committed_plan_matches_live_body():
+    """Витринный замок = текущее тело. Не переснимать bind, переснимать файл."""
+    import json
+
+    from acid_engine.level3.script.resolve import materialize_script
+
+    live = materialize_script(load_script_blank(BONES / "n_plus_one.json"))
+    plan = json.loads((BONES / "n_plus_one.plan.json").read_text(encoding="utf-8"))
+    assert plan["module_hashes"]["n_plus_one"] == live.content_hash
+    assert live.content_hash == build_script().content_hash
+
+
 def test_cli_run_bones_json():
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)

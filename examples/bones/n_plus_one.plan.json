@@ -1,6 +1,6 @@
 {
   "plan_id": "lock-n_plus_one",
-  "interface_contract_hash": "0408644fe06fb611e7b6672b5251c24940ad52452311a531e2faa0a3bbd859a9",
+  "interface_contract_hash": "674dbe04355c2508db6412ff4b6116b3addaff4349b8fa2b6ce61fa33c5a8416",
   "resolved_policies": {
     "pure": true,
     "max_latency_ms": 200.0,
@@ -10,7 +10,7 @@
     "quality_gate": null
   },
   "module_hashes": {
-    "n_plus_one": "cffe04f538e4f3ac0060b56a45a18bed3e794ea34bb4c58c7f0af17f24606312"
+    "n_plus_one": "7cef0f2539fce7532f647956a45017858adca31c139ed8f311b7bb11edea2066"
   },
   "execution_mode": "normal",
   "iface": {
@@ -31,7 +31,7 @@
       "quality_gate": null
     },
     "module_hashes": {
-      "n_plus_one": "cffe04f538e4f3ac0060b56a45a18bed3e794ea34bb4c58c7f0af17f24606312"
+      "n_plus_one": "7cef0f2539fce7532f647956a45017858adca31c139ed8f311b7bb11edea2066"
     }
   }
 }

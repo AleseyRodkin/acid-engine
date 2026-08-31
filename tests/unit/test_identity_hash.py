@@ -116,3 +116,15 @@ def test_unmaterialized_artifact_is_missing_not_ref():
     assert only_ref._identity_dict()["implementation"] == {"kind": "missing"}
     assert only_ref._identity_dict()["implementation"] != art.to_canonical_dict()
     assert only_ref.content_hash != _script(lambda x: x + 1).content_hash
+
+
+def test_ast_canon_is_unparse_not_dump():
+    """ast.dump плывёт с полями узла (3.12 type_params). Канон — unparse."""
+    from acid_engine.level2.implementation_canon import canonical_implementation
+
+    def plus(x):
+        return x + 1
+
+    body = canonical_implementation(plus)["body"]
+    assert "FunctionDef" not in body
+    assert "return x + 1" in body

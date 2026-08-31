@@ -22,6 +22,7 @@ def identify_script(script: ScriptModule) -> dict[str, Any]:
         "output_type": script.output_type,
         "input_type": script.input_type,
         "pure": bool(getattr(policy, "pure", False)),
+        "max_latency_ms": getattr(policy, "max_latency_ms", None),
     }
 
 
