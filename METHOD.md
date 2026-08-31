@@ -63,6 +63,8 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `judge --receipt FILE` пишет `acid.receipt.v1`: hashes, output, observation, verdict.
 Нет `proven_pure`, нет callable. Без `--plan` receipt всё равно пишется — статус SKIPPED.
 `locks --index` сверяет живое тело с `plan.lock`. Не исполняет. Несовпадение → FAIL.
+`receipt --sign` / `--verify`: Ed25519 на `canonical_serialize(receipt)`, локальный ключ.
+Не Sigstore. Подмена тела receipt → verify не проходит.
 
 
 ## Rust judge

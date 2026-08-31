@@ -24,6 +24,7 @@
 32. C3: пять tools в `examples/tools/` + plan.json; индекс bones+tools.
 33. C4: Claude Code PreToolUse, только bind. MCP нет. Pre не PASS.
 34. C5: `acid_engine locks --index`. Сверка тела с замком, не исполнение.
+35. C6: Ed25519 на каноне receipt. `receipt --verify`. Не Sigstore.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

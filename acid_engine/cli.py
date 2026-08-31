@@ -278,6 +278,50 @@ def cmd_locks(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_receipt(args: argparse.Namespace) -> None:
+    """Ed25519 на каноне receipt. Локальный ключ, не Sigstore."""
+    from acid_engine.sign import keygen, sign_receipt, verify_receipt
+
+    modes = [bool(args.keygen), bool(args.sign), bool(args.verify)]
+    if sum(modes) != 1:
+        print("ERROR: receipt needs exactly one of --keygen, --sign, --verify")
+        sys.exit(1)
+    try:
+        if args.keygen:
+            dest = args.out_dir or args.out
+            if not dest:
+                print("ERROR: --keygen needs --out-dir")
+                sys.exit(1)
+            secret, public = keygen(dest)
+            print(f"secret: {secret}")
+            print(f"public: {public}")
+            return
+        if args.sign:
+            if not args.key:
+                print("ERROR: --sign needs --key")
+                sys.exit(1)
+            receipt = json.loads(Path(args.sign).read_text(encoding="utf-8"))
+            if not isinstance(receipt, dict):
+                raise ValueError("receipt must be a JSON object")
+            payload = sign_receipt(receipt, args.key)
+            out = Path(args.out or (str(args.sign) + ".sig.json"))
+            out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(f"signature: {out}")
+            return
+        if not args.sig or not args.pubkey:
+            print("ERROR: --verify needs --sig and --pubkey")
+            sys.exit(1)
+        receipt = json.loads(Path(args.verify).read_text(encoding="utf-8"))
+        signature = json.loads(Path(args.sig).read_text(encoding="utf-8"))
+        if not isinstance(receipt, dict) or not isinstance(signature, dict):
+            raise ValueError("receipt and signature must be JSON objects")
+        verify_receipt(receipt, signature, args.pubkey)
+        print("[OK] signature verified")
+    except Exception as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
+
+
 def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
     parser.add_argument(
@@ -333,6 +377,20 @@ def main() -> None:
     )
     p_locks.add_argument("--index", required=True, help="locks/index.json")
     p_locks.set_defaults(func=cmd_locks)
+
+    p_receipt = subparsers.add_parser(
+        "receipt",
+        help="Ed25519 sign/verify canonical receipt (local openssl, not Sigstore)",
+    )
+    p_receipt.add_argument("--keygen", action="store_true", help="Создать пару Ed25519")
+    p_receipt.add_argument("--sign", help="Путь к receipt.json")
+    p_receipt.add_argument("--verify", help="Путь к receipt.json")
+    p_receipt.add_argument("--key", help="Секретный PEM")
+    p_receipt.add_argument("--pubkey", help="Публичный PEM")
+    p_receipt.add_argument("--sig", help="JSON подписи")
+    p_receipt.add_argument("--out", help="Куда писать подпись или ключи")
+    p_receipt.add_argument("--out-dir", help="Каталог для --keygen")
+    p_receipt.set_defaults(func=cmd_receipt)
 
     args = parser.parse_args()
     args.func(args)

@@ -14,11 +14,13 @@ Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS
 | `receipt` | `judge … --receipt FILE` — Observation + PASS/FAIL/SKIPPED, без `proven_pure` |
 
 `locks --index` — сверка живого тела с замком в git. Не исполняет, не hosted.
+`receipt --sign` / `receipt --verify` — Ed25519 на каноне receipt, локальный openssl. Не Sigstore.
 
 ```bash
 PYTHONPATH=. python -m acid_engine lock --script FILE --out LOCK.json
 PYTHONPATH=. python -m acid_engine judge --script FILE --plan LOCK.json --input '...'
 PYTHONPATH=. python -m acid_engine locks --index locks/index.json
+PYTHONPATH=. python -m acid_engine receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
 
 `judge` = нынешний `run --script --plan`. Без `--plan` → SKIPPED, не PASS.
@@ -63,4 +65,4 @@ Hook (один): [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py
 
 ## Чего нет в 0.1
 
-MCP hook, подпись receipt, hosted SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.
+MCP hook, Sigstore-SaaS, hosted registry, markdown-спеки, WASM, JS-тело, STOL, ценники.
