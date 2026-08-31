@@ -26,7 +26,7 @@ def test_register_and_resolve():
     reg.register(mod)
     resolved = reg.resolve(ContractId("test", "m1"))
     assert resolved is mod
-    assert "reg_1.0.0" in reg.list_versions(ContractId("test", "m1"))
+    assert "1.0.0" in reg.list_versions(ContractId("test", "m1"))
 
 
 def test_resolve_unknown():

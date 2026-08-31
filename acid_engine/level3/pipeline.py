@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from acid_engine.level2.base import Contract
-from acid_engine.level2.conformance import ConformanceResult
+from acid_engine.level2.conformance import ConformanceResult, ConformanceStatus
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.observation import ExecutionObservation
@@ -27,7 +27,7 @@ class PipelineResult:
         return self.conformance.ok
 
     @property
-    def status(self) -> Any:
+    def status(self) -> ConformanceStatus:
         return self.conformance.status
 
     @property
