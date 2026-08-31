@@ -38,7 +38,7 @@
 |---|---|---|---|
 | C0 | README + алиас `judge` | `4b87f13` копипаста зелёная | PyPI-ренейм, ценники |
 | C1 | `receipt.json` | `judge --receipt`; без `proven_pure` | dashboard |
-| C2 | GitHub Action + `locks/index.json` | PR с подменой тела красный | hosted SaaS |
+| C2 | GitHub Action + `locks/index.json` | workflow + index; подмена тела не PASS | hosted SaaS |
 | C3 | 5 tools в `examples/tools/` | index на bones+tools | сущность «новость» в ядре |
 | C4 | один hook | deny при чужом хеше; pre ≠ PASS | оба harness сразу |
 | C5 | реестр замков в git | одна команда сверки | Governance $40k |

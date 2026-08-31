@@ -35,8 +35,10 @@ PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json
 
 ```bash
 PYTHONPATH=. python -m pytest tests -q --ignore=tests/property --ignore=tests/unit/test_async.py
-cargo test --manifest-path rust/acid-judge/Cargo.toml
+PYTHONPATH=. python locks/ci_judge.py
 ```
+
+CI: [.github/workflows/acid-judge.yml](.github/workflows/acid-judge.yml) судит [locks/index.json](locks/index.json). Job падает, если tool не PASS. Receipt — artifact. Без `plan` в индексе не судит.
 
 Dev: `pip install -e ".[dev]"` — pytest, ruff, mypy.
 
@@ -54,4 +56,4 @@ mypy acid_engine
 
 ## Чего нет в 0.1
 
-GitHub Action, хуки, подпись receipt, SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.
+Хуки, подпись receipt, hosted SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.

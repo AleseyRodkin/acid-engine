@@ -10,3 +10,4 @@ build/
 script.py
 .hypothesis/
 rust/acid-judge/target/
+receipts/

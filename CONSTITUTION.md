@@ -20,6 +20,7 @@
     cargo ≥ 1.75, lockfile v3. Rust verdict: type/status/pure/latency.
 29. C0: README Acid Judge; CLI `judge` = `run --script --plan`. Receipt нет.
 30. C1: `acid_engine/receipt.py`, `judge --receipt`. Без proven_pure.
+31. C2: `locks/index.json` + `.github/workflows/acid-judge.yml`. Без plan не судит.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

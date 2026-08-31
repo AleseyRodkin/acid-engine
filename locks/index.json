@@ -1,0 +1,11 @@
+{
+  "schema": "acid.locks.v1",
+  "entries": [
+    {
+      "id": "n_plus_one",
+      "script": "examples/bones/n_plus_one.json",
+      "plan": "examples/bones/n_plus_one.plan.json",
+      "input": {"n": 3}
+    }
+  ]
+}

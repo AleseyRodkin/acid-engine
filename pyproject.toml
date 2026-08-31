@@ -22,7 +22,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py311"
-src = ["acid_engine", "tests", "examples"]
+src = ["acid_engine", "tests", "examples", "locks"]
 line-length = 100
 
 [tool.ruff.lint]
