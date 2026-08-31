@@ -77,15 +77,24 @@ class CompositeModule:
     ) -> CompositeResult:
         import asyncio
 
+        from acid_engine.judge import SELF_LOCK_SKIP
         from acid_engine.level2.conformance import check_conformance
         from acid_engine.level3.script.async_module import AsyncScriptModule
         from acid_engine.level3.script.async_runtime import run_async_script
         from acid_engine.level3.script.runner import (
             bind_script_to_plan,
             execute_plan,
-            lock_for_script,
         )
 
+        if detect_cycle(self.graph) is not None:
+            raise RuntimeError("Cycle detected in composite module graph")
+
+        if plan is None and iface is None:
+            return CompositeResult(
+                data=None,
+                observations=(),
+                conformance=ConformanceResult.skipped(SELF_LOCK_SKIP),
+            )
         if (plan is None) != (iface is None):
             return CompositeResult(
                 data=None,
@@ -94,9 +103,7 @@ class CompositeModule:
                     "plan and iface must be provided together"
                 ),
             )
-
-        if detect_cycle(self.graph) is not None:
-            raise RuntimeError("Cycle detected in composite module graph")
+        assert plan is not None and iface is not None
 
         ranks = compute_rank(self.graph)
         sorted_nodes = sorted(self.graph.nodes.keys(), key=lambda n: ranks[n])
@@ -120,10 +127,7 @@ class CompositeModule:
                 )
 
             if isinstance(mod, LeafModule):
-                if plan is not None and iface is not None:
-                    leaf_iface, leaf_plan = iface, plan
-                else:
-                    leaf_iface, leaf_plan = lock_for_script(mod.script)
+                leaf_iface, leaf_plan = iface, plan
                 if isinstance(mod.script, AsyncScriptModule):
                     bound = bind_script_to_plan(leaf_plan, mod.script)
                     if bound is not None:

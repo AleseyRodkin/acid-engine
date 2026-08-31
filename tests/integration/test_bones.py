@@ -39,8 +39,9 @@ def test_bones_execute_plan_and_pipeline():
     step = execute_plan(iface, plan, script, {"n": 3})
     assert step.ok
     assert step.data == {"n": 4}
-    pipe = Pipeline(script)
+    pipe = Pipeline(script, plan=plan, iface=iface)
     out = pipe.execute({"n": 3})
+
     assert out.ok
     assert out.data == {"n": 4}
 

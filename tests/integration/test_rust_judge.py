@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 from acid_engine.judge import judge_script
 from acid_engine.level2.conformance import ConformanceStatus
+from acid_engine.level3.script.runner import lock_for_script
 from examples.bones.n_plus_one import build_script
 from examples.commerce.order_amounts import build_pipeline, lock_pair
 
@@ -50,7 +51,8 @@ def rust_judge(payload: dict) -> dict:
 
 def test_rust_bones_same_status_as_python():
     script = build_script()
-    py = judge_script(script, {"n": 3})
+    iface, plan = lock_for_script(script)
+    py = judge_script(script, {"n": 3}, plan=plan, iface=iface)
     assert py.status == ConformanceStatus.PASS
     rust = rust_judge(
         {

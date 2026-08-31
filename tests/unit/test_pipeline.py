@@ -20,7 +20,9 @@ def _script(impl, name="increment"):
 
 
 def test_pipeline_with_script_module():
-    pipeline = Pipeline(_script(lambda x: x + 1))
+    script = _script(lambda x: x + 1)
+    iface, plan = lock_for_script(script)
+    pipeline = Pipeline(script, plan=plan, iface=iface)
     result = pipeline.execute(5)
     assert isinstance(result, PipelineResult)
     assert result.ok, f"Expected PASS, got {result.message}"

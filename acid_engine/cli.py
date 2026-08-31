@@ -165,14 +165,12 @@ def cmd_run(args: argparse.Namespace) -> None:
             print(f"ERROR: Failed to load script: {e}")
             sys.exit(1)
         input_val = parse_cli_input(args.input, default=3)
-        from acid_engine.judge import judge_script
+        from acid_engine.judge import SELF_LOCK_SKIP, judge_script
         from acid_engine.level3.pipeline import PipelineResult
         from acid_engine.level3.script.runner import load_script_lock
 
         if not args.plan:
-            skipped = ConformanceResult.skipped(
-                "CLI run --script without --plan is not a verdict (self-lock is tautology)"
-            )
+            skipped = ConformanceResult.skipped(SELF_LOCK_SKIP)
             result = PipelineResult(conformance=skipped)
             print(explain_result(result.conformance))
             _maybe_write_receipt(args, script, input_val, result, plan=None)

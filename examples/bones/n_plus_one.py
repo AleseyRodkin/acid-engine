@@ -42,8 +42,9 @@ def build_script() -> ScriptModule:
 def main() -> None:
     script = build_script()
     incoming = {"n": 3}
-    result = judge_script(script, incoming)
-    _, plan = lock_for_script(script)
+    iface, plan = lock_for_script(script)
+    result = judge_script(script, incoming, plan=plan, iface=iface)
+
     expected = {"n": 4}
     print("=== bones: n_plus_one ===")
     print(f"input:    {incoming}")

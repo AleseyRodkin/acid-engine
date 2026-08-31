@@ -9,6 +9,7 @@ from acid_engine.level3.module.composite import CompositeModule
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.async_module import AsyncScriptModule
 from acid_engine.level3.script.async_runtime import run_async_script
+from acid_engine.level3.script.runner import lock_for_script
 
 
 def test_async_script():
@@ -60,5 +61,6 @@ def test_composite_with_async_leaf():
         input_node="leaf",
         output_node="leaf",
     )
-    result = composite.execute(10)
+    iface, plan = lock_for_script(script)
+    result = composite.execute(10, plan=plan, iface=iface)
     assert result.data == 20

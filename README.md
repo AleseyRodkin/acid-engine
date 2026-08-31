@@ -57,7 +57,7 @@ mypy acid_engine
 - Хеш = декларация + канон тела (`ast.unparse`, иначе байткод). `ArtifactRef` не identity.
 - `plan.lock` до run. Несовпадение → FAIL, тело не запускается.
 - Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`.
-- Worker не пишет PASS/FAIL. `judge_script` без plan сам вешает замок (библиотека, не CLI).
+- Worker не пишет PASS/FAIL. `judge_script` без plan+iface → SKIPPED (self-lock не вердикт). `lock --script` только снимает JSON.
 
 Пять tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — в [locks/index.json](locks/index.json) вместе с bones.
 

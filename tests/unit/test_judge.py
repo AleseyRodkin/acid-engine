@@ -19,16 +19,30 @@ def _script(impl, name="s"):
     )
 
 
-def test_judge_bones_n_plus_one():
+def test_judge_without_plan_is_skipped():
     result = judge_script(build_script(), {"n": 3})
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
+    assert result.data is None
+    assert result.observation is None
+    assert "self-lock" in result.message.lower()
+
+
+def test_judge_bones_with_plan_pass():
+    script = build_script()
+    iface, plan = lock_for_script(script)
+    result = judge_script(script, {"n": 3}, plan=plan, iface=iface)
     assert result.ok
     assert result.data == {"n": 4}
 
 
-def test_judge_self_lock_pass():
-    result = judge_script(_script(lambda x: x + 1), 3)
-    assert result.status == ConformanceStatus.PASS
-    assert result.data == 4
+def test_pipeline_without_plan_is_skipped():
+    from acid_engine.level3.pipeline import Pipeline
+
+    result = Pipeline(build_script()).execute({"n": 3})
+    assert result.status == ConformanceStatus.SKIPPED
+    assert result.data is None
+    assert "self-lock" in result.message.lower()
 
 
 def test_judge_swapped_body_fail_without_run():
@@ -73,6 +87,7 @@ def test_judge_missing_is_skipped():
         implementation=None,
         name="empty",
     )
-    result = judge_script(script, 1)
+    iface, plan = lock_for_script(script)
+    result = judge_script(script, 1, plan=plan, iface=iface)
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok

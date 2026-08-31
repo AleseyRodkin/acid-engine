@@ -25,7 +25,7 @@
 - `plan.lock` до run. Несовпадение → FAIL, тело не запускать.
 - Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`. pure+effects → FAIL.
 - CLI `run --script` без `--plan` → SKIPPED. Worker не пишет PASS/FAIL.
-- `judge_script` без plan сам вешает замок — не менять в C0–C3.
+- `judge_script` без plan сам вешает замок — не менять в C0–C3. C7: без пары plan+iface → SKIPPED.
 - Rust без worker — зеркало. С worker: identify → bind → run → verdict.
 
 Стражи: `test_identity_hash`, `test_plan_lock_bind`, `test_purity_boundary`, `test_invariants`, `test_bones`, `test_committed_plan_matches_live_body`.
@@ -43,7 +43,7 @@
 | C4 | один hook | PreToolUse bind; deny на чужой хеш; pre ≠ PASS | оба harness сразу |
 | C5 | реестр замков в git | `locks --index`; сверка, не hosted | Governance $40k |
 | C6 | подпись receipt | `receipt --verify`; Ed25519 локально | до стабильных C1–C2 |
-| C7 | ниша B/C, API=CLI, один судья | только решение владельца | самовольно |
+| C7 | ниша B/C, API=CLI, один судья | API=CLI: без plan+iface не PASS | ниша B/C и слияние судей |
 
 Стартовать с C0. Не с Action, не с хука, не с подписи. Не начинать C(n+1), пока Cn не зелёная.
 

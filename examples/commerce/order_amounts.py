@@ -149,7 +149,7 @@ def main() -> None:
     assert step2.ok, explain_result(step2.conformance)
     assert step2.observation is not None
 
-    composite_out = pipe.execute(input_data).data
+    composite_out = pipe.execute(input_data, plan=plan, iface=iface).data
     assert composite_out == step2.data
 
     expected = [150.0, 0.0, 250.5, 1.0]

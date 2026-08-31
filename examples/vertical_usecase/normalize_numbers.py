@@ -72,9 +72,6 @@ def main():
     effective_policy = resolver.resolve_policy({}, pipe.modules["filter_node"].script.specification.policy.to_canonical_dict())
 
     input_data = [150, -10, 0, 250, 50]
-    output_data = pipe.execute(input_data).data
-
-    # Формируем Interface Contract
     iface = InterfaceContract(
         contract_id=ContractId("usecase", "normalize_iface"),
         version=Version(1, 0, 0),
@@ -82,8 +79,8 @@ def main():
         outputs={"normalized": "list"},
         constraints=effective_policy,
         module_hashes={
-            "filter": pipe.modules["filter_node"].content_hash,
-            "scale": pipe.modules["scale_node"].content_hash,
+            pipe.modules["filter_node"].script.name: pipe.modules["filter_node"].content_hash,
+            pipe.modules["scale_node"].script.name: pipe.modules["scale_node"].content_hash,
         },
     )
 
@@ -94,6 +91,7 @@ def main():
         module_hashes=iface.module_hashes,
         execution_mode=ExecutionMode.NORMAL,
     )
+    output_data = pipe.execute(input_data, plan=plan, iface=iface).data
 
     expected = [1.5, 0.0, 2.5, 0.5]
     print("=== Vertical Use-case: Normalize Numbers ===")

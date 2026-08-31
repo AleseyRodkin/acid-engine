@@ -56,7 +56,9 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `run --script` — через `judge_script` → `execute_plan`.
 `run --script file.py` — грузит переменную `script` (`ScriptModule`) и исполняет.
 `validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
-`judge_script`: plan и iface только вместе, иначе SKIPPED. Без обоих — замок на загруженное тело (библиотека).
+`judge_script` / `Pipeline(ScriptModule)` без пары plan+iface → SKIPPED.
+Self-lock не вердикт. В том числе в библиотеке.
+`lock_for_script` снимает замок (`lock --script`), не путь к PASS внутри judge.
 `run --script` без `--plan` → SKIPPED (self-lock не вердикт).
 `judge` — алиас `run --script --plan`. Без `--script` не walking skeleton.
 `--plan` — JSON замка (`lock --script`). Markdown-спеки не парсятся.

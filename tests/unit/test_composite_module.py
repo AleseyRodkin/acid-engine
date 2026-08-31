@@ -2,9 +2,12 @@ import pytest
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
+from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.graph.model import DependencyGraph
+from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.module.composite import CompositeModule, CompositeResult
 from acid_engine.level3.module.leaf import LeafModule
+from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import lock_for_script
 
@@ -22,7 +25,34 @@ def make_leaf(name: str, func) -> LeafModule:
     return LeafModule(module_id=name, script=script)
 
 
-def test_composite_with_one_node():
+def lock_graph(composite: CompositeModule) -> tuple[InterfaceContract, PlanLock]:
+    hashes = {
+        mod.script.name: mod.script.content_hash
+        for mod in composite.modules.values()
+        if isinstance(mod, LeafModule)
+    }
+    first = next(
+        mod.script for mod in composite.modules.values() if isinstance(mod, LeafModule)
+    )
+    iface = InterfaceContract(
+        contract_id=first.contract_id,
+        version=first.version,
+        inputs={"x": first.input_type},
+        outputs={"y": first.output_type},
+        constraints=first.specification.policy.to_canonical_dict(),
+        module_hashes=hashes,
+    )
+    plan = PlanLock.create(
+        plan_id="test-composite",
+        interface_contract_hash=iface.content_hash,
+        resolved_policies=iface.constraints,
+        module_hashes=hashes,
+        execution_mode=ExecutionMode.NORMAL,
+    )
+    return iface, plan
+
+
+def test_composite_without_plan_is_skipped():
     leaf = make_leaf("x2", lambda x: x * 2)
     g = DependencyGraph()
     g.add_node("x2", payload=leaf)
@@ -36,6 +66,26 @@ def test_composite_with_one_node():
         output_node="x2",
     )
     result = composite.execute(5)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert result.data is None
+    assert "self-lock" in result.conformance.message.lower()
+
+
+def test_composite_with_one_node():
+    leaf = make_leaf("x2", lambda x: x * 2)
+    g = DependencyGraph()
+    g.add_node("x2", payload=leaf)
+    composite = CompositeModule(
+        module_id="comp",
+        graph=g,
+        modules={"x2": leaf},
+        contract_id=ContractId("test", "comp"),
+        version=Version(1, 0, 0),
+        input_node="x2",
+        output_node="x2",
+    )
+    iface, plan = lock_graph(composite)
+    result = composite.execute(5, plan=plan, iface=iface)
     assert isinstance(result, CompositeResult)
     assert result.ok
     assert result.data == 10
@@ -60,7 +110,8 @@ def test_composite_two_nodes():
         input_node="plus1",
         output_node="times2",
     )
-    result = composite.execute(3)
+    iface, plan = lock_graph(composite)
+    result = composite.execute(3, plan=plan, iface=iface)
     assert result.ok
     assert result.data == 8
     assert len(result.observations) == 2
@@ -106,8 +157,9 @@ def test_composite_fan_in_forbidden():
         input_node="a",
         output_node="c",
     )
+    iface, plan = lock_graph(composite)
     with pytest.raises(RuntimeError, match="Fan-in"):
-        composite.execute(5)
+        composite.execute(5, plan=plan, iface=iface)
 
 
 def test_composite_external_plan_rejects_swapped_leaf():
