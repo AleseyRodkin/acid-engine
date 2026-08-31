@@ -15,6 +15,44 @@ def _run_cli(*args):
 def test_cli_help():
     result = _run_cli("--help")
     assert result.returncode == 0
+    assert "judge" in result.stdout
+    assert "lock" in result.stdout
+
+
+def test_cli_judge_help():
+    result = _run_cli("judge", "--help")
+    assert result.returncode == 0
+    assert "--script" in result.stdout
+    assert "--plan" in result.stdout
+
+
+def test_cli_judge_requires_script():
+    result = _run_cli("judge", "--input", "1")
+    assert result.returncode != 0
+    assert "ERROR" in result.stdout
+
+
+def test_cli_judge_without_plan_is_skipped():
+    script_code = '''from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Specification, Policy
+from acid_engine.level3.script.module import ScriptModule
+script = ScriptModule(
+    contract_id=ContractId("demo", "inc"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy(pure=True, max_latency_ms=100)),
+    input_type="int",
+    output_type="int",
+    implementation=lambda x: x + 1,
+    name="inc",
+)
+'''
+    with tempfile.TemporaryDirectory() as tmp:
+        script_file = os.path.join(tmp, "inc.py")
+        with open(script_file, "w") as f:
+            f.write(script_code)
+        result = _run_cli("judge", "--script", script_file, "--input", "5")
+        assert result.returncode != 0
+        assert "SKIPPED" in result.stdout
 
 def test_cli_init():
     with tempfile.TemporaryDirectory() as tmp:

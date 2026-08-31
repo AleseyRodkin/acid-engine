@@ -92,3 +92,29 @@ def test_cli_run_bones_json():
     assert result.returncode == 0, result.stderr + result.stdout
     assert "PASS" in result.stdout
     assert "output: {'n': 4}" in result.stdout
+
+
+def test_cli_judge_bones_json():
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "acid_engine",
+            "judge",
+            "--script",
+            str(BONES / "n_plus_one.json"),
+            "--plan",
+            str(BONES / "n_plus_one.plan.json"),
+            "--input",
+            '{"n": 3}',
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(ROOT),
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
+    assert "PASS" in result.stdout
+    assert "output: {'n': 4}" in result.stdout

@@ -192,8 +192,31 @@ def cmd_run(args: argparse.Namespace) -> None:
         ws_main()
 
 
+def cmd_judge(args: argparse.Namespace) -> None:
+    """Публичный вход: bind до run + вердикт. То же, что run --script --plan."""
+    if not args.script:
+        print("ERROR: lock not passed — judge requires --script")
+        sys.exit(1)
+    cmd_run(args)
+
+
+def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
+    parser.add_argument(
+        "--plan",
+        help="JSON plan.lock (acid_engine lock --script). Без него SKIPPED",
+    )
+    parser.add_argument(
+        "--input",
+        help="Вход: int, JSON (напр. '[1,2,3]') или строка. По умолчанию 3",
+    )
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="acid-engine", description="AcidEngine CLI")
+    parser = argparse.ArgumentParser(
+        prog="acid-engine",
+        description="Acid Judge: lock body, judge observation. receipt — C1.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     p_init = subparsers.add_parser("init", help="Создать шаблон ScriptModule (.py)")
@@ -206,19 +229,18 @@ def main() -> None:
     p_val.add_argument("command", nargs="*", help="Команда для проверки")
     p_val.set_defaults(func=cmd_validate)
 
-    p_run = subparsers.add_parser("run", help="Запустить скрипт или walking skeleton")
-    p_run.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
-    p_run.add_argument(
-        "--plan",
-        help="JSON plan.lock (acid_engine lock --script). Без него SKIPPED",
-    )
-    p_run.add_argument(
-        "--input",
-        help='Вход: int, JSON (напр. \'[1,2,3]\') или строка. По умолчанию 3',
-    )
+    p_run = subparsers.add_parser("run", help="Скрипт через plan.lock или walking skeleton")
+    _add_script_plan_input(p_run)
     p_run.set_defaults(func=cmd_run)
 
-    p_lock = subparsers.add_parser("lock", help="Заморозить plan.lock тела в JSON")
+    p_judge = subparsers.add_parser(
+        "judge",
+        help="Bind plan.lock до run + вердикт (алиас run --script --plan)",
+    )
+    _add_script_plan_input(p_judge)
+    p_judge.set_defaults(func=cmd_judge)
+
+    p_lock = subparsers.add_parser("lock", help="Замок на тело (JSON plan.lock)")
     p_lock.add_argument("--script", required=True, help="Путь к .py или .json blank")
     p_lock.add_argument("--out", required=True, help="Куда писать JSON замка")
     p_lock.set_defaults(func=cmd_lock)

@@ -1,7 +1,7 @@
 # AcidEngine — состояние
 
 **Репозиторий:** https://github.com/AleseyRodkin/acid-engine-2.0
-Закон: METHOD.md. Очередь: PLAN.md.
+Закон: METHOD.md. Очередь костей: PLAN.md. Очередь продукта: COMMERCIAL.md.
 
 ## Снимок 31.08.2026
 
@@ -18,6 +18,7 @@
 27. Worker: `acid_engine.worker` identify/run, без PASS/FAIL.
 28. Канон AST — `unparse`. Витринный `n_plus_one.plan.json` = живое тело.
     cargo ≥ 1.75, lockfile v3. Rust verdict: type/status/pure/latency.
+29. C0: README Acid Judge; CLI `judge` = `run --script --plan`. Receipt нет.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

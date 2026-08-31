@@ -1,37 +1,40 @@
-# AcidEngine 0.1.0
+# Acid Judge
 
-Жёсткий gate для шага под контрактом: тело бежит, судья сравнивает факт с обещанием.
+Агент вызовет только залоченное тело; вердикт по наблюдению.
 
-Код пишет человек или ИИ. Арбитр — проверяемый контракт, не модель.
-Система не имеет права утверждать больше, чем наблюдала.
-`Observed ≠ Proven`.
+Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`.
+Пакет **0.1.0**. Ядро MIT.
 
-Это не операционная система разработки, не SaaS, не self-hosting
-и не замена Pydantic/Pandera. Версия пакета — **0.1.0** (не «v3»).
+## Три команды
 
-Закон, который исполняет рантайм: [METHOD.md](METHOD.md).
-Очередь костей: [PLAN.md](PLAN.md). Лицензия: [LICENSE](LICENSE) (MIT).
-
-## Что есть
-
-Четыре кости + судья: Contract, Container, Script, Graph; Judge.
-
-- Хеш `ScriptModule` покрывает декларацию **и тело** (AST, иначе байткод).
-- `judge_script` → `execute_plan` / `plan.lock` **до** run. Нет исполнения → не PASS.
-- Мало фактов → SKIPPED. Подмена тела → FAIL, fn не вызывается.
-- `bool ≠ int`. `pure=True` + эффекты → FAIL. Пустые effects ≠ proven pure.
-- CLI: `.py` (переменная `script`) или `.json` blank. Markdown не парсится.
-  `run --script` без `--plan` → SKIPPED. `lock --script` пишет JSON замка.
-- Фикстура: `examples/bones/` `{n: 3}` → `{n: 4}`.
-- Пайплайны: `examples/commerce/order_amounts.py`, `sku_normalize.py`.
-- Rust `rust/acid-judge`: с `worker` — bind → `python -m acid_engine.worker` → verdict.
-  Без `worker` — зеркало по observation. cargo ≥ 1.75, lockfile v3.
-
-Python ≥ 3.11, **runtime-зависимостей нет**.
+| Команда | Роль |
+|---|---|
+| `lock` | замок на тело |
+| `judge` | bind до run + вердикт |
+| `receipt` | Observation + PASS/FAIL/SKIPPED — **C1, ещё нет** |
 
 ```bash
-PYTHONPATH=. python -m pytest tests -q --ignore=tests/property
-PYTHONPATH=. python -m acid_engine run --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
+PYTHONPATH=. python -m acid_engine lock --script FILE --out LOCK.json
+PYTHONPATH=. python -m acid_engine judge --script FILE --plan LOCK.json --input '...'
+```
+
+`judge` = нынешний `run --script --plan`. Без `--plan` → SKIPPED, не PASS.
+
+Витрина:
+
+```bash
+PYTHONPATH=. python -m acid_engine lock --help
+PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
+```
+
+Коротко, почему не PASS: тело не то / не было исполнения / pure но effects / тип не совпал / замок не передан.
+
+Закон рантайма: [METHOD.md](METHOD.md). Кости 0.1: [PLAN.md](PLAN.md). Очередь продукта: [COMMERCIAL.md](COMMERCIAL.md). Лицензия: [LICENSE](LICENSE).
+
+## Проверки
+
+```bash
+PYTHONPATH=. python -m pytest tests -q --ignore=tests/property --ignore=tests/unit/test_async.py
 cargo test --manifest-path rust/acid-judge/Cargo.toml
 ```
 
@@ -42,7 +45,13 @@ ruff check acid_engine tests examples
 mypy acid_engine
 ```
 
-## Чего в 0.1 нет
+## Что держит gate
 
-Профили Library/CLI/SaaS/Embedded, DSL, AI-context, aggregator,
-`validate spec.md`, формальная верификация, `proven_pure`, WASM, JS-тело, STOL.
+- Хеш = декларация + канон тела (`ast.unparse`, иначе байткод). `ArtifactRef` не identity.
+- `plan.lock` до run. Несовпадение → FAIL, тело не запускается.
+- Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`.
+- Worker не пишет PASS/FAIL. `judge_script` без plan сам вешает замок (библиотека, не CLI).
+
+## Чего нет в 0.1
+
+`receipt`, GitHub Action, хуки, подпись, SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.
