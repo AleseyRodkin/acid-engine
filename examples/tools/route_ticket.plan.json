@@ -1,0 +1,37 @@
+{
+  "plan_id": "lock-route_ticket",
+  "interface_contract_hash": "a394cfe77b27dd33e679ca00ab57a1e047736343fdf668cef573b21a7633c0d6",
+  "resolved_policies": {
+    "pure": true,
+    "max_latency_ms": 200.0,
+    "history": "none",
+    "network": "forbidden",
+    "security": "restricted",
+    "quality_gate": null
+  },
+  "module_hashes": {
+    "route_ticket": "0dcaf219d79334fe1429180163154090a339be6e089f7f477422da76cc4add78"
+  },
+  "execution_mode": "normal",
+  "iface": {
+    "contract_id": "tools/route_ticket",
+    "version": "0.1.0",
+    "inputs": {
+      "value": "dict"
+    },
+    "outputs": {
+      "result": "dict"
+    },
+    "constraints": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "module_hashes": {
+      "route_ticket": "0dcaf219d79334fe1429180163154090a339be6e089f7f477422da76cc4add78"
+    }
+  }
+}

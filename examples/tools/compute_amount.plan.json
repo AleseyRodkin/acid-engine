@@ -1,0 +1,37 @@
+{
+  "plan_id": "lock-compute_amount",
+  "interface_contract_hash": "24781415fb974f3481cecee47be218460034d996f5c254d91c3820a125cfb21c",
+  "resolved_policies": {
+    "pure": true,
+    "max_latency_ms": 200.0,
+    "history": "none",
+    "network": "forbidden",
+    "security": "restricted",
+    "quality_gate": null
+  },
+  "module_hashes": {
+    "compute_amount": "1811469b80482fa625630567b801d52a1d40c2432676a4b66f16279ec21178fb"
+  },
+  "execution_mode": "normal",
+  "iface": {
+    "contract_id": "tools/compute_amount",
+    "version": "0.1.0",
+    "inputs": {
+      "value": "dict"
+    },
+    "outputs": {
+      "result": "dict"
+    },
+    "constraints": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "module_hashes": {
+      "compute_amount": "1811469b80482fa625630567b801d52a1d40c2432676a4b66f16279ec21178fb"
+    }
+  }
+}

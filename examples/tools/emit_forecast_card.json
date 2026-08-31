@@ -1,0 +1,30 @@
+{
+  "schema": "acid.blank.script.v1",
+  "kind": "script",
+  "contract_id": "tools/emit_forecast_card",
+  "version": "0.1.0",
+  "name": "emit_forecast_card",
+  "input_type": "dict",
+  "output_type": "dict",
+  "specification": {
+    "parameters": {"values": {}},
+    "policy": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "implementation_requirements": {
+      "required_methods": [],
+      "required_exports": [],
+      "required_signatures": []
+    }
+  },
+  "implementation": {
+    "language": "python",
+    "file": "emit_forecast_card.py",
+    "entry": "emit_forecast_card"
+  }
+}

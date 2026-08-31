@@ -54,6 +54,8 @@ mypy acid_engine
 - Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`.
 - Worker не пишет PASS/FAIL. `judge_script` без plan сам вешает замок (библиотека, не CLI).
 
+Пять tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — в [locks/index.json](locks/index.json) вместе с bones.
+
 ## Чего нет в 0.1
 
 Хуки, подпись receipt, hosted SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.

@@ -1,0 +1,37 @@
+{
+  "plan_id": "lock-normalize_id",
+  "interface_contract_hash": "d60a033db1c5922bfeb28db1e35a7390770b56da0cfa90da35ee04afa057c95b",
+  "resolved_policies": {
+    "pure": true,
+    "max_latency_ms": 200.0,
+    "history": "none",
+    "network": "forbidden",
+    "security": "restricted",
+    "quality_gate": null
+  },
+  "module_hashes": {
+    "normalize_id": "203527a881244869515b557796b76f29f735cd42a56433387377b152dde7303e"
+  },
+  "execution_mode": "normal",
+  "iface": {
+    "contract_id": "tools/normalize_id",
+    "version": "0.1.0",
+    "inputs": {
+      "value": "dict"
+    },
+    "outputs": {
+      "result": "dict"
+    },
+    "constraints": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "module_hashes": {
+      "normalize_id": "203527a881244869515b557796b76f29f735cd42a56433387377b152dde7303e"
+    }
+  }
+}

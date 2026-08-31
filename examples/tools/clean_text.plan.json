@@ -1,0 +1,37 @@
+{
+  "plan_id": "lock-clean_text",
+  "interface_contract_hash": "65c58f3690ec22a84262111ae66d1bcf8e001e0e47599a10f0ea5f34b889ea3a",
+  "resolved_policies": {
+    "pure": true,
+    "max_latency_ms": 200.0,
+    "history": "none",
+    "network": "forbidden",
+    "security": "restricted",
+    "quality_gate": null
+  },
+  "module_hashes": {
+    "clean_text": "4ef73e683ff188cd709c29deed42fc0f4188dd8f1f085d6bd463b56716c1fca6"
+  },
+  "execution_mode": "normal",
+  "iface": {
+    "contract_id": "tools/clean_text",
+    "version": "0.1.0",
+    "inputs": {
+      "value": "dict"
+    },
+    "outputs": {
+      "result": "dict"
+    },
+    "constraints": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "module_hashes": {
+      "clean_text": "4ef73e683ff188cd709c29deed42fc0f4188dd8f1f085d6bd463b56716c1fca6"
+    }
+  }
+}

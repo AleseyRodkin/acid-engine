@@ -21,6 +21,7 @@
 29. C0: README Acid Judge; CLI `judge` = `run --script --plan`. Receipt нет.
 30. C1: `acid_engine/receipt.py`, `judge --receipt`. Без proven_pure.
 31. C2: `locks/index.json` + `.github/workflows/acid-judge.yml`. Без plan не судит.
+32. C3: пять tools в `examples/tools/` + plan.json; индекс bones+tools.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

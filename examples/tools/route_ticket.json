@@ -1,0 +1,30 @@
+{
+  "schema": "acid.blank.script.v1",
+  "kind": "script",
+  "contract_id": "tools/route_ticket",
+  "version": "0.1.0",
+  "name": "route_ticket",
+  "input_type": "dict",
+  "output_type": "dict",
+  "specification": {
+    "parameters": {"values": {}},
+    "policy": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "implementation_requirements": {
+      "required_methods": [],
+      "required_exports": [],
+      "required_signatures": []
+    }
+  },
+  "implementation": {
+    "language": "python",
+    "file": "route_ticket.py",
+    "entry": "route_ticket"
+  }
+}
