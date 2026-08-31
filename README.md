@@ -11,7 +11,7 @@ Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS
 |---|---|
 | `lock` | замок на тело |
 | `judge` | bind до run + вердикт |
-| `receipt` | Observation + PASS/FAIL/SKIPPED — **C1, ещё нет** |
+| `receipt` | `judge … --receipt FILE` — Observation + PASS/FAIL/SKIPPED, без `proven_pure` |
 
 ```bash
 PYTHONPATH=. python -m acid_engine lock --script FILE --out LOCK.json
@@ -24,7 +24,7 @@ PYTHONPATH=. python -m acid_engine judge --script FILE --plan LOCK.json --input 
 
 ```bash
 PYTHONPATH=. python -m acid_engine lock --help
-PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
+PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}' --receipt /tmp/bones.receipt.json
 ```
 
 Коротко, почему не PASS: тело не то / не было исполнения / pure но effects / тип не совпал / замок не передан.
@@ -54,4 +54,4 @@ mypy acid_engine
 
 ## Чего нет в 0.1
 
-`receipt`, GitHub Action, хуки, подпись, SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.
+GitHub Action, хуки, подпись receipt, SaaS, markdown-спеки, WASM, JS-тело, STOL, ценники.

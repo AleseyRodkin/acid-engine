@@ -173,7 +173,9 @@ def cmd_run(args: argparse.Namespace) -> None:
             skipped = ConformanceResult.skipped(
                 "CLI run --script without --plan is not a verdict (self-lock is tautology)"
             )
-            print(explain_result(skipped))
+            result = PipelineResult(conformance=skipped)
+            print(explain_result(result.conformance))
+            _maybe_write_receipt(args, script, input_val, result, plan=None)
             sys.exit(1)
         try:
             raw = json.loads(Path(args.plan).read_text(encoding="utf-8"))
@@ -181,15 +183,33 @@ def cmd_run(args: argparse.Namespace) -> None:
         except Exception as e:
             print(f"ERROR: Failed to load plan: {e}")
             sys.exit(1)
-        result: PipelineResult = judge_script(script, input_val, plan=plan, iface=iface)
+        result = judge_script(script, input_val, plan=plan, iface=iface)
         print(explain_result(result.conformance))
         print(f"output: {result.data}")
         print(f"plan.lock: {plan.content_hash[:16]}...")
+        _maybe_write_receipt(args, script, input_val, result, plan=plan)
         if not result.ok:
             sys.exit(1)
     else:
         from examples.walking_skeleton.run_x_plus_1 import main as ws_main
         ws_main()
+
+
+def _maybe_write_receipt(
+    args: argparse.Namespace,
+    script: Any,
+    input_val: Any,
+    result: Any,
+    plan: Any,
+) -> None:
+    path = getattr(args, "receipt", None)
+    if not path:
+        return
+    from acid_engine.receipt import build_receipt, write_receipt
+
+    payload = build_receipt(script, input_val, result, plan=plan)
+    write_receipt(path, payload)
+    print(f"receipt: {path}")
 
 
 def cmd_judge(args: argparse.Namespace) -> None:
@@ -210,12 +230,16 @@ def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
         "--input",
         help="Вход: int, JSON (напр. '[1,2,3]') или строка. По умолчанию 3",
     )
+    parser.add_argument(
+        "--receipt",
+        help="Куда писать receipt.json (факт + вердикт, без proven_pure)",
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="acid-engine",
-        description="Acid Judge: lock body, judge observation. receipt — C1.",
+        description="Acid Judge: lock, judge, receipt.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

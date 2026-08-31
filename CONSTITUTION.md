@@ -19,6 +19,7 @@
 28. Канон AST — `unparse`. Витринный `n_plus_one.plan.json` = живое тело.
     cargo ≥ 1.75, lockfile v3. Rust verdict: type/status/pure/latency.
 29. C0: README Acid Judge; CLI `judge` = `run --script --plan`. Receipt нет.
+30. C1: `acid_engine/receipt.py`, `judge --receipt`. Без proven_pure.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
 Без worker — зеркало observation. Worker не пишет вердикт.

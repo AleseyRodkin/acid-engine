@@ -36,8 +36,8 @@
 
 | Ф | Суть | Готово | Не делать |
 |---|---|---|---|
-| C0 | README + алиас `judge` | копипаста README зелёная | PyPI-ренейм, ценники |
-| C1 | `receipt.json` | файл без `proven_pure` | dashboard |
+| C0 | README + алиас `judge` | `4b87f13` копипаста зелёная | PyPI-ренейм, ценники |
+| C1 | `receipt.json` | `judge --receipt`; без `proven_pure` | dashboard |
 | C2 | GitHub Action + `locks/index.json` | PR с подменой тела красный | hosted SaaS |
 | C3 | 5 tools в `examples/tools/` | index на bones+tools | сущность «новость» в ядре |
 | C4 | один hook | deny при чужом хеше; pre ≠ PASS | оба harness сразу |

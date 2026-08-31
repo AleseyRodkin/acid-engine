@@ -60,6 +60,11 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `run --script` без `--plan` → SKIPPED (self-lock не вердикт).
 `judge` — алиас `run --script --plan`. Без `--script` не walking skeleton.
 `--plan` — JSON замка (`lock --script`). Markdown-спеки не парсятся.
+`judge --receipt FILE` пишет `acid.receipt.v1`: hashes, output, observation, verdict.
+Нет `proven_pure`, нет callable. Без `--plan` receipt всё равно пишется — статус SKIPPED.
+
+
+## Rust judge
 
 ## Rust judge
 
