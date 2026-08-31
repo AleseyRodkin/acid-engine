@@ -13,8 +13,10 @@ ARCHITECTURE.md не план (хвост «ОС» до сужения 21.08).
 
 ```text
 1 бланк → 2 ArtifactRef → 3 JSON-загрузчик → 4 тупая крышка →
-5 фикстура bones → 6 вход судьи → 7 Rust (позже) → 8 JS/WASM/STOL никогда сейчас
+5 фикстура bones → 6 вход судьи → 7 Rust-судья
 ```
+
+Очередь работ кончается на 7. Нет фазы «написать запрет в код».
 
 ## Форма продукта
 
@@ -62,7 +64,19 @@ STOL (лаборатория) — чужой проект: не стенд, не
 | 5 | `examples/bones/` dict n:3→n:4 + .json + integration | n_plus_one.py/.json; хеш JSON=callable |
 | 6 | `judge.py` фасад → `execute_plan` | judge_script; CLI и Pipeline через него |
 | 7 | Rust только после стабильных 1–3 | rust/acid-judge: bind+verdict; тот же status на bones/commerce |
-| 8 | Не делать: STOL, JS-тело, WASM, JSON Schema, proven_pure, SaaS, markdown parser | запрет |
+
+## Не делать (это не фаза и не код)
+
+Забор для следующего чата, не спринт. В репозиторий это не коммитится как фича.
+
+- STOL — чужой проект: не стенд, не фикстура, не пример
+- JS-тело, WASM — второй runtime
+- JSON Schema как канон identity
+- `proven_pure` (Observed ≠ Proven)
+- SaaS / self-hosting / «ОС разработки»
+- парсер markdown-спек
+
+Закон, который уже исполняет рантайм, живёт в METHOD.md. Этот список — чтобы не начать лишнее.
 
 ### Фаза 1 — детали
 

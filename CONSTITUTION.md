@@ -14,6 +14,6 @@
 23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
 24. Фаза 7: rust/acid-judge bind+verdict; тот же status на bones/commerce.
 
-Тесты: Python + `cargo test` в rust/acid-judge.
+Очередь костей 1–7 закрыта. «Фаза 8» — не работа: запрет в PLAN.md, не код.
 
-Не делать: Rust без команды, STOL, SaaS, веб-превью ядра.
+Не делать: STOL, JS/WASM, proven_pure, SaaS, markdown parser, веб-превью ядра.
