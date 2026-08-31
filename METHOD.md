@@ -141,7 +141,7 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `Composite.execute` возвращает `CompositeResult`: `data` + `observations` + `conformance`.
 Нет `conformance.ok` — не PASS.
 Внешний `plan`+`iface` — bind листьев к замку. Одно без другого — не исполнять.
-Без plan — self-lock листа (не замена чужого замка).
+Без plan — SKIPPED. Self-lock не вердикт. В том числе у Composite.
 
 ## CLI run
 
