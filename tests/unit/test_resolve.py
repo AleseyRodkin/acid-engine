@@ -132,3 +132,29 @@ def test_materialize_artifact_hash_equals_callable():
         got = materialize_script(only_ref)
         assert got.content_hash == native.content_hash
         assert callable(got.implementation)
+
+
+def test_lock_after_materialize_matches_callable_not_naked_ref():
+    from acid_engine.level3.script.resolve import materialize_script
+
+    def plus_one(x):
+        return x + 1
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "plus.py")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(BODY)
+        art = ArtifactRef(
+            language="python",
+            file=path,
+            entry="plus_one",
+            canon="ast",
+            body_hash="",
+        )
+        only_ref = _script(implementation=None, artifact=art)
+        native = _script(implementation=plus_one)
+        assert only_ref.content_hash != native.content_hash
+        _, plan = lock_for_script(only_ref)
+        frozen = materialize_script(only_ref)
+        assert frozen.content_hash == native.content_hash
+        assert plan.module_hashes[only_ref.name] == native.content_hash

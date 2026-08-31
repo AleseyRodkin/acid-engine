@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from acid_engine.level2.conformance import check_conformance, explain_result
+from acid_engine.level2.conformance import ConformanceResult, check_conformance, explain_result
 from acid_engine.level2.specification import Policy
 from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
@@ -140,6 +140,22 @@ def cmd_validate(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_lock(args: argparse.Namespace) -> None:
+    """Заморозить plan.lock текущего тела в JSON. Не вердикт."""
+    try:
+        script = load_script_from_file(args.script)
+    except Exception as e:
+        print(f"ERROR: Failed to load script: {e}")
+        sys.exit(1)
+    from acid_engine.level3.script.runner import dump_script_lock
+
+    payload = dump_script_lock(script)
+    out = Path(args.out)
+    out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"plan.lock written: {out}")
+    print(f"plan.lock: {payload['interface_contract_hash'][:16]}...")
+
+
 def cmd_run(args: argparse.Namespace) -> None:
     """Walking skeleton или пользовательский скрипт через judge_script."""
     if args.script:
@@ -150,10 +166,22 @@ def cmd_run(args: argparse.Namespace) -> None:
             sys.exit(1)
         input_val = parse_cli_input(args.input, default=3)
         from acid_engine.judge import judge_script
-        from acid_engine.level3.script.runner import lock_for_script
+        from acid_engine.level3.pipeline import PipelineResult
+        from acid_engine.level3.script.runner import load_script_lock
 
-        result = judge_script(script, input_val)
-        _, plan = lock_for_script(script)
+        if not args.plan:
+            skipped = ConformanceResult.skipped(
+                "CLI run --script without --plan is not a verdict (self-lock is tautology)"
+            )
+            print(explain_result(skipped))
+            sys.exit(1)
+        try:
+            raw = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+            iface, plan = load_script_lock(raw)
+        except Exception as e:
+            print(f"ERROR: Failed to load plan: {e}")
+            sys.exit(1)
+        result: PipelineResult = judge_script(script, input_val, plan=plan, iface=iface)
         print(explain_result(result.conformance))
         print(f"output: {result.data}")
         print(f"plan.lock: {plan.content_hash[:16]}...")
@@ -181,10 +209,19 @@ def main() -> None:
     p_run = subparsers.add_parser("run", help="Запустить скрипт или walking skeleton")
     p_run.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
     p_run.add_argument(
+        "--plan",
+        help="JSON plan.lock (acid_engine lock --script). Без него SKIPPED",
+    )
+    p_run.add_argument(
         "--input",
         help='Вход: int, JSON (напр. \'[1,2,3]\') или строка. По умолчанию 3',
     )
     p_run.set_defaults(func=cmd_run)
+
+    p_lock = subparsers.add_parser("lock", help="Заморозить plan.lock тела в JSON")
+    p_lock.add_argument("--script", required=True, help="Путь к .py или .json blank")
+    p_lock.add_argument("--out", required=True, help="Куда писать JSON замка")
+    p_lock.set_defaults(func=cmd_lock)
 
     args = parser.parse_args()
     args.func(args)

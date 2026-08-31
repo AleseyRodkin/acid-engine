@@ -154,6 +154,13 @@ def _const_canon(value: Any) -> Any:
     return {"kind": "repr", "type": type(value).__name__, "repr": repr(value)}
 
 
+def implementation_identity(fn: Callable[..., Any] | None) -> Any:
+    """Канон тела для identity. Нет callable — missing. Ссылка сюда не входит."""
+    if fn is None:
+        return {"kind": "missing"}
+    return canonical_implementation(fn)
+
+
 def _jsonable(value: Any, seen: set[int]) -> Any:
     if isinstance(value, (bool, int, float, str)) or value is None:
         return value

@@ -58,6 +58,7 @@ def test_json_and_py_same_hash_and_run():
 def test_cli_run_bones_json():
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)
+    plan = BONES / "n_plus_one.plan.json"
     result = subprocess.run(
         [
             sys.executable,
@@ -66,6 +67,8 @@ def test_cli_run_bones_json():
             "run",
             "--script",
             str(BONES / "n_plus_one.json"),
+            "--plan",
+            str(plan),
             "--input",
             '{"n": 3}',
         ],

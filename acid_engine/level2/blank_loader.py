@@ -88,7 +88,7 @@ def script_from_authoring_dict(
     body_hash = str(impl_raw.get("body_hash") or "")
     canon = str(impl_raw.get("canon") or "ast")
     if canon not in CANON_KINDS:
-        canon = "opaque"
+        raise ValueError(f"canon must be one of {sorted(CANON_KINDS)}, got {canon!r}")
 
     path = Path(file_s)
     if not path.is_absolute() and base_dir is not None:

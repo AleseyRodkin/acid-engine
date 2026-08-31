@@ -12,8 +12,10 @@
 1–21. Контур до `judge_script` (хеш тела, SKIPPED, plan.lock, bones, JSON blank).
 22. Аудит: plan+iface вместе; obs.status в gate; Composite внешний lock.
 23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
-24. Фаза 7: rust/acid-judge bind+verdict; тот же status на bones/commerce.
+24. `rust/acid-judge` bind+verdict (зеркало, не worker).
+25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
 
-Очередь костей 1–7 закрыта. «Фаза 8» — не работа: запрет в PLAN.md, не код.
+Фазы 1–6 закрыты. Фаза 7 не закрыта: бинарник не запускает Python-рабочего
+и не является арбитром снаружи процесса.
 
 Не делать: STOL, JS/WASM, proven_pure, SaaS, markdown parser, веб-превью ядра.

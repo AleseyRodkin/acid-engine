@@ -1,0 +1,37 @@
+{
+  "plan_id": "lock-n_plus_one",
+  "interface_contract_hash": "0408644fe06fb611e7b6672b5251c24940ad52452311a531e2faa0a3bbd859a9",
+  "resolved_policies": {
+    "pure": true,
+    "max_latency_ms": 200.0,
+    "history": "none",
+    "network": "forbidden",
+    "security": "restricted",
+    "quality_gate": null
+  },
+  "module_hashes": {
+    "n_plus_one": "cffe04f538e4f3ac0060b56a45a18bed3e794ea34bb4c58c7f0af17f24606312"
+  },
+  "execution_mode": "normal",
+  "iface": {
+    "contract_id": "bones/n_plus_one",
+    "version": "0.1.0",
+    "inputs": {
+      "value": "dict"
+    },
+    "outputs": {
+      "result": "dict"
+    },
+    "constraints": {
+      "pure": true,
+      "max_latency_ms": 200.0,
+      "history": "none",
+      "network": "forbidden",
+      "security": "restricted",
+      "quality_gate": null
+    },
+    "module_hashes": {
+      "n_plus_one": "cffe04f538e4f3ac0060b56a45a18bed3e794ea34bb4c58c7f0af17f24606312"
+    }
+  }
+}

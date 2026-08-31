@@ -45,8 +45,20 @@ script = ScriptModule(
     try:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(root)
+        plan = path + ".plan.json"
+        lock = subprocess.run(
+            [sys.executable, "-m", "acid_engine", "lock", "--script", path, "--out", plan],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=str(root),
+        )
+        assert lock.returncode == 0, lock.stderr + lock.stdout
         result = subprocess.run(
-            [sys.executable, "-m", "acid_engine", "run", "--script", path, "--input", "[10, 20, 12]"],
+            [
+                sys.executable, "-m", "acid_engine", "run",
+                "--script", path, "--plan", plan, "--input", "[10, 20, 12]",
+            ],
             capture_output=True,
             text=True,
             env=env,

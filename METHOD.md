@@ -28,7 +28,10 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 Замыкания и defaults входят в хеш: они часть того, что бежит.
 Разное тело → другой хеш. Подмена `x+1` на `x+100` при той же декларации
 ломает `content_hash` и `plan.lock`.
-После резолва (`materialize_script`) identity — канон тела fn, не dict ссылки.
+Канон тела один: callable. `ArtifactRef` — локатор, не identity.
+Нет callable → `implementation` в identity = `{kind: missing}`.
+После резолва (`materialize_script`) identity — канон тела fn.
+Замок снимать после materialize. Dict ссылки в хеш не входит.
 
 ## Наблюдение
 
@@ -53,13 +56,18 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 `run --script` — через `judge_script` → `execute_plan`.
 `run --script file.py` — грузит переменную `script` (`ScriptModule`) и исполняет.
 `validate` принимает `.py` с переменной `contract`. Markdown-спеки не парсятся.
-`judge_script`: plan и iface только вместе, иначе SKIPPED. Без обоих — замок на загруженное тело.
+`judge_script`: plan и iface только вместе, иначе SKIPPED. Без обоих — замок на загруженное тело (библиотека).
+`run --script` без `--plan` → SKIPPED (self-lock не вердикт).
+`--plan` — JSON замка (`lock --script`). Markdown-спеки не парсятся.
 
 ## Rust judge
 
 Один вход: bind `plan.module_hashes` ↔ `script_hash`, затем verdict по observation.
 Те же статусы PASS/FAIL/SKIPPED. Нет observation после bind → не PASS.
 Не runtime и не WASM. Тело Python не исполняет.
+Это зеркало вердикта, не арбитр снаружи процесса. Фаза 7 не закрыта.
+cargo ≥ 1.78 (lockfile v4).
+
 
 
 ## Типы
@@ -117,8 +125,9 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 
 ## CLI run
 
-`run --script` идёт через `judge_script` / `plan.lock` на тело загруженного скрипта.
+`run --script` без `--plan` не PASS. С `--plan` — `judge_script` / замороженный lock.
 Не обходит lock прямым `run_script`.
+`lock --script` пишет JSON замка, это не вердикт.
 
 ## History
 

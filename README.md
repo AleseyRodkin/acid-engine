@@ -21,15 +21,17 @@
 - Мало фактов → SKIPPED. Подмена тела → FAIL, fn не вызывается.
 - `bool ≠ int`. `pure=True` + эффекты → FAIL. Пустые effects ≠ proven pure.
 - CLI: `.py` (переменная `script`) или `.json` blank. Markdown не парсится.
+  `run --script` без `--plan` → SKIPPED. `lock --script` пишет JSON замка.
 - Фикстура: `examples/bones/` `{n: 3}` → `{n: 4}`.
 - Пайплайны: `examples/commerce/order_amounts.py`, `sku_normalize.py`.
-- Опционально: Rust-судья `rust/acid-judge` — тот же PASS/FAIL/SKIPPED, тело не исполняет.
+- Rust `rust/acid-judge` — bind+verdict по готовому observation, тело не исполняет.
+  Фаза 7 не закрыта: это не арбитр снаружи процесса. cargo ≥ 1.78.
 
 Python ≥ 3.11, **runtime-зависимостей нет**.
 
 ```bash
 PYTHONPATH=. python -m pytest tests -q --ignore=tests/property
-PYTHONPATH=. python -m acid_engine run --script examples/bones/n_plus_one.json --input '{"n": 3}'
+PYTHONPATH=. python -m acid_engine run --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
 cargo test --manifest-path rust/acid-judge/Cargo.toml
 ```
 

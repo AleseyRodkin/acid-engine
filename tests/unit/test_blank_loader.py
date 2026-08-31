@@ -117,6 +117,19 @@ def test_unknown_json_key_rejected():
             assert "unknown key" in str(e)
 
 
+def test_unknown_canon_rejected_not_opaque():
+    with tempfile.TemporaryDirectory() as tmp:
+        _py, js = _write_pair(tmp)
+        data = json.loads(Path(js).read_text())
+        data["implementation"]["canon"] = "json-schema"
+        Path(js).write_text(json.dumps(data))
+        try:
+            load_script_blank(js)
+            assert False
+        except ValueError as e:
+            assert "canon" in str(e)
+
+
 def test_body_hash_mismatch_before_run():
     with tempfile.TemporaryDirectory() as tmp:
         _py, js = _write_pair(tmp)
@@ -136,8 +149,20 @@ def test_cli_run_json_script():
         _py, js = _write_pair(tmp)
         env = os.environ.copy()
         env["PYTHONPATH"] = str(root)
+        plan = Path(tmp) / "plus.plan.json"
+        lock = subprocess.run(
+            [sys.executable, "-m", "acid_engine", "lock", "--script", str(js), "--out", str(plan)],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=str(root),
+        )
+        assert lock.returncode == 0, lock.stderr + lock.stdout
         result = subprocess.run(
-            [sys.executable, "-m", "acid_engine", "run", "--script", str(js), "--input", "3"],
+            [
+                sys.executable, "-m", "acid_engine", "run",
+                "--script", str(js), "--plan", str(plan), "--input", "3",
+            ],
             capture_output=True,
             text=True,
             env=env,
@@ -146,3 +171,4 @@ def test_cli_run_json_script():
         assert result.returncode == 0, result.stderr + result.stdout
         assert "PASS" in result.stdout
         assert "output: 4" in result.stdout
+

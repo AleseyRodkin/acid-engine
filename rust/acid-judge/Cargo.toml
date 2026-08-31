@@ -2,7 +2,8 @@
 name = "acid-judge"
 version = "0.1.0"
 edition = "2021"
-description = "AcidEngine judge: bind plan.lock and verdict. Not a runtime."
+rust-version = "1.78"
+description = "AcidEngine verdict mirror: bind plan.lock then judge observation. Not a runtime, not phase 7 done."
 publish = false
 
 [dependencies]

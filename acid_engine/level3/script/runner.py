@@ -1,6 +1,7 @@
 """Исполнение по замороженному плану. plan.lock связывает тело реализации."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from acid_engine.level2.conformance import (
@@ -81,6 +82,64 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
         resolved_policies=iface.constraints,
         module_hashes=iface.module_hashes,
         execution_mode=ExecutionMode.NORMAL,
+    )
+    return iface, plan
+
+
+def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
+    """JSON-safe замок после materialize. Не тавтология CLI: файл хранится отдельно."""
+    iface, plan = lock_for_script(script)
+    return {
+        "plan_id": plan.plan_id,
+        "interface_contract_hash": plan.interface_contract_hash,
+        "resolved_policies": plan.resolved_policies,
+        "module_hashes": dict(plan.module_hashes),
+        "execution_mode": plan.execution_mode.value,
+        "iface": {
+            "contract_id": str(iface.contract_id),
+            "version": str(iface.version),
+            "inputs": dict(iface.inputs),
+            "outputs": dict(iface.outputs),
+            "constraints": dict(iface.constraints),
+            "module_hashes": dict(iface.module_hashes),
+        },
+    }
+
+
+def load_script_lock(data: Mapping[str, Any]) -> tuple[InterfaceContract, PlanLock]:
+    """Восстановить iface+plan из JSON замка. Без materialize текущего тела."""
+    from acid_engine.level2.identity import ContractId, Version
+    from acid_engine.level3.script.modes import ExecutionMode
+
+    raw = data.get("iface")
+    if not isinstance(raw, Mapping):
+        raise ValueError("lock JSON must contain iface object")
+    ver_s = str(raw.get("version") or "0.0.0")
+    label = ""
+    if "-" in ver_s:
+        ver_s, label = ver_s.split("-", 1)
+    nums = ver_s.split(".")
+    version = Version(
+        int(nums[0]) if nums else 0,
+        int(nums[1]) if len(nums) > 1 else 0,
+        int(nums[2]) if len(nums) > 2 else 0,
+        label,
+    )
+    iface = InterfaceContract(
+        contract_id=ContractId.parse(str(raw["contract_id"])),
+        version=version,
+        inputs=dict(raw.get("inputs") or {}),
+        outputs=dict(raw.get("outputs") or {}),
+        constraints=dict(raw.get("constraints") or {}),
+        module_hashes=dict(raw.get("module_hashes") or {}),
+    )
+    mode_raw = str(data.get("execution_mode") or "normal")
+    plan = PlanLock.create(
+        plan_id=str(data.get("plan_id") or "lock"),
+        interface_contract_hash=str(data["interface_contract_hash"]),
+        resolved_policies=dict(data.get("resolved_policies") or {}),
+        module_hashes=dict(data.get("module_hashes") or {}),
+        execution_mode=ExecutionMode(mode_raw),
     )
     return iface, plan
 

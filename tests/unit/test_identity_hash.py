@@ -88,3 +88,31 @@ def test_async_module_hash_includes_implementation():
         )
 
     assert make(plus_one).content_hash != make(plus_hundred).content_hash
+
+
+def test_unmaterialized_artifact_is_missing_not_ref():
+    """Ссылка не подменяет канон тела. Нет fn — missing, не dict ArtifactRef."""
+    from acid_engine.level3.script.artifact import ArtifactRef
+
+    art = ArtifactRef(
+        language="python",
+        file="somewhere.py",
+        entry="fn",
+        canon="ast",
+        body_hash="0" * 64,
+    )
+    missing = _script(None)
+    only_ref = ScriptModule(
+        contract_id=ContractId("test", "s"),
+        version=Version(1, 0, 0),
+        specification=Specification(),
+        input_type="int",
+        output_type="int",
+        implementation=None,
+        name="s",
+        artifact=art,
+    )
+    assert only_ref.content_hash == missing.content_hash
+    assert only_ref._identity_dict()["implementation"] == {"kind": "missing"}
+    assert only_ref._identity_dict()["implementation"] != art.to_canonical_dict()
+    assert only_ref.content_hash != _script(lambda x: x + 1).content_hash
