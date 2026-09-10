@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Contract-driven execution engine"
 requires-python = ">=3.11"
 license = {text = "MIT"}
+authors = [{name = "Rodkin Aleksey"}]
 dependencies = []
 
 [project.optional-dependencies]
