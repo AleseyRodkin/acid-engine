@@ -46,6 +46,8 @@ pub struct Request {
     #[serde(default)]
     pub worker_hash: Option<String>,
     #[serde(default)]
+    pub runtime_hashes: BTreeMap<String, String>,
+    #[serde(default)]
     pub max_latency_ms: Option<f64>,
 }
 
@@ -120,6 +122,9 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
         return Response::fail("worker.script is empty", "worker");
     }
     if let Some(pin) = pin_worker(req, worker) {
+        return pin;
+    }
+    if let Some(pin) = pin_runtime(req, worker) {
         return pin;
     }
     let ident = match spawn_worker(worker, "identify", None) {
@@ -244,6 +249,50 @@ fn pin_worker(req: &Request, worker: &WorkerSpec) -> Option<Response> {
         Ok(_) => Some(Response::fail("worker source hash mismatch", "worker_hash")),
         Err(e) => Some(Response::fail(e, "worker_hash")),
     }
+}
+
+const RUNTIME_PIN_PATHS: &[&str] = &[
+    "acid_engine/worker.py",
+    "acid_engine/level3/script/python_runtime.py",
+    "acid_engine/level3/script/runner.py",
+    "acid_engine/level2/implementation_canon.py",
+];
+
+fn pin_rel_ok(rel: &str) -> bool {
+    !rel.contains("..")
+        && !rel.contains('\0')
+        && rel.starts_with("acid_engine/")
+        && rel.ends_with(".py")
+}
+
+fn pin_runtime(req: &Request, worker: &WorkerSpec) -> Option<Response> {
+    if req.runtime_hashes.is_empty() {
+        return Some(Response::skipped("runtime not pinned"));
+    }
+    for rel in RUNTIME_PIN_PATHS {
+        if !req.runtime_hashes.contains_key(*rel) {
+            return Some(Response::skipped("runtime not pinned"));
+        }
+    }
+    let cwd = worker.cwd.as_deref().unwrap_or(".");
+    for (rel, want) in &req.runtime_hashes {
+        if !pin_rel_ok(rel) {
+            return Some(Response::fail("runtime path rejected", "runtime_hash"));
+        }
+        let path = Path::new(cwd).join(rel);
+        let expected = want.to_lowercase();
+        match sha256_file(&path) {
+            Ok(actual) if actual == expected => {}
+            Ok(_) => {
+                return Some(Response::fail(
+                    format!("runtime source hash mismatch: {rel}"),
+                    "runtime_hash",
+                ))
+            }
+            Err(e) => return Some(Response::fail(e, "runtime_hash")),
+        }
+    }
+    None
 }
 
 fn sha256_file(path: &Path) -> Result<String, String> {
@@ -590,5 +639,66 @@ mod tests {
         let _ = std::fs::remove_dir_all(&tmp);
         assert_eq!(r.status, "FAIL");
         assert_eq!(r.property.as_deref(), Some("worker_hash"));
+    }
+
+    #[test]
+    fn worker_hash_without_runtime_hashes_is_skipped() {
+        let tmp = std::env::temp_dir().join(format!("acid-worker-only-{}", std::process::id()));
+        let pkg = tmp.join("acid_engine");
+        std::fs::create_dir_all(&pkg).unwrap();
+        std::fs::write(pkg.join("worker.py"), b"print('worker')\n").unwrap();
+        let hex = sha256_file(&pkg.join("worker.py")).unwrap();
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some(hex),
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(tmp.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&tmp);
+        assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn runtime_hash_mismatch_fails_before_identify() {
+        let tmp = std::env::temp_dir().join(format!("acid-runtime-pin-{}", std::process::id()));
+        let files = [
+            "acid_engine/worker.py",
+            "acid_engine/level3/script/python_runtime.py",
+            "acid_engine/level3/script/runner.py",
+            "acid_engine/level2/implementation_canon.py",
+        ];
+        for rel in files {
+            let path = tmp.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"print('ok')\n").unwrap();
+        }
+        let worker_hex = sha256_file(&tmp.join("acid_engine/worker.py")).unwrap();
+        let mut runtime = BTreeMap::new();
+        for rel in files {
+            runtime.insert(rel.to_string(), sha256_file(&tmp.join(rel)).unwrap());
+        }
+        runtime.insert(
+            "acid_engine/level3/script/python_runtime.py".into(),
+            "0".repeat(64),
+        );
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some(worker_hex),
+            runtime_hashes: runtime,
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(tmp.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&tmp);
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("runtime_hash"));
     }
 }

@@ -228,13 +228,23 @@ def cmd_locks(args: argparse.Namespace) -> None:
         print(f"ERROR: index not found: {index_path}")
         sys.exit(1)
     raw = json.loads(index_path.read_text(encoding="utf-8"))
-    pinned = raw.get("worker_hash")
-    if pinned:
-        from acid_engine.worker import source_hash
+    from acid_engine.worker import RUNTIME_PIN_PATHS, runtime_hashes, source_hash
 
-        live = source_hash()
-        if str(pinned) != live:
-            print("[FAIL] worker_hash mismatch")
+    pinned = raw.get("worker_hash")
+    if not pinned:
+        print("[FAIL] worker_hash missing")
+        sys.exit(1)
+    if str(pinned) != source_hash():
+        print("[FAIL] worker_hash mismatch")
+        sys.exit(1)
+    pinned_rt = raw.get("runtime_hashes")
+    if not isinstance(pinned_rt, dict) or not pinned_rt:
+        print("[FAIL] runtime_hashes missing")
+        sys.exit(1)
+    live_rt = runtime_hashes()
+    for rel in RUNTIME_PIN_PATHS:
+        if pinned_rt.get(rel) != live_rt[rel]:
+            print(f"[FAIL] runtime_hashes mismatch: {rel}")
             sys.exit(1)
     entries = raw.get("entries")
     if not isinstance(entries, list) or not entries:

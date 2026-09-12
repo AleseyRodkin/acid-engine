@@ -7,5 +7,5 @@
 - **content_hash** — декларация + канон тела. `ArtifactRef` не входит.
 - **Observation** — факты прогона. Observed ≠ Proven.
 - **SKIPPED** — фактов мало, чтобы судить. Не PASS.
-- **toolchain** — `python_version` + `canon_kind` + `worker_hash` рядом с замком, не в identity.
+- **toolchain** — `python_version` + `canon_kind` + `worker_hash` + `runtime_hashes` рядом с замком, не в identity.
 - **supervisor** — бинарь `acid-judge`: bind → worker → verdict. Не канон тела.

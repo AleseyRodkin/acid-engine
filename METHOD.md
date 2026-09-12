@@ -73,8 +73,10 @@ Self-lock не вердикт. В том числе в библиотеке.
 
 Бинарь не считает хеш тела. Один канон — Python (`implementation_canon`).
 Один вход бинаря: нужен worker.
-До identify supervisor сверяет SHA-256 файла `acid_engine/worker.py` с `worker_hash` в запросе/замке.
-Нет `worker_hash` → SKIPPED. Несовпадение → FAIL. Хеш worker не входит в identity тела.
+До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
+Нет `worker_hash` или нет полного `runtime_hashes` → SKIPPED. Несовпадение → FAIL. Хеш рантайма не входит в identity тела.
+`locks --index` без `worker_hash` / `runtime_hashes` → FAIL, не fail-open.
+`judge_script` in-process не сверяет эти пины: он не вызывает worker.
 identify → bind → run worker → verdict.
 Нет worker → SKIPPED. Observation без worker — не вердикт.
 После run: status, output_type, pure, latency.
@@ -148,7 +150,7 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `run --script` без `--plan` не PASS. С `--plan` — `judge_script` / замороженный lock.
 Не обходит lock прямым `run_script`.
 `lock --script` пишет JSON замка, это не вердикт.
-В JSON замка рядом с identity (не в `content_hash`) — `toolchain.python_version`, `toolchain.canon_kind`, `toolchain.worker_hash`.
+В JSON замка рядом с identity (не в `content_hash`) — `toolchain.python_version`, `toolchain.canon_kind`, `toolchain.worker_hash`, `toolchain.runtime_hashes`.
 
 ## History
 

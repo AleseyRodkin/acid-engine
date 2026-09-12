@@ -1,6 +1,6 @@
 # Acid Judge
 
-Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит подмену worker.
+Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит файлы вне `runtime_hashes`.
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
@@ -15,8 +15,8 @@ Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS
 Не защищает от того, что делает само тело после PASS: нет изоляции fs/net/process.
 Не защищает обход через `bash` / любой shell вне `judge`.
 `pure=True` ловит только эффекты, которые runtime занёс в `effects_observed`.
-Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind` и `worker_hash`. Смена CPython может потребовать пересъёма `plan.json`.
-Supervisor сверяет SHA-256 `acid_engine/worker.py` с `worker_hash` до identify. Нет пина — SKIPPED. Несовпадение — FAIL.
+Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind`, `worker_hash` и `runtime_hashes`. Смена CPython может потребовать пересъёма `plan.json`.
+Supervisor сверяет SHA-256 контура (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` без пина — FAIL. In-process `judge` эти пины не смотрит.
 
 ## Три команды
 

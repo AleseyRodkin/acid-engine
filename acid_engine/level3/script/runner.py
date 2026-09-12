@@ -88,18 +88,19 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
     return iface, plan
 
 
-def lock_toolchain(script: ScriptModule) -> dict[str, str]:
-    """python_version + canon_kind рядом с замком. Не входят в identity и content_hash."""
+def lock_toolchain(script: ScriptModule) -> dict[str, Any]:
+    """python_version + canon_kind + runtime pins рядом с замком. Не входят в identity."""
     ident = implementation_identity(script.implementation)
     kind = "missing"
     if isinstance(ident, dict):
         kind = str(ident.get("kind") or "missing")
-    from acid_engine.worker import source_hash
+    from acid_engine.worker import runtime_hashes, source_hash
 
     return {
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "canon_kind": kind,
         "worker_hash": source_hash(),
+        "runtime_hashes": runtime_hashes(),
     }
 
 

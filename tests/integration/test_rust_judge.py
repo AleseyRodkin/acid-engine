@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from acid_engine.worker import source_hash
+from acid_engine.worker import runtime_hashes, source_hash
 from examples.bones.n_plus_one import build_script
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -91,6 +91,7 @@ def test_rust_worker_bones_pass():
         {
             "module_hashes": dict(plan["module_hashes"]),
             "worker_hash": source_hash(),
+            "runtime_hashes": runtime_hashes(),
             "worker": {
                 "python": sys.executable,
                 "script": str(BONES_JSON),
@@ -124,6 +125,7 @@ def test_rust_worker_swapped_lock_fail_not_run_pass():
         {
             "module_hashes": {"n_plus_one": "0" * 64},
             "worker_hash": source_hash(),
+            "runtime_hashes": runtime_hashes(),
             "worker": {
                 "python": sys.executable,
                 "script": str(BONES_JSON),

@@ -60,12 +60,16 @@ def test_locks_swapped_hash_fails():
 
 
 def test_locks_missing_plan_fails():
+    from acid_engine.worker import runtime_hashes, source_hash
+
     with tempfile.TemporaryDirectory() as tmp:
         idx = Path(tmp) / "index.json"
         idx.write_text(
             json.dumps(
                 {
                     "schema": "acid.locks.v1",
+                    "worker_hash": source_hash(),
+                    "runtime_hashes": runtime_hashes(),
                     "entries": [{"id": "x", "script": "a.json"}],
                 }
             ),

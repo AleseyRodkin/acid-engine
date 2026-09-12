@@ -14,14 +14,35 @@ from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level3.script.resolve import materialize_script
 
+RUNTIME_PIN_PATHS = (
+    "acid_engine/worker.py",
+    "acid_engine/level3/script/python_runtime.py",
+    "acid_engine/level3/script/runner.py",
+    "acid_engine/level2/implementation_canon.py",
+)
+
 
 def source_path() -> Path:
     return Path(__file__).resolve()
 
 
+def package_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
 def source_hash() -> str:
     """SHA-256 of this file's bytes. Pin for the supervisor, not identity of a tool body."""
     return hashlib.sha256(source_path().read_bytes()).hexdigest()
+
+
+def runtime_hashes(root: Path | None = None) -> dict[str, str]:
+    """SHA-256 of the imported judge contour. Not the whole package, not identity of a tool."""
+    base = root if root is not None else package_root()
+    out: dict[str, str] = {}
+    for rel in RUNTIME_PIN_PATHS:
+        path = base / rel
+        out[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return out
 
 
 def identify_script(script: ScriptModule) -> dict[str, Any]:

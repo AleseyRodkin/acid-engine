@@ -7,6 +7,7 @@ from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import dump_script_lock, load_script_lock, lock_for_script
+from acid_engine.worker import RUNTIME_PIN_PATHS, runtime_hashes, source_hash
 
 
 def _script():
@@ -27,10 +28,11 @@ def test_dump_includes_toolchain_outside_identity():
     tool = payload["toolchain"]
     assert tool["python_version"] == f"{sys.version_info.major}.{sys.version_info.minor}"
     assert tool["canon_kind"] in {"ast", "bytecode", "opaque", "partial"}
-    from acid_engine.worker import source_hash
-
     assert tool["worker_hash"] == source_hash()
     assert len(tool["worker_hash"]) == 64
+    live_rt = runtime_hashes()
+    assert tool["runtime_hashes"] == live_rt
+    assert set(tool["runtime_hashes"]) == set(RUNTIME_PIN_PATHS)
     iface, plan = lock_for_script(script)
     assert payload["module_hashes"] == dict(plan.module_hashes)
     assert payload["interface_contract_hash"] == plan.interface_contract_hash
