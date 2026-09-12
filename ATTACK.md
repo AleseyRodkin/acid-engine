@@ -71,4 +71,4 @@ Same class of miss as replacing `implementation_canon.py` on disk after the lock
 - Not MCP tool-description scanning.
 - Not a sandbox.
 - Not `proven_pure`.
-- Library `judge_script` without toolchain still does not pin the contour. The README command does.
+- `judge_script` without `toolchain` is SKIPPED, not PASS. Use `judge_script_from_lock`.

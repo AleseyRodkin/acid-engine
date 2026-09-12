@@ -190,7 +190,9 @@ def cmd_run(args: argparse.Namespace) -> None:
             _maybe_write_receipt(args, script, input_val, result, plan=plan)
             sys.exit(1)
         print("runtime: pinned")
-        result = judge_script(script, input_val, plan=plan, iface=iface)
+        result = judge_script(
+            script, input_val, plan=plan, iface=iface, toolchain=raw
+        )
         print(explain_result(result.conformance))
         print(f"output: {result.data}")
         print(f"plan.lock: {plan.content_hash[:16]}...")

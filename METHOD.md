@@ -77,7 +77,8 @@ Self-lock не вердикт. В том числе в библиотеке.
 Нет `worker_hash` или нет полного `runtime_hashes` → SKIPPED. Несовпадение → FAIL. Хеш рантайма не входит в identity тела.
 `locks --index` без `worker_hash` / `runtime_hashes` → FAIL, не fail-open.
 CLI `judge --plan` сверяет те же пины до run. Несовпадение → FAIL, тело не запускать.
-`judge_script` без toolchain (in-process API) пины не сверяет.
+`judge_script` без `toolchain` → SKIPPED (`runtime not pinned`). С `toolchain` без полного `runtime_hashes` → FAIL.
+`judge_script_from_lock` читает plan+iface+toolchain из JSON замка.
 identify → bind → run worker → verdict.
 Нет worker → SKIPPED. Observation без worker — не вердикт.
 После run: status, output_type, pure, latency.

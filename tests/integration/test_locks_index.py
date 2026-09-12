@@ -46,11 +46,13 @@ def test_index_bones_pass_and_swapped_plan_fails():
     script = materialize_script(load_script_from_file(ROOT / str(bones["script"])))
     raw = json.loads((ROOT / str(bones["plan"])).read_text(encoding="utf-8"))
     iface, plan = load_script_lock(raw)
-    ok = judge_script(script, bones["input"], plan=plan, iface=iface)
+    ok = judge_script(script, bones["input"], plan=plan, iface=iface, toolchain=raw)
     assert ok.ok
     raw["module_hashes"][script.name] = "0" * 64
     iface_bad, plan_bad = load_script_lock(raw)
-    bad = judge_script(script, bones["input"], plan=plan_bad, iface=iface_bad)
+    bad = judge_script(
+        script, bones["input"], plan=plan_bad, iface=iface_bad, toolchain=raw
+    )
     assert not bad.ok
     assert bad.failure is not None
     assert bad.failure.property_name == "module_hash"

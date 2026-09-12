@@ -34,7 +34,7 @@ def test_receipt_bones_pass():
     script = materialize_script(load_script_from_file(SCRIPT))
     raw = json.loads(PLAN.read_text(encoding="utf-8"))
     iface, plan = load_script_lock(raw)
-    result = judge_script(script, {"n": 3}, plan=plan, iface=iface)
+    result = judge_script(script, {"n": 3}, plan=plan, iface=iface, toolchain=raw)
     assert result.ok
     rec = build_receipt(script, {"n": 3}, result, plan=plan, timestamp="2026-08-31T00:00:00Z")
     assert rec["schema"] == SCHEMA
@@ -56,7 +56,7 @@ def test_receipt_swapped_plan_fail_module_hash():
     raw = json.loads(PLAN.read_text(encoding="utf-8"))
     raw["module_hashes"]["n_plus_one"] = "0" * 64
     iface, plan = load_script_lock(raw)
-    result = judge_script(script, {"n": 3}, plan=plan, iface=iface)
+    result = judge_script(script, {"n": 3}, plan=plan, iface=iface, toolchain=raw)
     assert not result.ok
     rec = build_receipt(script, {"n": 3}, result, plan=plan)
     assert rec["verdict"]["status"] == "FAIL"

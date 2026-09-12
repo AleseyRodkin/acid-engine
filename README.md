@@ -22,7 +22,7 @@ Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. 
 Не защищает обход через `bash` / любой shell вне `judge`.
 `pure=True` ловит только эффекты, которые runtime занёс в `effects_observed`.
 Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind`, `canon` (`python.ast.v1`), `worker_hash` и `runtime_hashes`. Смена CPython может потребовать пересъёма `plan.json`.
-Supervisor сверяет SHA-256 контура (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. Библиотечный `judge_script` без toolchain эти пины не смотрит.
+Supervisor сверяет SHA-256 контура (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
 
 ## Три команды
 

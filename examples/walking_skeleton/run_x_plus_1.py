@@ -21,6 +21,7 @@ from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
+from acid_engine.level3.script.runner import dump_script_lock
 
 
 def build_script() -> ScriptModule:
@@ -66,7 +67,9 @@ def main() -> None:
         execution_mode=ExecutionMode.NORMAL,
     )
 
-    result = judge_script(script, 3, plan=plan, iface=iface)
+    result = judge_script(
+        script, 3, plan=plan, iface=iface, toolchain=dump_script_lock(script)
+    )
 
     print("=== Walking Skeleton ===")
     print("input:  3")

@@ -1,6 +1,7 @@
 """Pipeline — замкнутый контур: контракт → execute_plan → conformance."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -48,11 +49,13 @@ class Pipeline:
         registry: Any | None = None,
         plan: PlanLock | None = None,
         iface: InterfaceContract | None = None,
+        toolchain: Mapping[str, Any] | None = None,
     ):
         self.contract = contract
         self.registry = registry
         self.plan = plan
         self.iface = iface
+        self.toolchain = toolchain
 
     def execute(self, input_data: Any) -> PipelineResult:
         from acid_engine.judge import judge_script
@@ -65,7 +68,11 @@ class Pipeline:
 
         if script is not None:
             return judge_script(
-                script, input_data, plan=self.plan, iface=self.iface
+                script,
+                input_data,
+                plan=self.plan,
+                iface=self.iface,
+                toolchain=self.toolchain,
             )
 
         if isinstance(self.contract, InterfaceContract):

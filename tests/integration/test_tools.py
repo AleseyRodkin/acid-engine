@@ -60,14 +60,16 @@ def test_tools_bool_is_not_int_and_unknown_queue():
 def test_tools_locked_pass_and_swap_fails():
     for name, incoming, expected in CASES:
         script, iface, plan = _load(name)
+        raw = json.loads((TOOLS / f"{name}.plan.json").read_text(encoding="utf-8"))
         assert plan.module_hashes[name] == script.content_hash
-        result = judge_script(script, incoming, plan=plan, iface=iface)
+        result = judge_script(script, incoming, plan=plan, iface=iface, toolchain=raw)
         assert result.ok, (name, result.conformance.message)
         assert result.data == expected
-        raw = json.loads((TOOLS / f"{name}.plan.json").read_text(encoding="utf-8"))
         raw["module_hashes"][name] = "0" * 64
         iface_bad, plan_bad = load_script_lock(raw)
-        bad = judge_script(script, incoming, plan=plan_bad, iface=iface_bad)
+        bad = judge_script(
+            script, incoming, plan=plan_bad, iface=iface_bad, toolchain=raw
+        )
         assert not bad.ok
         assert bad.failure is not None
         assert bad.failure.property_name == "module_hash"

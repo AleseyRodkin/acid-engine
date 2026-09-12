@@ -6,12 +6,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from acid_engine.judge import judge_script
+from acid_engine.judge import judge_script_from_lock
 from acid_engine.level2.conformance import explain_result
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.runner import lock_for_script
 
 
 def bump_n(data: dict) -> dict:
@@ -42,8 +41,8 @@ def build_script() -> ScriptModule:
 def main() -> None:
     script = build_script()
     incoming = {"n": 3}
-    iface, plan = lock_for_script(script)
-    result = judge_script(script, incoming, plan=plan, iface=iface)
+    plan_path = Path(__file__).with_name("n_plus_one.plan.json")
+    result = judge_script_from_lock(script, incoming, plan_path)
 
     expected = {"n": 4}
     print("=== bones: n_plus_one ===")
@@ -51,7 +50,7 @@ def main() -> None:
     print(f"output:   {result.data}")
     print(f"expected: {expected}")
     print(explain_result(result.conformance))
-    print(f"plan.lock: {plan.content_hash[:16]}...")
+    print(f"plan.lock: {plan_path.name}")
     assert result.ok, explain_result(result.conformance)
     assert result.data == expected
     assert not hasattr(result.observation, "proven_pure")

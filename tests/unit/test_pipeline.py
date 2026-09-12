@@ -5,6 +5,11 @@ from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.pipeline import Pipeline, PipelineResult
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import lock_for_script
+from acid_engine.worker import runtime_hashes, source_hash
+
+
+def _tc() -> dict:
+    return {"worker_hash": source_hash(), "runtime_hashes": runtime_hashes()}
 
 
 def _script(impl, name="increment"):
@@ -22,7 +27,7 @@ def _script(impl, name="increment"):
 def test_pipeline_with_script_module():
     script = _script(lambda x: x + 1)
     iface, plan = lock_for_script(script)
-    pipeline = Pipeline(script, plan=plan, iface=iface)
+    pipeline = Pipeline(script, plan=plan, iface=iface, toolchain=_tc())
     result = pipeline.execute(5)
     assert isinstance(result, PipelineResult)
     assert result.ok, f"Expected PASS, got {result.message}"
@@ -57,7 +62,7 @@ def test_pipeline_rejects_swapped_body_against_plan():
 
     bad = _script(swapped)
     iface, plan = lock_for_script(good)
-    result = Pipeline(bad, plan=plan, iface=iface).execute(1)
+    result = Pipeline(bad, plan=plan, iface=iface, toolchain=_tc()).execute(1)
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "module_hash"

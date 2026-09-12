@@ -63,6 +63,7 @@ def test_public_exports_are_the_gate():
     assert acid_engine.__all__ == [
         "__version__",
         "judge_script",
+        "judge_script_from_lock",
         "dump_script_lock",
         "lock_for_script",
     ]
