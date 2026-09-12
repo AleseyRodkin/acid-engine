@@ -60,6 +60,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
 
 Это bind по индексу, не PASS тела. Не песочница.
+Чужой CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke) — один tool, job `tamper` должен FAIL.
 
 `judge` без `--plan` → SKIPPED, не PASS. Скрытый `run` ещё вызывается, в `--help` его нет.
 

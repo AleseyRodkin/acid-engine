@@ -22,6 +22,7 @@ def test_readme_install_has_no_pythonpath():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "acid-judge lock --script FILE" in readme
     assert "uses: AleseyRodkin/acid-engine-2.0@" in readme
+    assert "acid-judge-smoke" in readme
     assert "pip install" in readme
     for line in readme.splitlines():
         if line.startswith("acid-judge ") or line.startswith("pip install"):
