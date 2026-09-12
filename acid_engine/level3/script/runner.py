@@ -94,9 +94,12 @@ def lock_toolchain(script: ScriptModule) -> dict[str, str]:
     kind = "missing"
     if isinstance(ident, dict):
         kind = str(ident.get("kind") or "missing")
+    from acid_engine.worker import source_hash
+
     return {
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "canon_kind": kind,
+        "worker_hash": source_hash(),
     }
 
 

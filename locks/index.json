@@ -1,41 +1,59 @@
 {
   "schema": "acid.locks.v1",
+  "worker_hash": "0c1571197efa58496aa875b0b74c3da83eac9ef88e502c85fc9848d56308273b",
   "entries": [
     {
       "id": "n_plus_one",
       "script": "examples/bones/n_plus_one.json",
       "plan": "examples/bones/n_plus_one.plan.json",
-      "input": {"n": 3}
+      "input": {
+        "n": 3
+      }
     },
     {
       "id": "clean_text",
       "script": "examples/tools/clean_text.json",
       "plan": "examples/tools/clean_text.plan.json",
-      "input": {"text": "  Hello   WORLD "}
+      "input": {
+        "text": "  Hello   WORLD "
+      }
     },
     {
       "id": "normalize_id",
       "script": "examples/tools/normalize_id.json",
       "plan": "examples/tools/normalize_id.plan.json",
-      "input": {"id": " sku-12a "}
+      "input": {
+        "id": " sku-12a "
+      }
     },
     {
       "id": "compute_amount",
       "script": "examples/tools/compute_amount.json",
       "plan": "examples/tools/compute_amount.plan.json",
-      "input": {"cents": 1999, "qty": 2}
+      "input": {
+        "cents": 1999,
+        "qty": 2
+      }
     },
     {
       "id": "route_ticket",
       "script": "examples/tools/route_ticket.json",
       "plan": "examples/tools/route_ticket.plan.json",
-      "input": {"queue": "billing"}
+      "input": {
+        "queue": "billing"
+      }
     },
     {
       "id": "emit_forecast_card",
       "script": "examples/tools/emit_forecast_card.json",
       "plan": "examples/tools/emit_forecast_card.plan.json",
-      "input": {"title": "alpha", "items": ["a", "b"]}
+      "input": {
+        "title": "alpha",
+        "items": [
+          "a",
+          "b"
+        ]
+      }
     }
   ]
 }

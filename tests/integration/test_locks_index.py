@@ -11,6 +11,7 @@ from acid_engine.cli import load_script_from_file
 from acid_engine.judge import judge_script
 from acid_engine.level3.script.resolve import materialize_script
 from acid_engine.level3.script.runner import load_script_lock
+from acid_engine.worker import source_hash
 from locks.ci_judge import INDEX, load_index
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,6 +29,12 @@ def test_index_entries_have_plan_and_live_hash():
         plan_raw = json.loads(plan_path.read_text(encoding="utf-8"))
         locked = plan_raw["module_hashes"][script.name]
         assert locked == script.content_hash, entry["id"]
+        assert plan_raw["toolchain"]["worker_hash"] == source_hash()
+
+
+def test_index_pins_live_worker():
+    raw = json.loads(INDEX.read_text(encoding="utf-8"))
+    assert raw["worker_hash"] == source_hash()
 
 
 def test_index_bones_pass_and_swapped_plan_fails():

@@ -73,6 +73,8 @@ Self-lock не вердикт. В том числе в библиотеке.
 
 Бинарь не считает хеш тела. Один канон — Python (`implementation_canon`).
 Один вход бинаря: нужен worker.
+До identify supervisor сверяет SHA-256 файла `acid_engine/worker.py` с `worker_hash` в запросе/замке.
+Нет `worker_hash` → SKIPPED. Несовпадение → FAIL. Хеш worker не входит в identity тела.
 identify → bind → run worker → verdict.
 Нет worker → SKIPPED. Observation без worker — не вердикт.
 После run: status, output_type, pure, latency.
@@ -146,7 +148,7 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `run --script` без `--plan` не PASS. С `--plan` — `judge_script` / замороженный lock.
 Не обходит lock прямым `run_script`.
 `lock --script` пишет JSON замка, это не вердикт.
-В JSON замка рядом с identity (не в `content_hash`) — `toolchain.python_version` и `toolchain.canon_kind`.
+В JSON замка рядом с identity (не в `content_hash`) — `toolchain.python_version`, `toolchain.canon_kind`, `toolchain.worker_hash`.
 
 ## History
 

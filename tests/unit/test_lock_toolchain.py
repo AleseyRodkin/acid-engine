@@ -27,6 +27,10 @@ def test_dump_includes_toolchain_outside_identity():
     tool = payload["toolchain"]
     assert tool["python_version"] == f"{sys.version_info.major}.{sys.version_info.minor}"
     assert tool["canon_kind"] in {"ast", "bytecode", "opaque", "partial"}
+    from acid_engine.worker import source_hash
+
+    assert tool["worker_hash"] == source_hash()
+    assert len(tool["worker_hash"]) == 64
     iface, plan = lock_for_script(script)
     assert payload["module_hashes"] == dict(plan.module_hashes)
     assert payload["interface_contract_hash"] == plan.interface_contract_hash

@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from acid_engine.worker import source_hash
 from examples.bones.n_plus_one import build_script
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -89,6 +90,7 @@ def test_rust_worker_bones_pass():
     rust = rust_judge(
         {
             "module_hashes": dict(plan["module_hashes"]),
+            "worker_hash": source_hash(),
             "worker": {
                 "python": sys.executable,
                 "script": str(BONES_JSON),
@@ -101,10 +103,27 @@ def test_rust_worker_bones_pass():
     assert rust.get("data") == {"n": 4}
 
 
+def test_rust_worker_without_pin_is_skipped():
+    rust = rust_judge(
+        {
+            "module_hashes": {"n_plus_one": "0" * 64},
+            "worker": {
+                "python": sys.executable,
+                "script": str(BONES_JSON),
+                "input": {"n": 3},
+                "cwd": str(ROOT),
+            },
+        }
+    )
+    assert rust["status"] == "SKIPPED"
+    assert rust["status"] != "PASS"
+
+
 def test_rust_worker_swapped_lock_fail_not_run_pass():
     rust = rust_judge(
         {
             "module_hashes": {"n_plus_one": "0" * 64},
+            "worker_hash": source_hash(),
             "worker": {
                 "python": sys.executable,
                 "script": str(BONES_JSON),

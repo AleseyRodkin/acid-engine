@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::io::Write;
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -42,6 +43,8 @@ pub struct Request {
     pub effects: Vec<String>,
     #[serde(default)]
     pub worker: Option<WorkerSpec>,
+    #[serde(default)]
+    pub worker_hash: Option<String>,
     #[serde(default)]
     pub max_latency_ms: Option<f64>,
 }
@@ -115,6 +118,9 @@ pub fn judge(req: &Request) -> Response {
 fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     if worker.script.trim().is_empty() {
         return Response::fail("worker.script is empty", "worker");
+    }
+    if let Some(pin) = pin_worker(req, worker) {
+        return pin;
     }
     let ident = match spawn_worker(worker, "identify", None) {
         Ok(v) => v,
@@ -224,6 +230,70 @@ fn spawn_worker(
     }
     let text = String::from_utf8_lossy(&out.stdout);
     serde_json::from_str(text.trim()).map_err(|e| format!("worker json: {e}"))
+}
+
+fn pin_worker(req: &Request, worker: &WorkerSpec) -> Option<Response> {
+    let expected = match req.worker_hash.as_deref() {
+        Some(h) if !h.is_empty() => h.to_lowercase(),
+        _ => return Some(Response::skipped("worker not pinned")),
+    };
+    let cwd = worker.cwd.as_deref().unwrap_or(".");
+    let path = Path::new(cwd).join("acid_engine").join("worker.py");
+    match sha256_file(&path) {
+        Ok(actual) if actual == expected => None,
+        Ok(_) => Some(Response::fail("worker source hash mismatch", "worker_hash")),
+        Err(e) => Some(Response::fail(e, "worker_hash")),
+    }
+}
+
+fn sha256_file(path: &Path) -> Result<String, String> {
+    if !path.is_file() {
+        return Err(format!("worker source missing: {}", path.display()));
+    }
+    let attempts = [
+        Command::new("sha256sum").arg(path).output(),
+        Command::new("shasum").args(["-a", "256"]).arg(path).output(),
+        Command::new("openssl")
+            .args(["dgst", "-sha256", "-r"])
+            .arg(path)
+            .output(),
+    ];
+    let mut last_err = "no hash tool".to_string();
+    for result in attempts {
+        match result {
+            Ok(out) if out.status.success() => {
+                let text = String::from_utf8_lossy(&out.stdout);
+                if let Some(hex) = parse_sha256_output(&text) {
+                    return Ok(hex);
+                }
+                last_err = format!("bad hash output: {text}");
+            }
+            Ok(out) => {
+                last_err = format!(
+                    "hash exit {}: {}",
+                    out.status.code().unwrap_or(-1),
+                    String::from_utf8_lossy(&out.stderr).trim()
+                );
+            }
+            Err(e) => last_err = format!("hash worker: {e}"),
+        }
+    }
+    Err(last_err)
+}
+
+fn parse_sha256_output(text: &str) -> Option<String> {
+    let trimmed = text.trim();
+    let token = if let Some((_, right)) = trimmed.rsplit_once('=') {
+        right.trim()
+    } else {
+        trimmed.split_whitespace().next().unwrap_or("")
+    };
+    let hex = token.trim().trim_start_matches('(').to_lowercase();
+    if hex.len() == 64 && hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        Some(hex)
+    } else {
+        None
+    }
 }
 
 fn bind(req: &Request) -> Response {
@@ -485,5 +555,40 @@ mod tests {
         });
         assert_eq!(r.status, "FAIL");
         assert_eq!(r.property.as_deref(), Some("worker"));
+    }
+
+    #[test]
+    fn worker_without_hash_is_skipped() {
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn worker_hash_mismatch_fails_before_identify() {
+        let tmp = std::env::temp_dir().join(format!("acid-worker-pin-{}", std::process::id()));
+        let pkg = tmp.join("acid_engine");
+        std::fs::create_dir_all(&pkg).unwrap();
+        std::fs::write(pkg.join("worker.py"), b"print('tamper')\n").unwrap();
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some("0".repeat(64)),
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(tmp.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&tmp);
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("worker_hash"));
     }
 }

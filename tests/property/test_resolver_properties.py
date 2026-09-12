@@ -1,4 +1,8 @@
 """Property-based tests for ConstraintResolver strategies."""
+import pytest
+
+pytest.importorskip("hypothesis")
+
 from acid_engine.level2.resolver import ConstraintResolver, ResolveConflict
 from acid_engine.level2.strategies.boolean_policy import BooleanStrengthenStrategy
 from acid_engine.level2.strategies.numeric import MaxValueStrategy, MinValueStrategy

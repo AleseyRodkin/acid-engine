@@ -29,6 +29,7 @@
 37. H1–H5: бинарь без worker → SKIPPED. Observation без worker не вердикт.
 38. 0.2: ARCHITECTURE в `docs/archive/`. Threat model на витрине. `acid-judge` — supervisor, не второй канон.
     CI: pytest 3.11/3.12 + locks + cargo. `toolchain` в JSON замка рядом с identity, не в хеше.
+39. Три разреза: property без hypothesis — skip; `init`/`validate` скрыты из `--help`; supervisor пинит SHA-256 `worker.py` до identify.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

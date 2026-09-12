@@ -1,4 +1,4 @@
-"""Единый CLI AcidEngine: init, validate, run."""
+"""CLI Acid Judge: lock, judge, receipt."""
 from __future__ import annotations
 
 import argparse
@@ -228,6 +228,14 @@ def cmd_locks(args: argparse.Namespace) -> None:
         print(f"ERROR: index not found: {index_path}")
         sys.exit(1)
     raw = json.loads(index_path.read_text(encoding="utf-8"))
+    pinned = raw.get("worker_hash")
+    if pinned:
+        from acid_engine.worker import source_hash
+
+        live = source_hash()
+        if str(pinned) != live:
+            print("[FAIL] worker_hash mismatch")
+            sys.exit(1)
     entries = raw.get("entries")
     if not isinstance(entries, list) or not entries:
         print("ERROR: index has no entries")
@@ -336,22 +344,31 @@ def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _hidden_cli(argv: list[str]) -> None:
+    """init/validate still run, but they are not on the public --help."""
+    parser = argparse.ArgumentParser(prog="acid-engine")
+    sub = parser.add_subparsers(dest="command", required=True)
+    p_init = sub.add_parser("init")
+    p_init.add_argument("--path", default="script.py", help="Путь к .py файлу скрипта")
+    p_init.add_argument("--script", help="Альтернативный путь к шаблону скрипта")
+    p_init.set_defaults(func=cmd_init)
+    p_val = sub.add_parser("validate")
+    p_val.add_argument("spec", help="Путь к .py файлу с переменной contract")
+    p_val.add_argument("command", nargs="*", help="Команда для проверки")
+    p_val.set_defaults(func=cmd_validate)
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] in {"init", "validate"}:
+        _hidden_cli(sys.argv[1:])
+        return
     parser = argparse.ArgumentParser(
         prog="acid-engine",
         description="Acid Judge: lock, judge, receipt.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    p_init = subparsers.add_parser("init", help="Создать шаблон ScriptModule (.py)")
-    p_init.add_argument("--path", default="script.py", help="Путь к .py файлу скрипта")
-    p_init.add_argument("--script", help="Альтернативный путь к шаблону скрипта")
-    p_init.set_defaults(func=cmd_init)
-
-    p_val = subparsers.add_parser("validate", help="Проверить внешнюю команду по контракту")
-    p_val.add_argument("spec", help="Путь к .py файлу с переменной contract")
-    p_val.add_argument("command", nargs="*", help="Команда для проверки")
-    p_val.set_defaults(func=cmd_validate)
 
     p_run = subparsers.add_parser("run", help="Скрипт через plan.lock или walking skeleton")
     _add_script_plan_input(p_run)

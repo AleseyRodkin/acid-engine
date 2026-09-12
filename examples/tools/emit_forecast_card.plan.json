@@ -36,6 +36,7 @@
   },
   "toolchain": {
     "python_version": "3.11",
-    "canon_kind": "ast"
+    "canon_kind": "ast",
+    "worker_hash": "0c1571197efa58496aa875b0b74c3da83eac9ef88e502c85fc9848d56308273b"
   }
 }

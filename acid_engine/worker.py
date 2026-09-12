@@ -1,8 +1,10 @@
 """Python worker for the external judge. Runs a body. Does not verdict."""
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 from acid_engine.cli import load_script_from_file
@@ -11,6 +13,15 @@ from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level3.script.resolve import materialize_script
+
+
+def source_path() -> Path:
+    return Path(__file__).resolve()
+
+
+def source_hash() -> str:
+    """SHA-256 of this file's bytes. Pin for the supervisor, not identity of a tool body."""
+    return hashlib.sha256(source_path().read_bytes()).hexdigest()
 
 
 def identify_script(script: ScriptModule) -> dict[str, Any]:

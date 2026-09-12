@@ -1,6 +1,6 @@
 # Acid Judge
 
-Агент вызовет только залоченное тело; вердикт по наблюдению.
+Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит подмену worker.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
 Пакет **0.2.0**. Ядро MIT.
@@ -11,8 +11,10 @@ Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS
 
 Защищает от подмены файла tool между `lock` и вызовом, если hook или CI сверяют хеш.
 Не защищает от того, что делает само тело после PASS: нет изоляции fs/net/process.
+Не защищает обход через `bash` / любой shell вне `judge`.
 `pure=True` ловит только эффекты, которые runtime занёс в `effects_observed`.
-Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version` и `canon_kind`. Смена CPython может потребовать пересъёма `plan.json`.
+Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind` и `worker_hash`. Смена CPython может потребовать пересъёма `plan.json`.
+Supervisor сверяет SHA-256 `acid_engine/worker.py` с `worker_hash` до identify. Нет пина — SKIPPED. Несовпадение — FAIL.
 
 ## Три команды
 

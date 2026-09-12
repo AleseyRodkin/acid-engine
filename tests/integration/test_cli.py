@@ -17,6 +17,10 @@ def test_cli_help():
     assert result.returncode == 0
     assert "judge" in result.stdout
     assert "lock" in result.stdout
+    assert "receipt" in result.stdout
+    help_text = result.stdout
+    assert "init" not in help_text
+    assert "validate" not in help_text
 
 
 def test_cli_judge_help():
