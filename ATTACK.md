@@ -39,6 +39,16 @@ PYTHONPATH=. python -m acid_engine judge \
 
 Code ≠ 0. `module_hash`. No `PASS`. Body does not run. Guard: `tests/integration/test_compute_amount_tamper.py`.
 
+Same drift as a table, still no execution:
+
+```bash
+PYTHONPATH=. python -m acid_engine diff \
+  --script /tmp/acid-attack/examples/tools/compute_amount.py \
+  --plan examples/tools/compute_amount.plan.json
+```
+
+`DRIFT`, `✗` on the body, no `PASS`.
+
 ## 2. Swap the hasher, not the tool
 
 CLI `judge --plan` pins `runtime_hashes` (worker, python_runtime, runner, implementation_canon) before run.

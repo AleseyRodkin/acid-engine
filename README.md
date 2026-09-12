@@ -4,6 +4,8 @@
 
 An agent can write or change a tool. Acid Judge does not have to believe it. It checks that the approved body is what will run, then checks the observation against the contract. Not enough facts → SKIPPED, not PASS.
 
+Trust continuity: approved → unchanged → executed → observed → verified. Not a checksum feature. The trust layer sits between the agent and the Python tool it is about to run.
+
 Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит файлы вне `runtime_hashes`.
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
@@ -33,12 +35,14 @@ Supervisor сверяет SHA-256 контура (`worker.py`, `python_runtime.p
 | `receipt` | `judge … --receipt FILE` — Observation + PASS/FAIL/SKIPPED, без `proven_pure` |
 
 `locks --index` — сверка живого тела с замком в git. Не исполняет, не hosted.
+`diff --script --plan` — таблица approved vs live. Не исполняет, не PASS.
 `receipt --sign` / `receipt --verify` — Ed25519 на каноне receipt, локальный openssl. Не Sigstore.
 
 ```bash
 PYTHONPATH=. python -m acid_engine lock --script FILE --out LOCK.json
 PYTHONPATH=. python -m acid_engine judge --script FILE --plan LOCK.json --input '...'
 PYTHONPATH=. python -m acid_engine locks --index locks/index.json
+PYTHONPATH=. python -m acid_engine diff --script FILE --plan LOCK.json
 PYTHONPATH=. python -m acid_engine receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
 

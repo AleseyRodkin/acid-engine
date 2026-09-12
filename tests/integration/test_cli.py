@@ -19,6 +19,7 @@ def test_cli_help():
     assert "judge" in result.stdout
     assert "lock" in result.stdout
     assert "receipt" in result.stdout
+    assert "diff" in result.stdout
     help_text = result.stdout
     assert "init" not in help_text
     assert "validate" not in help_text
@@ -201,3 +202,31 @@ def test_cli_judge_runtime_mismatch_fails_before_pass():
     assert "PASS" not in result.stdout
     assert "runtime_hash" in result.stdout
     assert "runtime: pinned" not in result.stdout
+    assert "Execution blocked" in result.stdout
+    assert "was not executed" in result.stdout
+
+
+def test_cli_diff_bones_match():
+    root = Path(__file__).parent.parent.parent
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(root)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "acid_engine",
+            "diff",
+            "--script",
+            str(root / "examples" / "bones" / "n_plus_one.json"),
+            "--plan",
+            str(root / "examples" / "bones" / "n_plus_one.plan.json"),
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(root),
+    )
+    assert result.returncode == 0, result.stderr + result.stdout
+    assert "MATCH" in result.stdout
+    assert "PASS" not in result.stdout
+    assert "The body was not executed." in result.stdout

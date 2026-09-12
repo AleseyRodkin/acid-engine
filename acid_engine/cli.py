@@ -8,7 +8,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from acid_engine.level2.conformance import ConformanceResult, check_conformance, explain_result
+from acid_engine.level2.conformance import (
+    ConformanceResult,
+    check_conformance,
+    explain_block,
+    explain_result,
+)
 from acid_engine.level2.specification import Policy
 from acid_engine.level3.script.external_runner import run_external
 from acid_engine.level3.script.modes import ExecutionMode
@@ -186,14 +191,14 @@ def cmd_run(args: argparse.Namespace) -> None:
         pin = verify_runtime_pin(raw)
         if pin is not None:
             result = PipelineResult(conformance=pin)
-            print(explain_result(result.conformance))
+            print(explain_block(result.conformance))
             _maybe_write_receipt(args, script, input_val, result, plan=plan)
             sys.exit(1)
         print("runtime: pinned")
         result = judge_script(
             script, input_val, plan=plan, iface=iface, toolchain=raw
         )
-        print(explain_result(result.conformance))
+        print(explain_block(result.conformance))
         print(f"output: {result.data}")
         print(f"plan.lock: {plan.content_hash[:16]}...")
         _maybe_write_receipt(args, script, input_val, result, plan=plan)
@@ -305,6 +310,26 @@ def cmd_locks(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_diff(args: argparse.Namespace) -> None:
+    """Живое vs plan.lock. Не исполняет, не вердикт."""
+    from acid_engine.level3.script.resolve import materialize_script
+    from acid_engine.lock_diff import diff_lock, format_diff
+
+    try:
+        script = materialize_script(load_script_from_file(args.script))
+        raw = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
+    if not isinstance(raw, dict):
+        print("ERROR: plan must be a JSON object")
+        sys.exit(1)
+    rows = diff_lock(raw, script)
+    print(format_diff(rows))
+    if any(not row.ok for row in rows):
+        sys.exit(1)
+
+
 def cmd_receipt(args: argparse.Namespace) -> None:
     """Ed25519 на каноне receipt. Локальный ключ, не Sigstore."""
     from acid_engine.sign import keygen, sign_receipt, verify_receipt
@@ -413,6 +438,14 @@ def main() -> None:
     )
     p_locks.add_argument("--index", required=True, help="locks/index.json")
     p_locks.set_defaults(func=cmd_locks)
+
+    p_diff = subparsers.add_parser(
+        "diff",
+        help="Живое vs plan.lock (не исполняет, не вердикт)",
+    )
+    p_diff.add_argument("--script", required=True, help="Путь к .py или .json blank")
+    p_diff.add_argument("--plan", required=True, help="JSON plan.lock")
+    p_diff.set_defaults(func=cmd_diff)
 
     p_receipt = subparsers.add_parser(
         "receipt",

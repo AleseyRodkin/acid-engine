@@ -204,3 +204,47 @@ def explain_result(result: ConformanceResult) -> str:
     if result.failure:
         return result.failure.human()
     return f"[{result.status.value}] {result.message}"
+
+
+def explain_block(result: ConformanceResult) -> str:
+    """Why blocked, then the machine line. SKIPPED stays a skip, not a block."""
+    if result.ok or result.failure is None:
+        return explain_result(result)
+    fail = result.failure
+    prop = fail.property_name
+    if prop == "module_hash":
+        why = (
+            "Execution blocked\n"
+            "The locked tool body does not match the file on disk (module_hash).\n"
+            "The body was not executed."
+        )
+    elif prop == "runtime_hash":
+        name = fail.detail or "a contour file"
+        if str(fail.actual) == "missing":
+            why = (
+                "Execution blocked\n"
+                "runtime_hashes missing from the lock.\n"
+                "The body was not executed."
+            )
+        else:
+            why = (
+                "Execution blocked\n"
+                f"{name} differs from the approved contour (runtime_hash).\n"
+                "The body was not executed."
+            )
+    elif prop == "worker_hash":
+        if str(fail.actual) == "missing":
+            why = (
+                "Execution blocked\n"
+                "worker_hash missing from the lock.\n"
+                "The body was not executed."
+            )
+        else:
+            why = (
+                "Execution blocked\n"
+                "worker.py differs from the approved contour (worker_hash).\n"
+                "The body was not executed."
+            )
+    else:
+        why = f"Execution blocked\n{fail.human()}\nThe body was not executed."
+    return why + "\n" + fail.human()

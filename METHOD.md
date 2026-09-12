@@ -152,6 +152,7 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `run --script` без `--plan` не PASS. С `--plan` — `judge_script` / замороженный lock.
 Не обходит lock прямым `run_script`.
 `lock --script` пишет JSON замка, это не вердикт.
+`diff --script --plan` сравнивает живое с замком. Не исполняет, не PASS.
 В JSON замка рядом с identity (не в `content_hash`) — `toolchain.python_version`, `toolchain.canon_kind`, `toolchain.canon` (`python.ast.v1` / `python.bytecode.v1`), `toolchain.worker_hash`, `toolchain.runtime_hashes`.
 Новая версия канона (`python.ast.v2`) не подменяет старую семантику молча: имя канона рядом, хеш тела тот же алгоритм, пока имя не сменили и не пересняли замки.
 
