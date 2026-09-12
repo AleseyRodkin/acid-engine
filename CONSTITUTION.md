@@ -31,6 +31,7 @@
     CI: pytest 3.11/3.12 + locks + cargo. `toolchain` в JSON замка рядом с identity, не в хеше.
 39. Три разреза: property без hypothesis — skip; `init`/`validate` скрыты из `--help`; supervisor пинит SHA-256 `worker.py` до identify.
 40. Контур рантайма: `runtime_hashes` на `worker.py` + `python_runtime.py` + `runner.py` + `implementation_canon.py`. `locks --index` без пина → FAIL.
+41. CLI `judge --plan` сверяет `runtime_hashes` до run. Библиотечный `judge_script` без toolchain — нет.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

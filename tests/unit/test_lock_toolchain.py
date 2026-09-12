@@ -63,3 +63,27 @@ def test_public_exports_are_the_gate():
     ]
     assert "Pipeline" not in acid_engine.__all__
     assert acid_engine.__version__ == "0.2.0"
+
+
+def test_verify_runtime_pin_ok_and_mismatch():
+    from acid_engine.level2.conformance import ConformanceStatus
+    from acid_engine.worker import verify_runtime_pin
+
+    payload = dump_script_lock(_script())
+    assert verify_runtime_pin(payload) is None
+    bad = dict(payload)
+    tool = dict(payload["toolchain"])
+    hashes = dict(tool["runtime_hashes"])
+    hashes["acid_engine/level2/implementation_canon.py"] = "0" * 64
+    tool["runtime_hashes"] = hashes
+    bad["toolchain"] = tool
+    pin = verify_runtime_pin(bad)
+    assert pin is not None
+    assert pin.status == ConformanceStatus.FAIL
+    assert pin.failure is not None
+    assert pin.failure.property_name == "runtime_hash"
+    missing = verify_runtime_pin({"plan_id": "x"})
+    assert missing is not None
+    assert missing.failure is not None
+    assert missing.failure.property_name == "worker_hash"
+

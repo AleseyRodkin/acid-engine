@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -163,3 +164,40 @@ def test_cli_validate_rejects_markdown():
         result = _run_cli("validate", spec, "echo", "hello")
         assert result.returncode != 0
         assert "markdown" in result.stdout.lower() or "ERROR" in result.stdout
+
+
+def test_cli_judge_runtime_mismatch_fails_before_pass():
+    root = Path(__file__).parent.parent.parent
+    plan = json.loads(
+        (root / "examples" / "bones" / "n_plus_one.plan.json").read_text(encoding="utf-8")
+    )
+    plan["toolchain"]["runtime_hashes"][
+        "acid_engine/level2/implementation_canon.py"
+    ] = "0" * 64
+    with tempfile.TemporaryDirectory() as tmp:
+        plan_path = Path(tmp) / "bad.plan.json"
+        plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(root)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "acid_engine",
+                "judge",
+                "--script",
+                str(root / "examples" / "bones" / "n_plus_one.json"),
+                "--plan",
+                str(plan_path),
+                "--input",
+                '{"n": 3}',
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=str(root),
+        )
+    assert result.returncode != 0
+    assert "PASS" not in result.stdout
+    assert "runtime_hash" in result.stdout
+    assert "runtime: pinned" not in result.stdout

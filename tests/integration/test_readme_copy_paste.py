@@ -46,6 +46,7 @@ def test_readme_bones_judge_pass_and_receipt(tmp_path: Path):
     )
     assert proc.returncode == 0, proc.stderr + proc.stdout
     assert "PASS" in proc.stdout
+    assert "runtime: pinned" in proc.stdout
     assert "SKIPPED" not in proc.stdout
     assert "{'n': 4}" in proc.stdout or '"n": 4' in proc.stdout
     assert rec.is_file()

@@ -181,6 +181,15 @@ def cmd_run(args: argparse.Namespace) -> None:
         except Exception as e:
             print(f"ERROR: Failed to load plan: {e}")
             sys.exit(1)
+        from acid_engine.worker import verify_runtime_pin
+
+        pin = verify_runtime_pin(raw)
+        if pin is not None:
+            result = PipelineResult(conformance=pin)
+            print(explain_result(result.conformance))
+            _maybe_write_receipt(args, script, input_val, result, plan=plan)
+            sys.exit(1)
+        print("runtime: pinned")
         result = judge_script(script, input_val, plan=plan, iface=iface)
         print(explain_result(result.conformance))
         print(f"output: {result.data}")

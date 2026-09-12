@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,84 @@ def runtime_hashes(root: Path | None = None) -> dict[str, str]:
         path = base / rel
         out[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
     return out
+
+
+def verify_runtime_pin(data: Mapping[str, Any]) -> Any:
+    """None = pinned. FAIL if pin missing or live files differ. Does not run a tool body."""
+    from acid_engine.level2.conformance import (
+        ConformanceLevel,
+        ConformanceResult,
+        ConformanceStatus,
+    )
+    from acid_engine.level2.failure import FailureReason
+
+    tool: Mapping[str, Any]
+    raw_tool = data.get("toolchain")
+    if isinstance(raw_tool, Mapping):
+        tool = raw_tool
+    else:
+        tool = data
+    pinned = tool.get("worker_hash")
+    if not pinned:
+        return ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="worker_hash missing",
+            failure=FailureReason(
+                node_id="runtime",
+                contract_id="runtime",
+                property_name="worker_hash",
+                expected="pinned",
+                actual="missing",
+            ),
+        )
+    live_worker = source_hash()
+    if str(pinned) != live_worker:
+        return ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="worker_hash mismatch",
+            failure=FailureReason(
+                node_id="runtime",
+                contract_id="runtime",
+                property_name="worker_hash",
+                expected=str(pinned),
+                actual=live_worker,
+            ),
+        )
+    pinned_rt = tool.get("runtime_hashes")
+    if not isinstance(pinned_rt, Mapping) or not pinned_rt:
+        return ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="runtime_hashes missing",
+            failure=FailureReason(
+                node_id="runtime",
+                contract_id="runtime",
+                property_name="runtime_hash",
+                expected="pinned",
+                actual="missing",
+            ),
+        )
+    live_rt = runtime_hashes()
+    for rel in RUNTIME_PIN_PATHS:
+        got = pinned_rt.get(rel)
+        want = live_rt[rel]
+        if got != want:
+            return ConformanceResult(
+                status=ConformanceStatus.FAIL,
+                level=ConformanceLevel.STRUCTURAL,
+                message=f"runtime_hashes mismatch: {rel}",
+                failure=FailureReason(
+                    node_id="runtime",
+                    contract_id="runtime",
+                    property_name="runtime_hash",
+                    expected=str(got),
+                    actual=want,
+                    detail=rel,
+                ),
+            )
+    return None
 
 
 def identify_script(script: ScriptModule) -> dict[str, Any]:

@@ -76,7 +76,8 @@ Self-lock не вердикт. В том числе в библиотеке.
 До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
 Нет `worker_hash` или нет полного `runtime_hashes` → SKIPPED. Несовпадение → FAIL. Хеш рантайма не входит в identity тела.
 `locks --index` без `worker_hash` / `runtime_hashes` → FAIL, не fail-open.
-`judge_script` in-process не сверяет эти пины: он не вызывает worker.
+CLI `judge --plan` сверяет те же пины до run. Несовпадение → FAIL, тело не запускать.
+`judge_script` без toolchain (in-process API) пины не сверяет.
 identify → bind → run worker → verdict.
 Нет worker → SKIPPED. Observation без worker — не вердикт.
 После run: status, output_type, pure, latency.
