@@ -15,3 +15,11 @@ def test_readme_does_not_point_at_tutorial():
     readme = README.read_text(encoding="utf-8")
     assert "TUTORIAL" not in readme
     assert "Tutorial.md" not in readme
+
+
+def test_readme_does_not_revive_agent_slogan():
+    readme = README.read_text(encoding="utf-8")
+    assert "агент вызовет только" not in readme
+    commercial = Path(__file__).resolve().parents[2] / "COMMERCIAL.md"
+    assert "агент вызовет только" not in commercial.read_text(encoding="utf-8")
+

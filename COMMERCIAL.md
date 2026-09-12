@@ -1,23 +1,33 @@
 # Acid Judge — коммерческий план для сборщика
 
-**Дата:** 31.08.2026  
+**Дата:** 12.09.2026  
 Закон только [METHOD.md](METHOD.md). [PLAN.md](PLAN.md) (кости 0.1) не переоткрывать.  
-База: снимок `3a1100f+`. Если нет `worker.py` / `lock` / `--plan` — сначала актуальный zip.
+База: снимок `c72ea42`. Если нет `worker.py` / `lock` / `--plan` — сначала актуальный zip.
 
 Курс: личный эксперимент достигнут. Дальше — ниша fail-closed gate тела tool. STOL не стенд.
 
 ## 1. Что продаём
 
-Продукт: Acid Judge.  
-Фраза: агент вызовет только залоченное тело; вердикт по наблюдению.  
+Продукт: **Acid Judge** (не зонтик AcidEngine, не PyPI-ренейм).  
+Фраза: file-byte lock on a locally approved Python tool body, checked immediately before the agent call.  
+Не MCP-gateway: шлюз ловит отравленные *описания* tool на сети; этот gate ловит подмену *файла* между одобрением и вызовом. Дополнение, не конкурент шлюзу.
+
 Покупатель: Head of Platform / AppSec / AI Governance.  
 Ниша A: fail-closed gate тела Python-tool.
 
 Три команды — единственный публичный контракт: `lock`, `judge`, `receipt`.
 
-Ядро MIT. Платят потом за Action, реестр, подпись, инцидент — не в фазах C0–C3.
+Ядро MIT. Платят потом за Action, реестр, подпись, инцидент — не в фазах C0–C3. Ценники в README не писать.
 
-Никогда в этом плане: SaaS-ОС, self-hosting, профили, markdown-спеки, `proven_pure`, каркас любого проекта, агрегатор как продукт, конкуренция с Pydantic, JS/WASM/второй язык, STOL, SKIPPED→PASS, двадцать адаптеров, ценники в README.
+Ярусы (мысленно, не публиковать цены):
+
+| Ярус | Что | Зачем |
+|---|---|---|
+| Open core (MIT) | `lock` / `judge` / `receipt`, CLI, supervisor, `locks/` в git | дистрибуция и аудит security-инструмента |
+| Team | hosted registry, audit trail, уведомление о FAIL | первая платная единица из C5 |
+| Enterprise | compliance-отчёт, инцидент, SLA | AI Governance из этого же файла |
+
+Никогда в этом плане: SaaS-ОС, self-hosting, профили, markdown-спеки, `proven_pure`, каркас любого проекта, агрегатор как продукт, конкуренция с Pydantic, JS/WASM/второй язык, STOL, SKIPPED→PASS, двадцать адаптеров, ценники в README, MCP как второй harness до закрытой витрины CLI.
 
 ## 2. Нельзя сломать
 
@@ -44,6 +54,8 @@
 | C5 | реестр замков в git | `locks --index`; сверка, не hosted | Governance $40k |
 | C6 | подпись receipt | `receipt --verify`; Ed25519 локально | до стабильных C1–C2 |
 | C7 | ниша B/C, API=CLI, один судья | API=CLI: без plan+iface не PASS | ниша B/C и слияние судей |
+
+CLI `judge --plan` сверяет `runtime_hashes` (`c72ea42`). Второй hook (Cursor / Copilot / MCP) — не начинать, пока витрина CLI и один Claude hook зелёные. Готовые бинарники supervisor — GitHub Release, не `cargo` у покупателя; не в этом файле как фаза C.
 
 Стартовать с C0. Не с Action, не с хука, не с подписи. Не начинать C(n+1), пока Cn не зелёная.
 

@@ -7,6 +7,8 @@ Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
 Пакет **0.2.0**. Ядро MIT.
 
+Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
+
 Закон рантайма: [METHOD.md](METHOD.md).
 
 ## Что защищает и что нет
