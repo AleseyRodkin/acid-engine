@@ -11,7 +11,7 @@ Trust continuity: approved → unchanged → executed → observed → verified.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.0**. Ядро MIT.
+Пакет **0.2.0**. Ядро MIT. Бинарь supervisor: GitHub Releases (`acid-judge-linux-x86_64`), без локального `cargo`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
 
@@ -24,7 +24,7 @@ Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. 
 Не защищает обход через `bash` / любой shell вне `judge`.
 `pure=True` ловит только эффекты, которые runtime занёс в `effects_observed`.
 Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind`, `canon` (`python.ast.v1`), `worker_hash` и `runtime_hashes`. Смена CPython может потребовать пересъёма `plan.json`.
-Supervisor сверяет SHA-256 контура (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
+Supervisor сверяет SHA-256 контура (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
 
 ## Три команды
 
@@ -46,7 +46,7 @@ PYTHONPATH=. python -m acid_engine diff --script FILE --plan LOCK.json
 PYTHONPATH=. python -m acid_engine receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
 
-`judge` = нынешний `run --script --plan`. Без `--plan` → SKIPPED, не PASS.
+`judge` без `--plan` → SKIPPED, не PASS. Скрытый `run` ещё вызывается, в `--help` его нет.
 
 Витрина:
 

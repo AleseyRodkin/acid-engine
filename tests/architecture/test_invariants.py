@@ -7,6 +7,7 @@ from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
+from acid_engine.worker import live_toolchain
 
 
 def test_container_snapshot_immutable():
@@ -171,6 +172,6 @@ def test_execute_plan_rejects_swapped_body():
         module_hashes={"s": good.content_hash},
         execution_mode=ExecutionMode.NORMAL,
     )
-    result = execute_plan(iface, plan, bad, 1)
+    result = execute_plan(iface, plan, bad, 1, toolchain=live_toolchain())
     assert result.status == ConformanceStatus.FAIL
     assert not result.ok

@@ -10,6 +10,7 @@ from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import lock_for_script
+from acid_engine.worker import live_toolchain
 
 
 def make_leaf(name: str, func) -> LeafModule:
@@ -85,7 +86,7 @@ def test_composite_with_one_node():
         output_node="x2",
     )
     iface, plan = lock_graph(composite)
-    result = composite.execute(5, plan=plan, iface=iface)
+    result = composite.execute(5, plan=plan, iface=iface, toolchain=live_toolchain())
     assert isinstance(result, CompositeResult)
     assert result.ok
     assert result.data == 10
@@ -111,7 +112,7 @@ def test_composite_two_nodes():
         output_node="times2",
     )
     iface, plan = lock_graph(composite)
-    result = composite.execute(3, plan=plan, iface=iface)
+    result = composite.execute(3, plan=plan, iface=iface, toolchain=live_toolchain())
     assert result.ok
     assert result.data == 8
     assert len(result.observations) == 2
@@ -159,7 +160,7 @@ def test_composite_fan_in_forbidden():
     )
     iface, plan = lock_graph(composite)
     with pytest.raises(RuntimeError, match="Fan-in"):
-        composite.execute(5, plan=plan, iface=iface)
+        composite.execute(5, plan=plan, iface=iface, toolchain=live_toolchain())
 
 
 def test_composite_external_plan_rejects_swapped_leaf():
@@ -183,7 +184,7 @@ def test_composite_external_plan_rejects_swapped_leaf():
         output_node="plus1",
     )
     iface, plan = lock_for_script(good.script)
-    result = composite.execute(1, plan=plan, iface=iface)
+    result = composite.execute(1, plan=plan, iface=iface, toolchain=live_toolchain())
     assert not result.ok
     assert result.status is not None
     assert result.data is None

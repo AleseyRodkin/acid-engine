@@ -172,9 +172,20 @@ def execute_plan(
     plan: PlanLock,
     script: ScriptModule,
     input_data: Any,
+    *,
+    toolchain: Mapping[str, Any] | None = None,
 ) -> PipelineResult:
-    """Исполняет скрипт только если он совпадает с plan.lock."""
+    """Исполняет скрипт только если он совпадает с plan.lock и контур запинен."""
     from acid_engine.level3.script.resolve import materialize_script
+    from acid_engine.worker import verify_runtime_pin
+
+    if toolchain is None:
+        return PipelineResult(
+            conformance=ConformanceResult.skipped("runtime not pinned")
+        )
+    pin = verify_runtime_pin(toolchain)
+    if pin is not None:
+        return PipelineResult(conformance=pin)
 
     script = materialize_script(script)
     if plan.interface_contract_hash != iface.content_hash:

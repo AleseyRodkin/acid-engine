@@ -6,6 +6,7 @@ from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import bind_script_to_plan, execute_plan, replay_run
+from acid_engine.worker import live_toolchain
 
 
 def _script(impl, name="double"):
@@ -41,11 +42,22 @@ def _plan(iface: InterfaceContract, script: ScriptModule) -> PlanLock:
     )
 
 
-def test_execute_plan_ok_when_hash_matches():
+def test_execute_plan_without_toolchain_is_skipped():
     script = _script(lambda x: x * 2)
     iface = _iface(script)
     plan = _plan(iface, script)
     result = execute_plan(iface, plan, script, 5)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
+    assert result.data is None
+    assert "runtime not pinned" in result.message
+
+
+def test_execute_plan_ok_when_hash_matches():
+    script = _script(lambda x: x * 2)
+    iface = _iface(script)
+    plan = _plan(iface, script)
+    result = execute_plan(iface, plan, script, 5, toolchain=live_toolchain())
     assert result.ok
     assert result.data == 10
     assert result.observation is not None
@@ -63,7 +75,7 @@ def test_execute_plan_fails_on_swapped_body_and_does_not_run():
     bad = _script(swapped)
     iface = _iface(good)
     plan = _plan(iface, good)
-    result = execute_plan(iface, plan, bad, 5)
+    result = execute_plan(iface, plan, bad, 5, toolchain=live_toolchain())
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "module_hash"
@@ -80,7 +92,7 @@ def test_execute_plan_skipped_without_hashes():
         module_hashes={},
         execution_mode=ExecutionMode.NORMAL,
     )
-    result = execute_plan(iface, plan, script, 1)
+    result = execute_plan(iface, plan, script, 1, toolchain=live_toolchain())
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok
     assert result.data is None
@@ -103,7 +115,7 @@ def test_execute_plan_fails_on_interface_mismatch():
         module_hashes={script.name: script.content_hash},
         execution_mode=ExecutionMode.NORMAL,
     )
-    result = execute_plan(iface, plan, script, 1)
+    result = execute_plan(iface, plan, script, 1, toolchain=live_toolchain())
     assert not result.ok
     assert result.failure.property_name == "interface_contract_hash"
 
@@ -125,7 +137,7 @@ def test_bind_wrong_key_is_skipped_not_fallback():
         module_hashes={"unrelated": script.content_hash},
         execution_mode=ExecutionMode.NORMAL,
     )
-    result = execute_plan(iface, plan, script, 1)
+    result = execute_plan(iface, plan, script, 1, toolchain=live_toolchain())
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok
 

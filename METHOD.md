@@ -73,12 +73,13 @@ Self-lock не вердикт. В том числе в библиотеке.
 
 Бинарь не считает хеш тела. Один канон — Python (`implementation_canon`).
 Один вход бинаря: нужен worker.
-До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
+До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
 Нет `worker_hash` или нет полного `runtime_hashes` → SKIPPED. Несовпадение → FAIL. Хеш рантайма не входит в identity тела.
 `locks --index` без `worker_hash` / `runtime_hashes` → FAIL, не fail-open.
 CLI `judge --plan` сверяет те же пины до run. Несовпадение → FAIL, тело не запускать.
 `judge_script` без `toolchain` → SKIPPED (`runtime not pinned`). С `toolchain` без полного `runtime_hashes` → FAIL.
 `judge_script_from_lock` читает plan+iface+toolchain из JSON замка.
+`execute_plan` без `toolchain` → SKIPPED. Это не публичный вход: снаружи `judge_script` / CLI.
 identify → bind → run worker → verdict.
 Нет worker → SKIPPED. Observation без worker — не вердикт.
 После run: status, output_type, pure, latency.

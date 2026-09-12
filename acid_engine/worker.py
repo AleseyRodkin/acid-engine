@@ -17,8 +17,10 @@ from acid_engine.level3.script.resolve import materialize_script
 
 RUNTIME_PIN_PATHS = (
     "acid_engine/worker.py",
+    "acid_engine/cli.py",
     "acid_engine/level3/script/python_runtime.py",
     "acid_engine/level3/script/runner.py",
+    "acid_engine/level3/script/resolve.py",
     "acid_engine/level2/implementation_canon.py",
 )
 
@@ -44,6 +46,11 @@ def runtime_hashes(root: Path | None = None) -> dict[str, str]:
         path = base / rel
         out[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
     return out
+
+
+def live_toolchain() -> dict[str, Any]:
+    """Live contour pin. Not a frozen lock. Same-process tests and demos only."""
+    return {"worker_hash": source_hash(), "runtime_hashes": runtime_hashes()}
 
 
 def verify_runtime_pin(data: Mapping[str, Any]) -> Any:

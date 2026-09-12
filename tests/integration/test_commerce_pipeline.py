@@ -9,6 +9,7 @@ from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import execute_plan
+from acid_engine.worker import live_toolchain
 from examples.commerce.order_amounts import (
     build_filter_script,
     build_pipeline,
@@ -94,9 +95,9 @@ def test_commerce_type_fail():
 def test_orders_via_execute_plan():
     _, leaf_f, leaf_s = build_pipeline()
     iface, plan = lock_pair(leaf_f, leaf_s)
-    step1 = execute_plan(iface, plan, leaf_f.script, [15000, -200, True, 100])
+    step1 = execute_plan(iface, plan, leaf_f.script, [15000, -200, True, 100], toolchain=live_toolchain())
     assert step1.ok
     assert step1.data == [15000, 100]
-    step2 = execute_plan(iface, plan, leaf_s.script, step1.data)
+    step2 = execute_plan(iface, plan, leaf_s.script, step1.data, toolchain=live_toolchain())
     assert step2.ok
     assert step2.data == [150.0, 1.0]

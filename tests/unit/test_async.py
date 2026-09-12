@@ -10,6 +10,7 @@ from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.async_module import AsyncScriptModule
 from acid_engine.level3.script.async_runtime import run_async_script
 from acid_engine.level3.script.runner import lock_for_script
+from acid_engine.worker import live_toolchain
 
 
 def test_async_script():
@@ -62,5 +63,5 @@ def test_composite_with_async_leaf():
         output_node="leaf",
     )
     iface, plan = lock_for_script(script)
-    result = composite.execute(10, plan=plan, iface=iface)
+    result = composite.execute(10, plan=plan, iface=iface, toolchain=live_toolchain())
     assert result.data == 20

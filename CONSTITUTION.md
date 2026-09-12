@@ -35,6 +35,7 @@
 42. Витрина: фраза рынка (не MCP-gateway), [ATTACK.md](ATTACK.md), ярусы в COMMERCIAL без ценников. Второй hook не начат.
 43. `toolchain.canon` = `python.ast.v1` рядом с identity. `level0`/`level4`/`services` в `research/`, import path тот же.
 44. Витрина: trust continuity. FAIL говорит «не запускали». `diff` — inspection, не вердикт. MCP и capability не начаты.
+45. `run` скрыт из `--help`. Контур + `cli.py`/`resolve.py`. `execute_plan` без toolchain → SKIPPED. Receipt несёт toolchain. Supervisor — бинарь в Release.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

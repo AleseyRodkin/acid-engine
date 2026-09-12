@@ -192,7 +192,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         if pin is not None:
             result = PipelineResult(conformance=pin)
             print(explain_block(result.conformance))
-            _maybe_write_receipt(args, script, input_val, result, plan=plan)
+            _maybe_write_receipt(args, script, input_val, result, plan=plan, toolchain=raw)
             sys.exit(1)
         print("runtime: pinned")
         result = judge_script(
@@ -201,7 +201,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(explain_block(result.conformance))
         print(f"output: {result.data}")
         print(f"plan.lock: {plan.content_hash[:16]}...")
-        _maybe_write_receipt(args, script, input_val, result, plan=plan)
+        _maybe_write_receipt(args, script, input_val, result, plan=plan, toolchain=raw)
         if not result.ok:
             sys.exit(1)
     else:
@@ -215,13 +215,14 @@ def _maybe_write_receipt(
     input_val: Any,
     result: Any,
     plan: Any,
+    toolchain: Any | None = None,
 ) -> None:
     path = getattr(args, "receipt", None)
     if not path:
         return
     from acid_engine.receipt import build_receipt, write_receipt
 
-    payload = build_receipt(script, input_val, result, plan=plan)
+    payload = build_receipt(script, input_val, result, plan=plan, toolchain=toolchain)
     write_receipt(path, payload)
     print(f"receipt: {path}")
 
@@ -402,12 +403,15 @@ def _hidden_cli(argv: list[str]) -> None:
     p_val.add_argument("spec", help="Путь к .py файлу с переменной contract")
     p_val.add_argument("command", nargs="*", help="Команда для проверки")
     p_val.set_defaults(func=cmd_validate)
+    p_run = sub.add_parser("run")
+    _add_script_plan_input(p_run)
+    p_run.set_defaults(func=cmd_run)
     args = parser.parse_args(argv)
     args.func(args)
 
 
 def main() -> None:
-    if len(sys.argv) > 1 and sys.argv[1] in {"init", "validate"}:
+    if len(sys.argv) > 1 and sys.argv[1] in {"init", "validate", "run"}:
         _hidden_cli(sys.argv[1:])
         return
     parser = argparse.ArgumentParser(
@@ -416,13 +420,9 @@ def main() -> None:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    p_run = subparsers.add_parser("run", help="Скрипт через plan.lock или walking skeleton")
-    _add_script_plan_input(p_run)
-    p_run.set_defaults(func=cmd_run)
-
     p_judge = subparsers.add_parser(
         "judge",
-        help="Bind plan.lock до run + вердикт (алиас run --script --plan)",
+        help="Bind plan.lock до исполнения + вердикт",
     )
     _add_script_plan_input(p_judge)
     p_judge.set_defaults(func=cmd_judge)

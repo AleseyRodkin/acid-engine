@@ -10,6 +10,7 @@ from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import execute_plan
+from acid_engine.worker import live_toolchain
 from examples.commerce.sku_normalize import (
     build_clean_script,
     build_dedupe_script,
@@ -88,8 +89,8 @@ def test_sku_type_fail():
 def test_skus_via_execute_plan():
     _, leaf_c, leaf_d = build_pipeline()
     iface, plan = lock_pair(leaf_c, leaf_d)
-    step1 = execute_plan(iface, plan, leaf_c.script, ["  ab-01 ", "ab-01", 42])
+    step1 = execute_plan(iface, plan, leaf_c.script, ["  ab-01 ", "ab-01", 42], toolchain=live_toolchain())
     assert step1.ok
-    step2 = execute_plan(iface, plan, leaf_d.script, step1.data)
+    step2 = execute_plan(iface, plan, leaf_d.script, step1.data, toolchain=live_toolchain())
     assert step2.ok
     assert step2.data == ["AB-01"]

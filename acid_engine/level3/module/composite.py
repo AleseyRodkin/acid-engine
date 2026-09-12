@@ -74,6 +74,7 @@ class CompositeModule:
         input_data: Any,
         plan: PlanLock | None = None,
         iface: InterfaceContract | None = None,
+        toolchain: Any | None = None,
     ) -> CompositeResult:
         import asyncio
 
@@ -164,7 +165,13 @@ class CompositeModule:
                         )
                     node_outputs[node_id] = out_snap.data
                 else:
-                    step = execute_plan(leaf_iface, leaf_plan, mod.script, input_val)
+                    step = execute_plan(
+                        leaf_iface,
+                        leaf_plan,
+                        mod.script,
+                        input_val,
+                        toolchain=toolchain,
+                    )
                     if step.observation is not None:
                         observations.append(step.observation)
                     last_conf = step.conformance
@@ -177,7 +184,9 @@ class CompositeModule:
                     node_outputs[node_id] = step.data
 
             elif isinstance(mod, CompositeModule):
-                nested = mod.execute(input_val, plan=plan, iface=iface)
+                nested = mod.execute(
+                    input_val, plan=plan, iface=iface, toolchain=toolchain
+                )
                 observations.extend(nested.observations)
                 last_conf = nested.conformance
                 if not nested.ok:

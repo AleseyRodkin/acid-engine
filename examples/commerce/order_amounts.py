@@ -26,6 +26,7 @@ from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level3.script.runner import execute_plan
+from acid_engine.worker import live_toolchain
 
 
 def filter_non_negative(data: list) -> list:
@@ -141,15 +142,15 @@ def main() -> None:
     input_data = [15000, -200, 0, True, 25050, 100]
     iface, plan = lock_pair(leaf_filter, leaf_scale)
 
-    step1 = execute_plan(iface, plan, leaf_filter.script, input_data)
+    step1 = execute_plan(iface, plan, leaf_filter.script, input_data, toolchain=live_toolchain())
     assert step1.ok, explain_result(step1.conformance)
     assert step1.observation is not None
 
-    step2 = execute_plan(iface, plan, leaf_scale.script, step1.data)
+    step2 = execute_plan(iface, plan, leaf_scale.script, step1.data, toolchain=live_toolchain())
     assert step2.ok, explain_result(step2.conformance)
     assert step2.observation is not None
 
-    composite_out = pipe.execute(input_data, plan=plan, iface=iface).data
+    composite_out = pipe.execute(input_data, plan=plan, iface=iface, toolchain=live_toolchain()).data
     assert composite_out == step2.data
 
     expected = [150.0, 0.0, 250.5, 1.0]

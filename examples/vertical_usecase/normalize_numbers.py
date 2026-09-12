@@ -20,6 +20,7 @@ from acid_engine.level3.module.composite import CompositeModule
 from acid_engine.level3.module.leaf import LeafModule
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
+from acid_engine.worker import live_toolchain
 
 
 def build_pipeline():
@@ -91,7 +92,7 @@ def main():
         module_hashes=iface.module_hashes,
         execution_mode=ExecutionMode.NORMAL,
     )
-    output_data = pipe.execute(input_data, plan=plan, iface=iface).data
+    output_data = pipe.execute(input_data, plan=plan, iface=iface, toolchain=live_toolchain()).data
 
     expected = [1.5, 0.0, 2.5, 0.5]
     print("=== Vertical Use-case: Normalize Numbers ===")

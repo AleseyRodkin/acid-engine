@@ -9,6 +9,7 @@ from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level3.pipeline import Pipeline
 from acid_engine.level3.script.runner import execute_plan, lock_for_script
 from acid_engine.worker import runtime_hashes, source_hash
+from acid_engine.worker import live_toolchain
 from examples.bones.n_plus_one import build_script, bump_n
 
 ROOT = Path(__file__).parent.parent.parent
@@ -37,7 +38,7 @@ def test_bones_main():
 def test_bones_execute_plan_and_pipeline():
     script = build_script()
     iface, plan = lock_for_script(script)
-    step = execute_plan(iface, plan, script, {"n": 3})
+    step = execute_plan(iface, plan, script, {"n": 3}, toolchain=live_toolchain())
     assert step.ok
     assert step.data == {"n": 4}
     pipe = Pipeline(
@@ -57,7 +58,7 @@ def test_json_and_py_same_hash_and_run():
     loaded = load_script_blank(BONES / "n_plus_one.json")
     assert loaded.content_hash == native.content_hash
     iface, plan = lock_for_script(loaded)
-    step = execute_plan(iface, plan, loaded, {"n": 3})
+    step = execute_plan(iface, plan, loaded, {"n": 3}, toolchain=live_toolchain())
     assert step.status == ConformanceStatus.PASS
     assert step.data == {"n": 4}
 

@@ -80,3 +80,36 @@ def test_explain_block_runtime_hash_names_file():
     assert "implementation_canon.py" in text
     assert "runtime_hash" in text
     assert "was not executed" in text
+
+
+def test_explain_block_output_type_and_pure():
+    typed = ConformanceResult(
+        status=ConformanceStatus.FAIL,
+        level=ConformanceLevel.STRUCTURAL,
+        message="x",
+        failure=FailureReason(
+            node_id="n",
+            contract_id="c",
+            property_name="output_type",
+            expected="int",
+            actual="bool",
+        ),
+    )
+    text = explain_block(typed)
+    assert "bool is not int" in text
+    assert "body ran" in text
+    pure = ConformanceResult(
+        status=ConformanceStatus.FAIL,
+        level=ConformanceLevel.OPERATIONAL,
+        message="x",
+        failure=FailureReason(
+            node_id="n",
+            contract_id="c",
+            property_name="pure",
+            expected=True,
+            actual=["net"],
+        ),
+    )
+    ptxt = explain_block(pure)
+    assert "not prove purity" in ptxt
+    assert "proven_pure" in ptxt

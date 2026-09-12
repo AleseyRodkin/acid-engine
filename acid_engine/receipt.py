@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,7 @@ def build_receipt(
     result: PipelineResult,
     *,
     plan: Any | None = None,
+    toolchain: Mapping[str, Any] | None = None,
     timestamp: str | None = None,
 ) -> dict[str, Any]:
     script = materialize_script(script)
@@ -59,6 +61,20 @@ def build_receipt(
             "property": prop,
         },
     }
+    if toolchain is not None:
+        nested = toolchain.get("toolchain") if isinstance(toolchain.get("toolchain"), Mapping) else toolchain
+        if isinstance(nested, Mapping):
+            receipt["toolchain"] = {
+                key: nested[key]
+                for key in (
+                    "python_version",
+                    "canon_kind",
+                    "canon",
+                    "worker_hash",
+                    "runtime_hashes",
+                )
+                if key in nested
+            }
     dumped = canonical_serialize(receipt)
     for banned in _FORBIDDEN:
         if banned in dumped:

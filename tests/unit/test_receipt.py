@@ -36,7 +36,9 @@ def test_receipt_bones_pass():
     iface, plan = load_script_lock(raw)
     result = judge_script(script, {"n": 3}, plan=plan, iface=iface, toolchain=raw)
     assert result.ok
-    rec = build_receipt(script, {"n": 3}, result, plan=plan, timestamp="2026-08-31T00:00:00Z")
+    rec = build_receipt(
+        script, {"n": 3}, result, plan=plan, toolchain=raw, timestamp="2026-08-31T00:00:00Z"
+    )
     assert rec["schema"] == SCHEMA
     assert rec["script_name"] == "n_plus_one"
     assert rec["contract_id"] == "bones/n_plus_one"
@@ -46,6 +48,9 @@ def test_receipt_bones_pass():
     assert rec["verdict"]["status"] == "PASS"
     assert rec["verdict"]["property"] is None
     assert rec["observation"]["status"] == "completed"
+    assert rec["toolchain"]["worker_hash"] == raw["toolchain"]["worker_hash"]
+    assert rec["toolchain"]["runtime_hashes"] == raw["toolchain"]["runtime_hashes"]
+    assert rec["toolchain"]["canon"] == "python.ast.v1"
     text = canonical_serialize(rec)
     assert "proven_pure" not in text
     assert "callable" not in text

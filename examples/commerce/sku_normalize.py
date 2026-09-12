@@ -25,6 +25,7 @@ from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.python_runtime import run_script
 from acid_engine.level3.script.runner import execute_plan
+from acid_engine.worker import live_toolchain
 
 
 def clean_skus(data: list) -> list:
@@ -148,12 +149,12 @@ def main() -> None:
     input_data = ["  ab-01 ", "ab-01", "XY-9", 42, "", "  xy-9  ", None, "zz-3"]
     iface, plan = lock_pair(leaf_clean, leaf_dedupe)
 
-    step1 = execute_plan(iface, plan, leaf_clean.script, input_data)
+    step1 = execute_plan(iface, plan, leaf_clean.script, input_data, toolchain=live_toolchain())
     assert step1.ok, explain_result(step1.conformance)
-    step2 = execute_plan(iface, plan, leaf_dedupe.script, step1.data)
+    step2 = execute_plan(iface, plan, leaf_dedupe.script, step1.data, toolchain=live_toolchain())
     assert step2.ok, explain_result(step2.conformance)
 
-    composite_out = pipe.execute(input_data, plan=plan, iface=iface).data
+    composite_out = pipe.execute(input_data, plan=plan, iface=iface, toolchain=live_toolchain()).data
     expected = ["AB-01", "XY-9", "ZZ-3"]
 
     print("=== Commerce pipeline: SKU normalize ===")

@@ -23,6 +23,9 @@ def test_cli_help():
     help_text = result.stdout
     assert "init" not in help_text
     assert "validate" not in help_text
+    braces = [line for line in help_text.splitlines() if "{" in line and "}" in line]
+    assert braces, help_text
+    assert "run" not in braces[0]
 
 
 def test_cli_judge_help():

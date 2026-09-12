@@ -245,6 +245,26 @@ def explain_block(result: ConformanceResult) -> str:
                 "worker.py differs from the approved contour (worker_hash).\n"
                 "The body was not executed."
             )
+    elif prop == "output_type":
+        why = (
+            "Observation did not satisfy the contract\n"
+            f"Expected {fail.expected}, got {fail.actual} (output_type). "
+            "bool is not int.\n"
+            "The body ran; this is not a proof of safety."
+        )
+    elif prop == "pure":
+        why = (
+            "Observation did not satisfy the contract\n"
+            "pure=True but effects were observed (pure). "
+            "Empty effects would still not prove purity.\n"
+            "The body ran; this is not proven_pure."
+        )
+    elif prop == "max_latency_ms":
+        why = (
+            "Observation did not satisfy the contract\n"
+            f"Latency {fail.actual} ms exceeded max_latency_ms {fail.expected}.\n"
+            "The body ran."
+        )
     else:
         why = f"Execution blocked\n{fail.human()}\nThe body was not executed."
     return why + "\n" + fail.human()

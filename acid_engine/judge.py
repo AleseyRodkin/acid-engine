@@ -47,7 +47,7 @@ def judge_script(
     pin = verify_runtime_pin(toolchain)
     if pin is not None:
         return PipelineResult(conformance=pin)
-    return execute_plan(iface, plan, script, input_data)
+    return execute_plan(iface, plan, script, input_data, toolchain=toolchain)
 
 
 def judge_script_from_lock(

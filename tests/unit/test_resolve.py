@@ -7,6 +7,7 @@ from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.script.artifact import ArtifactRef
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import execute_plan, lock_for_script
+from acid_engine.worker import live_toolchain
 
 BODY = '''def plus_one(x):
     return x + 1
@@ -45,7 +46,7 @@ def test_resolve_python_file_and_run():
         )
         script = _script(implementation=None, artifact=art)
         iface, plan = _iface_plan(script)
-        result = execute_plan(iface, plan, script, 3)
+        result = execute_plan(iface, plan, script, 3, toolchain=live_toolchain())
         assert result.ok
         assert result.data == 4
 
@@ -60,7 +61,7 @@ def test_unknown_language_is_fail_not_eval():
     )
     script = _script(implementation=None, artifact=art)
     iface, plan = _iface_plan(script)
-    result = execute_plan(iface, plan, script, 1)
+    result = execute_plan(iface, plan, script, 1, toolchain=live_toolchain())
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "language"
@@ -77,7 +78,7 @@ def test_broken_file_is_fail():
     )
     script = _script(implementation=None, artifact=art)
     iface, plan = _iface_plan(script)
-    result = execute_plan(iface, plan, script, 1)
+    result = execute_plan(iface, plan, script, 1, toolchain=live_toolchain())
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "artifact"
@@ -86,7 +87,7 @@ def test_broken_file_is_fail():
 def test_missing_impl_and_artifact_is_skipped():
     script = _script(implementation=None, artifact=None)
     iface, plan = _iface_plan(script)
-    result = execute_plan(iface, plan, script, 1)
+    result = execute_plan(iface, plan, script, 1, toolchain=live_toolchain())
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok
     assert result.data is None
@@ -105,7 +106,7 @@ def test_callable_still_preferred_over_artifact():
     )
     script = _script(implementation=plus_one, artifact=art)
     iface, plan = _iface_plan(script)
-    result = execute_plan(iface, plan, script, 2)
+    result = execute_plan(iface, plan, script, 2, toolchain=live_toolchain())
     assert result.ok
     assert result.data == 3
 

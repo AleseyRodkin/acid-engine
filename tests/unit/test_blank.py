@@ -25,6 +25,7 @@ from acid_engine.level3.graph.model import DependencyGraph
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import execute_plan, lock_for_script
+from acid_engine.worker import live_toolchain
 
 
 def _script(impl, name="plus"):
@@ -135,7 +136,7 @@ def test_container_blank_roundtrip_runs_step():
     assert restored.data == 3
     assert restored.content_hash == snap.content_hash
     iface, plan = lock_for_script(script)
-    result = execute_plan(iface, plan, script, restored.data)
+    result = execute_plan(iface, plan, script, restored.data, toolchain=live_toolchain())
     assert result.ok
     assert result.data == 4
 
