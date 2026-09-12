@@ -1,5 +1,9 @@
 # Acid Judge
 
+ИИ может написать или изменить tool. Acid Judge не обязан ему верить. Он проверяет, что будет запущен именно тот код, который был одобрен, и отдельно сверяет наблюдение с контрактом. Нет фактов — SKIPPED, не PASS.
+
+An agent can write or change a tool. Acid Judge does not have to believe it. It checks that the approved body is what will run, then checks the observation against the contract. Not enough facts → SKIPPED, not PASS.
+
 Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит файлы вне `runtime_hashes`.
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
@@ -17,7 +21,7 @@ Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. 
 Не защищает от того, что делает само тело после PASS: нет изоляции fs/net/process.
 Не защищает обход через `bash` / любой shell вне `judge`.
 `pure=True` ловит только эффекты, которые runtime занёс в `effects_observed`.
-Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind`, `worker_hash` и `runtime_hashes`. Смена CPython может потребовать пересъёма `plan.json`.
+Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind`, `canon` (`python.ast.v1`), `worker_hash` и `runtime_hashes`. Смена CPython может потребовать пересъёма `plan.json`.
 Supervisor сверяет SHA-256 контура (`worker.py`, `python_runtime.py`, `runner.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. Библиотечный `judge_script` без toolchain эти пины не смотрит.
 
 ## Три команды

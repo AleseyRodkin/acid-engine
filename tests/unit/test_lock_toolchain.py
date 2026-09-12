@@ -4,6 +4,7 @@ from __future__ import annotations
 import sys
 
 from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.implementation_canon import canon_id_for
 from acid_engine.level2.specification import Policy, Specification
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.level3.script.runner import dump_script_lock, load_script_lock, lock_for_script
@@ -28,6 +29,10 @@ def test_dump_includes_toolchain_outside_identity():
     tool = payload["toolchain"]
     assert tool["python_version"] == f"{sys.version_info.major}.{sys.version_info.minor}"
     assert tool["canon_kind"] in {"ast", "bytecode", "opaque", "partial"}
+    assert tool["canon"] == canon_id_for(tool["canon_kind"])
+    assert tool["canon"].startswith("python.")
+    assert tool["canon"].endswith(".v1")
+    assert "canon" not in script._identity_dict()
     assert tool["worker_hash"] == source_hash()
     assert len(tool["worker_hash"]) == 64
     live_rt = runtime_hashes()
@@ -86,4 +91,15 @@ def test_verify_runtime_pin_ok_and_mismatch():
     assert missing is not None
     assert missing.failure is not None
     assert missing.failure.property_name == "worker_hash"
+
+
+def test_research_shims_keep_import_path():
+    from acid_engine.level0.live_code import LiveCodeView
+    from acid_engine.level4.registry import ContractRegistry
+    from acid_engine.services.logging.logger import ExecutionLogger
+
+    assert LiveCodeView is not None
+    assert ContractRegistry is not None
+    assert ExecutionLogger is not None
+
 

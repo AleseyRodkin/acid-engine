@@ -2,6 +2,7 @@
 
 Canon: AST of source when it can be parsed; otherwise bytecode.
 Closure cells and defaults are always included — they are part of what runs.
+Public name of this hasher, not part of identity: python.ast.v1 / python.bytecode.v1.
 """
 from __future__ import annotations
 
@@ -12,6 +13,20 @@ import textwrap
 from collections.abc import Callable, Iterator
 from types import CodeType
 from typing import Any
+
+CANON_IDS = {
+    "ast": "python.ast.v1",
+    "bytecode": "python.bytecode.v1",
+    "opaque": "python.opaque.v1",
+    "partial": "python.partial.v1",
+    "missing": "python.missing.v1",
+    "cycle": "python.cycle.v1",
+}
+
+
+def canon_id_for(kind: str) -> str:
+    """Stable name of the hasher. Sits next to identity, never inside the hash."""
+    return CANON_IDS.get(kind, f"python.{kind}.v1")
 
 
 def canonical_implementation(

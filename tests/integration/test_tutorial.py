@@ -23,3 +23,10 @@ def test_readme_does_not_revive_agent_slogan():
     commercial = Path(__file__).resolve().parents[2] / "COMMERCIAL.md"
     assert "агент вызовет только" not in commercial.read_text(encoding="utf-8")
 
+
+def test_readme_thirty_seconds():
+    readme = README.read_text(encoding="utf-8")
+    assert "ИИ может написать или изменить tool" in readme
+    assert "SKIPPED, не PASS" in readme
+    assert "does not have to believe it" in readme
+

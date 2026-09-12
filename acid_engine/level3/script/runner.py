@@ -12,7 +12,7 @@ from acid_engine.level2.conformance import (
     check_conformance,
 )
 from acid_engine.level2.failure import FailureReason
-from acid_engine.level2.implementation_canon import implementation_identity
+from acid_engine.level2.implementation_canon import canon_id_for, implementation_identity
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -99,6 +99,7 @@ def lock_toolchain(script: ScriptModule) -> dict[str, Any]:
     return {
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "canon_kind": kind,
+        "canon": canon_id_for(kind),
         "worker_hash": source_hash(),
         "runtime_hashes": runtime_hashes(),
     }
