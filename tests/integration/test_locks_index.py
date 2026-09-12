@@ -72,6 +72,10 @@ def test_ci_judge_script_never_calls_library_without_plan():
     yaml = (ROOT / ".github" / "workflows" / "acid-judge.yml").read_text(encoding="utf-8")
     assert "locks/ci_judge.py" in yaml
     assert "judge_script" not in yaml
+    assert "pytest" in yaml
+    assert "cargo test" in yaml
+    assert "3.11" in yaml
+    assert "3.12" in yaml
 
 
 def test_ci_judge_runs_index():

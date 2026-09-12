@@ -50,7 +50,7 @@
 ## 4. Старт
 
 ```bash
-PYTHONPATH=. python -m pytest tests -q --ignore=tests/property --ignore=tests/unit/test_async.py
+PYTHONPATH=. python -m pytest tests -q
 PYTHONPATH=. python -m acid_engine lock --help
 PYTHONPATH=. python -m acid_engine run --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
 ```

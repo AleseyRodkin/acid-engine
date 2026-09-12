@@ -1,5 +1,5 @@
-//! External judge: bind plan.lock, run a Python worker, then verdict.
-//! Without `worker` the binary does not judge: SKIPPED, not PASS.
+//! Supervisor: bind plan.lock, run a Python worker, then verdict.
+//! Body hash is Python canon only. Without `worker` the binary does not judge: SKIPPED, not PASS.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;

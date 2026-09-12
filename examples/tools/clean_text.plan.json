@@ -33,5 +33,9 @@
     "module_hashes": {
       "clean_text": "4ef73e683ff188cd709c29deed42fc0f4188dd8f1f085d6bd463b56716c1fca6"
     }
+  },
+  "toolchain": {
+    "python_version": "3.11",
+    "canon_kind": "ast"
   }
 }

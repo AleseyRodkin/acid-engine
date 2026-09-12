@@ -33,5 +33,9 @@
     "module_hashes": {
       "emit_forecast_card": "d085a472dd81f138c87a0e026d385de899e1fb7b3aa3394a31db857b46a0fe5f"
     }
+  },
+  "toolchain": {
+    "python_version": "3.11",
+    "canon_kind": "ast"
   }
 }

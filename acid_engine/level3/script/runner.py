@@ -1,6 +1,7 @@
 """Исполнение по замороженному плану. plan.lock связывает тело реализации."""
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping
 from typing import Any
 
@@ -11,6 +12,7 @@ from acid_engine.level2.conformance import (
     check_conformance,
 )
 from acid_engine.level2.failure import FailureReason
+from acid_engine.level2.implementation_canon import implementation_identity
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -86,8 +88,23 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
     return iface, plan
 
 
+def lock_toolchain(script: ScriptModule) -> dict[str, str]:
+    """python_version + canon_kind рядом с замком. Не входят в identity и content_hash."""
+    ident = implementation_identity(script.implementation)
+    kind = "missing"
+    if isinstance(ident, dict):
+        kind = str(ident.get("kind") or "missing")
+    return {
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
+        "canon_kind": kind,
+    }
+
+
 def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
     """JSON-safe замок после materialize. Не тавтология CLI: файл хранится отдельно."""
+    from acid_engine.level3.script.resolve import materialize_script
+
+    script = materialize_script(script)
     iface, plan = lock_for_script(script)
     return {
         "plan_id": plan.plan_id,
@@ -95,6 +112,7 @@ def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
         "resolved_policies": plan.resolved_policies,
         "module_hashes": dict(plan.module_hashes),
         "execution_mode": plan.execution_mode.value,
+        "toolchain": lock_toolchain(script),
         "iface": {
             "contract_id": str(iface.contract_id),
             "version": str(iface.version),

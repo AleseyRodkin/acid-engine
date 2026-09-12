@@ -33,5 +33,9 @@
     "module_hashes": {
       "compute_amount": "1811469b80482fa625630567b801d52a1d40c2432676a4b66f16279ec21178fb"
     }
+  },
+  "toolchain": {
+    "python_version": "3.11",
+    "canon_kind": "ast"
   }
 }

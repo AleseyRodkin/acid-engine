@@ -69,8 +69,9 @@ Self-lock не вердикт. В том числе в библиотеке.
 Не Sigstore. Подмена тела receipt → verify не проходит.
 
 
-## Rust judge
+## Rust supervisor
 
+Бинарь не считает хеш тела. Один канон — Python (`implementation_canon`).
 Один вход бинаря: нужен worker.
 identify → bind → run worker → verdict.
 Нет worker → SKIPPED. Observation без worker — не вердикт.
@@ -145,6 +146,7 @@ Interface без исполнения → SKIPPED, `data=None`, `observation=Non
 `run --script` без `--plan` не PASS. С `--plan` — `judge_script` / замороженный lock.
 Не обходит lock прямым `run_script`.
 `lock --script` пишет JSON замка, это не вердикт.
+В JSON замка рядом с identity (не в `content_hash`) — `toolchain.python_version` и `toolchain.canon_kind`.
 
 ## History
 

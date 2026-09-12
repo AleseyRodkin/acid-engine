@@ -1,17 +1,11 @@
-
-```markdown
 # Глоссарий
 
-- **Contract** — универсальное описание сущности системы (идентификатор, характеристики, правила, действия).
-- **Container** — иммутабельный снимок данных на порте.
-- **ScriptModule** — минимальная исполняемая единица, содержащая спецификацию и реализацию.
-- **CompositeModule** — модуль, состоящий из графа других модулей.
-- **Pipeline** — замкнутый контур выполнения контракта (Container → Script → Module → Graph → Interface).
-- **ConstraintResolver** — механизм слияния унаследованных и декларированных политик.
-- **ContractRegistry** — реестр всех контрактов проекта с историей и разрешением ссылок.
-- **ExecutionProfile** — способ упаковки проекта в артефакт (Library, CLI, Desktop, Service, SaaS, Embedded).
-- **Observation** — наблюдаемые факты выполнения (latency, effects, trace).
-- **Conformance** — проверка `Provided ⊨ Required`.
-- **Self-hosting** — способность AcidEngine описывать и проверять собственные компоненты.
-- **DSL** — человекочитаемый язык описания контрактов.
-- **AIReferenceView** — представление кода для ИИ (атомарные ссылки на ScriptModule).
+- **lock** — JSON замка на тело. Не вердикт.
+- **judge** — bind до run + вердикт.
+- **receipt** — Observation + PASS/FAIL/SKIPPED, без `proven_pure`.
+- **plan.lock** — замороженные `module_hashes` и `interface_contract_hash`.
+- **content_hash** — декларация + канон тела. `ArtifactRef` не входит.
+- **Observation** — факты прогона. Observed ≠ Proven.
+- **SKIPPED** — фактов мало, чтобы судить. Не PASS.
+- **toolchain** — `python_version` + `canon_kind` рядом с замком, не в identity.
+- **supervisor** — бинарь `acid-judge`: bind → worker → verdict. Не канон тела.

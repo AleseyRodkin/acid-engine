@@ -1,4 +1,4 @@
-"""Rust judge: bind → python worker → verdict. No worker → SKIPPED, not PASS."""
+"""Rust supervisor: bind → python worker → verdict. No worker → SKIPPED, not PASS."""
 from __future__ import annotations
 
 import json

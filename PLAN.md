@@ -1,7 +1,7 @@
 # AcidEngine 0.1 — план костей
 
 Бриф для сборщика. Закон — только [METHOD.md](METHOD.md).
-ARCHITECTURE.md не план (хвост «ОС» до сужения 21.08).
+ARCHITECTURE.md не план (хвост «ОС» до сужения 21.08). Архив: [docs/archive/ARCHITECTURE.md](docs/archive/ARCHITECTURE.md).
 
 **Дата:** 31.08.2026
 **Репо:** https://github.com/AleseyRodkin/acid-engine-2.0
@@ -100,5 +100,5 @@ STOL (лаборатория) — чужой проект: не стенд, не
 Проверка:
 
 ```text
-PYTHONPATH=. python -m pytest tests -q --ignore=tests/property --ignore=tests/unit/test_async.py
+PYTHONPATH=. python -m pytest tests -q
 ```

@@ -3,9 +3,9 @@
 **Репозиторий:** https://github.com/AleseyRodkin/acid-engine-2.0
 Закон: METHOD.md. Очередь костей: PLAN.md. Очередь продукта: COMMERCIAL.md.
 
-## Снимок 31.08.2026
+## Снимок 12.09.2026
 
-Сборка после C7 (API=CLI) / контур H. Не zip `8e1b2a7`.
+Сборка 0.2: одно лицо Acid Judge. Не zip `8e1b2a7`.
 
 ## Сделано
 
@@ -14,7 +14,7 @@
 23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
 24. `rust/acid-judge` bind → python worker → verdict. Без worker SKIPPED.
 25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
-26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE помечен как не план.
+26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE — архив, не план.
 27. Worker: `acid_engine.worker` identify/run, без PASS/FAIL.
 28. Канон AST — `unparse`. Витринный `n_plus_one.plan.json` = живое тело.
     cargo ≥ 1.75, lockfile v3. Rust verdict: type/status/pure/latency.
@@ -27,8 +27,10 @@
 35. C6: Ed25519 на каноне receipt. `receipt --verify`. Не Sigstore.
 36. C7: API=CLI. `judge_script` / Pipeline без plan+iface → SKIPPED. Self-lock не вердикт.
 37. H1–H5: бинарь без worker → SKIPPED. Observation без worker не вердикт.
+38. 0.2: ARCHITECTURE в `docs/archive/`. Threat model на витрине. `acid-judge` — supervisor, не второй канон.
+    CI: pytest 3.11/3.12 + locks + cargo. `toolchain` в JSON замка рядом с identity, не в хеше.
 
-Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` bind → python worker → verdict.
-Без worker — SKIPPED. Worker не пишет вердикт.
+Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
+Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.
 
 Не делать: STOL, JS/WASM, proven_pure, SaaS, markdown parser, веб-превью ядра.

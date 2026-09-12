@@ -33,5 +33,9 @@
     "module_hashes": {
       "normalize_id": "203527a881244869515b557796b76f29f735cd42a56433387377b152dde7303e"
     }
+  },
+  "toolchain": {
+    "python_version": "3.11",
+    "canon_kind": "ast"
   }
 }

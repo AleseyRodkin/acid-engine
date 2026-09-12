@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "acid-engine"
-version = "0.1.0"
-description = "Contract-driven execution engine"
+version = "0.2.0"
+description = "Fail-closed gate for a locked Python-tool body"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Rodkin Aleksey"}]

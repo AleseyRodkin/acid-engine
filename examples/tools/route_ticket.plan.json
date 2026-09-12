@@ -33,5 +33,9 @@
     "module_hashes": {
       "route_ticket": "0dcaf219d79334fe1429180163154090a339be6e089f7f477422da76cc4add78"
     }
+  },
+  "toolchain": {
+    "python_version": "3.11",
+    "canon_kind": "ast"
   }
 }
