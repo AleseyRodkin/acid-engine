@@ -1,0 +1,28 @@
+name: Acid Judge
+description: Fail-closed lock check for a Python tool body. Catches a file swap between lock and CI. Does not sandbox.
+author: Rodkin Aleksey
+branding:
+  icon: shield
+  color: gray-dark
+inputs:
+  index:
+    description: Path to locks/index.json in the calling repository
+    required: false
+    default: locks/index.json
+  python-version:
+    description: CPython for the CLI
+    required: false
+    default: "3.11"
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install Acid Judge
+      shell: bash
+      run: pip install "${{ github.action_path }}"
+    - name: Verify lock index
+      shell: bash
+      run: acid-judge locks --index "${{ inputs.index }}"

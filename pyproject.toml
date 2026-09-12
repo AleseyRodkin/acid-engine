@@ -11,6 +11,9 @@ license = {text = "MIT"}
 authors = [{name = "Rodkin Aleksey"}]
 dependencies = []
 
+[project.scripts]
+acid-judge = "acid_engine.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "mypy>=1.0", "ruff>=0.1", "hypothesis>=6.0"]
 

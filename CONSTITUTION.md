@@ -36,6 +36,7 @@
 43. `toolchain.canon` = `python.ast.v1` рядом с identity. `level0`/`level4`/`services` в `research/`, import path тот же.
 44. Витрина: trust continuity. FAIL говорит «не запускали». `diff` — inspection, не вердикт. MCP и capability не начаты.
 45. `run` скрыт из `--help`. Контур + `cli.py`/`resolve.py`. `execute_plan` без toolchain → SKIPPED. Receipt несёт toolchain. Supervisor — бинарь в Release.
+46. CLI `acid-judge` после `pip install`. Reusable Action `uses: AleseyRodkin/acid-engine-2.0@…`. PyPI-ренейм нет. Windows/macOS — `release-bins`, не этот sandbox.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

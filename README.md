@@ -38,22 +38,37 @@ Supervisor сверяет SHA-256 контура (`worker.py`, `cli.py`, `python
 `diff --script --plan` — таблица approved vs live. Не исполняет, не PASS.
 `receipt --sign` / `receipt --verify` — Ed25519 на каноне receipt, локальный openssl. Не Sigstore.
 
+Продукт — Acid Judge. Import остаётся `acid_engine`. CLI — `acid-judge`. Репозиторий — `acid-engine-2.0`. На PyPI не публикуем: имя `acid-engine` уже занято чужим пакетом.
+
 ```bash
-PYTHONPATH=. python -m acid_engine lock --script FILE --out LOCK.json
-PYTHONPATH=. python -m acid_engine judge --script FILE --plan LOCK.json --input '...'
-PYTHONPATH=. python -m acid_engine locks --index locks/index.json
-PYTHONPATH=. python -m acid_engine diff --script FILE --plan LOCK.json
-PYTHONPATH=. python -m acid_engine receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
+pip install "acid-engine @ git+https://github.com/AleseyRodkin/acid-engine-2.0.git"
+acid-judge lock --script FILE --out LOCK.json
+acid-judge judge --script FILE --plan LOCK.json --input '...'
+acid-judge locks --index locks/index.json
+acid-judge diff --script FILE --plan LOCK.json
+acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
+
+`python -m acid_engine` — тот же CLI. `PYTHONPATH=.` не нужен после `pip install`.
+
+Чужой репозиторий:
+
+```yaml
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.2
+  with:
+    index: locks/index.json
+```
+
+Это bind по индексу, не PASS тела. Не песочница.
 
 `judge` без `--plan` → SKIPPED, не PASS. Скрытый `run` ещё вызывается, в `--help` его нет.
 
 Витрина:
 
 ```bash
-PYTHONPATH=. python -m acid_engine lock --help
-PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}' --receipt /tmp/bones.receipt.json
-PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json --input '{"n": 3}'
+acid-judge lock --help
+acid-judge judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}' --receipt /tmp/bones.receipt.json
+acid-judge judge --script examples/bones/n_plus_one.json --input '{"n": 3}'
 ```
 
 Коротко, почему не PASS: тело не то / не было исполнения / pure но effects / тип не совпал / замок не передан.
@@ -64,12 +79,14 @@ PYTHONPATH=. python -m acid_engine judge --script examples/bones/n_plus_one.json
 
 Бинарь `acid-judge` — supervisor: identify → bind → run worker → verdict.
 Хеш тела считает только Python canon. Без worker — SKIPPED, не PASS. Observation без worker — не вердикт.
+Linux: [Releases](https://github.com/AleseyRodkin/acid-engine-2.0/releases). Windows/macOS собирает workflow `release-bins`.
 
 ## Проверки
 
 ```bash
-PYTHONPATH=. python -m pytest tests -q
-PYTHONPATH=. python locks/ci_judge.py
+pip install -e ".[dev]"
+python -m pytest tests -q
+python locks/ci_judge.py
 cargo test --locked --manifest-path rust/acid-judge/Cargo.toml
 ```
 

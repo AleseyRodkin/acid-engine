@@ -1,0 +1,45 @@
+name: release-bins
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  bins:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: acid-judge-linux-x86_64
+          - os: windows-latest
+            artifact: acid-judge-windows-x86_64.exe
+          - os: macos-latest
+            artifact: acid-judge-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.75.0"
+      - name: Build
+        run: cargo build --release --locked --manifest-path rust/acid-judge/Cargo.toml
+      - name: Name artifact (unix)
+        if: runner.os != 'Windows'
+        run: |
+          src=rust/acid-judge/target/release/acid-judge
+          cp "$src" "${{ matrix.artifact }}"
+          strip "${{ matrix.artifact }}" || true
+      - name: Name artifact (windows)
+        if: runner.os == 'Windows'
+        run: copy rust\acid-judge\target\release\acid-judge.exe ${{ matrix.artifact }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
