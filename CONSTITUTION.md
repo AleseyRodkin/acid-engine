@@ -38,6 +38,7 @@
 45. `run` скрыт из `--help`. Контур + `cli.py`/`resolve.py`. `execute_plan` без toolchain → SKIPPED. Receipt несёт toolchain. Supervisor — бинарь в Release.
 46. CLI `acid-judge` после `pip install`. Reusable Action `uses: AleseyRodkin/acid-engine-2.0@…`. PyPI-ренейм нет. Windows/macOS — `release-bins`, не этот sandbox.
 47. Пакет 0.2.3 = тег `v0.2.3`. `release-bins` имеет `contents: write`. Action по умолчанию bind, не judge.
+48. `locks --judge` исполняет и пишет receipt. Action `judge: true` включает это. Default без флага — bind.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

@@ -301,12 +301,35 @@ def cmd_locks(args: argparse.Namespace) -> None:
             failed += 1
             continue
         bound = bind_script_to_plan(plan, script)
-        if bound is None:
-            print(f"[BOUND] {ident}")
+        if bound is not None:
+            status = bound.status.value if hasattr(bound.status, "value") else str(bound.status)
+            print(f"[{status}] {ident} {bound.message}")
+            failed += 1
             continue
-        status = bound.status.value if hasattr(bound.status, "value") else str(bound.status)
-        print(f"[{status}] {ident} {bound.message}")
-        failed += 1
+        print(f"[BOUND] {ident}")
+        if not getattr(args, "judge", False):
+            continue
+        from acid_engine.judge import judge_script
+        from acid_engine.receipt import build_receipt, write_receipt
+
+        raw_plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        iface, plan = load_script_lock(raw_plan)
+        result = judge_script(
+            script, item.get("input"), plan=plan, iface=iface, toolchain=raw_plan
+        )
+        print(explain_block(result.conformance))
+        dest = Path(getattr(args, "receipts", None) or "receipts")
+        dest.mkdir(parents=True, exist_ok=True)
+        rec_path = dest / f"{ident}.json"
+        write_receipt(
+            rec_path,
+            build_receipt(
+                script, item.get("input"), result, plan=plan, toolchain=raw_plan
+            ),
+        )
+        print(f"receipt: {rec_path}")
+        if not result.ok:
+            failed += 1
     if failed:
         sys.exit(1)
 
@@ -434,9 +457,15 @@ def main() -> None:
 
     p_locks = subparsers.add_parser(
         "locks",
-        help="Сверить живые тела с plan.lock по индексу (не исполняет)",
+        help="Сверить живые тела с plan.lock по индексу. Без --judge не исполняет.",
     )
     p_locks.add_argument("--index", required=True, help="locks/index.json")
+    p_locks.add_argument(
+        "--judge",
+        action="store_true",
+        help="После bind исполнить тело и написать receipt. По умолчанию только bind.",
+    )
+    p_locks.add_argument("--receipts", default="receipts", help="Каталог receipt при --judge")
     p_locks.set_defaults(func=cmd_locks)
 
     p_diff = subparsers.add_parser(

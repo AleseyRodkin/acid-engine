@@ -33,6 +33,19 @@ def test_locks_index_all_bound():
     assert "PASS" not in proc.stdout
 
 
+def test_locks_judge_pass_writes_receipt(tmp_path: Path):
+    proc = _cli("locks", "--index", str(INDEX), "--judge", "--receipts", str(tmp_path))
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    assert "[BOUND]" in proc.stdout
+    assert "PASS" in proc.stdout
+    rec = tmp_path / "n_plus_one.json"
+    assert rec.is_file()
+    payload = json.loads(rec.read_text(encoding="utf-8"))
+    assert payload["verdict"]["status"] == "PASS"
+    assert "proven_pure" not in json.dumps(payload)
+    assert "toolchain" in payload
+
+
 def test_locks_swapped_hash_fails():
     raw = json.loads(INDEX.read_text(encoding="utf-8"))
     plan_src = ROOT / "examples" / "tools" / "clean_text.plan.json"

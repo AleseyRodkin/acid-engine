@@ -11,7 +11,7 @@ Trust continuity: approved → unchanged → executed → observed → verified.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.3**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
+Пакет **0.2.4**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
 
@@ -54,12 +54,13 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.2
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.4
   with:
     index: locks/index.json
+    judge: true   # optional: execute + receipt. Default is bind only.
 ```
 
-Это bind по индексу, не PASS тела. Не песочница.
+Без `judge: true` — только bind, тело не запускается. С флагом — `lock → judge → receipt`. Не песочница.
 Чужой CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke) — один tool, job `tamper` должен FAIL.
 
 `judge` без `--plan` → SKIPPED, не PASS. Скрытый `run` ещё вызывается, в `--help` его нет.

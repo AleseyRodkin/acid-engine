@@ -13,6 +13,14 @@ inputs:
     description: CPython for the CLI
     required: false
     default: "3.11"
+  judge:
+    description: After bind, run judge and write receipts. Default false = bind only.
+    required: false
+    default: "false"
+  receipts:
+    description: Receipt directory when judge is true
+    required: false
+    default: receipts
 runs:
   using: composite
   steps:
@@ -25,4 +33,16 @@ runs:
       run: pip install "${{ github.action_path }}"
     - name: Verify lock index
       shell: bash
-      run: acid-judge locks --index "${{ inputs.index }}"
+      run: |
+        extra=()
+        if [ "${{ inputs.judge }}" = "true" ]; then
+          extra=(--judge --receipts "${{ inputs.receipts }}")
+        fi
+        acid-judge locks --index "${{ inputs.index }}" "${extra[@]}"
+    - name: Upload receipts
+      if: ${{ inputs.judge == 'true' && always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: receipts
+        path: ${{ inputs.receipts }}
+        if-no-files-found: ignore

@@ -14,6 +14,7 @@ def test_action_yml_runs_locks_index():
     text = (ROOT / "action.yml").read_text(encoding="utf-8")
     assert "using: composite" in text
     assert "acid-judge locks --index" in text
+    assert "--judge" in text
     assert "proven_pure" not in text
     assert "MCP" not in text
 
@@ -22,6 +23,7 @@ def test_readme_install_has_no_pythonpath():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "acid-judge lock --script FILE" in readme
     assert "uses: AleseyRodkin/acid-engine-2.0@" in readme
+    assert "judge: true" in readme
     assert "acid-judge-smoke" in readme
     assert "pip install" in readme
     for line in readme.splitlines():

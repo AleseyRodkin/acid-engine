@@ -12,18 +12,8 @@ jobs:
       - uses: ./
         with:
           index: locks/index.json
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install
-        run: pip install -e .
-      - name: Judge locked tools
-        run: python locks/ci_judge.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: receipts
-          path: receipts/
+          judge: true
+
 
   tests:
     runs-on: ubuntu-latest
