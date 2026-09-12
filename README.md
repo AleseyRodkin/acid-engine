@@ -2,6 +2,8 @@
 
 Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит подмену worker.
 
+Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
+
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
 Пакет **0.2.0**. Ядро MIT.
 
