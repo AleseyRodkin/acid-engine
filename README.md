@@ -11,7 +11,7 @@ Trust continuity: approved → unchanged → executed → observed → verified.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.0**. Ядро MIT. Бинарь supervisor: GitHub Releases (`acid-judge-linux-x86_64`), без локального `cargo`.
+Пакет **0.2.3**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
 
@@ -74,7 +74,7 @@ acid-judge judge --script examples/bones/n_plus_one.json --input '{"n": 3}'
 
 Коротко, почему не PASS: тело не то / не было исполнения / pure но effects / тип не совпал / замок не передан.
 
-Кости 0.1: [PLAN.md](PLAN.md). Очередь продукта: [COMMERCIAL.md](COMMERCIAL.md). Лицензия: [LICENSE](LICENSE).
+Лицензия: [LICENSE](LICENSE).
 
 ## Supervisor, не второй канон
 
