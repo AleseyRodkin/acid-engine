@@ -45,4 +45,7 @@ def test_readme_thirty_seconds():
     assert "Python-first" in readme
     assert "INTEROP.md" in readme
     assert "execution-integrity layer" in readme
+    assert "Verify it yourself" in readme
+    assert "acid-judge-smoke" in readme
+    assert "./smoke.sh" in readme
 

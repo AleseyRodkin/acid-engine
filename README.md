@@ -54,6 +54,19 @@ Proof: [attacks/](attacks/README.md). Manual copies: [ATTACK.md](ATTACK.md). TCB
 
 Honest `compute_amount` is PASS. The swapped body is blocked. No sandbox, no LLM.
 
+## Verify it yourself
+
+No signup. No cloud. No trust required.
+
+```bash
+git clone https://github.com/AleseyRodkin/acid-judge-smoke.git
+cd acid-judge-smoke
+./smoke.sh
+```
+
+Run the smoke test: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+The product repository explains Acid Judge. The smoke repository is the proof.
+
 ## Install
 
 ```bash
