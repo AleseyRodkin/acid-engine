@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_pyproject_exposes_acid_judge_script():
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert 'acid-judge = "acid_engine.cli:main"' in text
-    assert 'name = "acid-engine"' in text
+    assert 'name = "acid-judge"' in text
+    assert 'name = "acid-engine"' not in text
 
 
 def test_action_yml_runs_locks_index():
@@ -26,6 +27,8 @@ def test_readme_install_has_no_pythonpath():
     assert "judge: true" in readme
     assert "acid-judge-smoke" in readme
     assert "pip install" in readme
+    assert "pip install acid-judge" in readme
+    assert "Not published to PyPI" not in readme
     for line in readme.splitlines():
         if line.startswith("acid-judge ") or line.startswith("pip install"):
             assert "PYTHONPATH" not in line

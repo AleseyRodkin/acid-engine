@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.15 — 2026-09-16
+
+- PyPI distribution name is `acid-judge`. Import stays `acid_engine`. CLI stays `acid-judge`.
+- Does not overwrite [acid-engine](https://pypi.org/project/acid-engine/) (data contracts, Apache 2.0).
+- Trusted Publishing workflow: `.github/workflows/pypi.yml`.
+
 ## 0.2.14 — 2026-09-16
 
 - `source_hash` of the exec target is compared to the lock **before import**. Mismatch → FAIL, the file is not imported. Missing pin → SKIPPED.

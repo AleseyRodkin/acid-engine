@@ -52,7 +52,7 @@ Do not “improve” the hash canon without re-taking every `plan.json`.
 
 | Phase | Point | Done | Do not |
 |---|---|---|---|
-| C0 | README + `judge` alias | `4b87f13` copy-paste green | PyPI rename, prices |
+| C0 | README + `judge` alias | `4b87f13` copy-paste green | overwrite `acid-engine` on PyPI, prices |
 | C1 | `receipt.json` | `judge --receipt`; no `proven_pure` | dashboard |
 | C2 | GitHub Action + `locks/index.json` | workflow + index; body swap is not PASS | hosted SaaS |
 | C3 | 5 tools in `examples/tools/` | `.py`+`.json`+`.plan.json`; index bones+tools | a “news” entity in the core |

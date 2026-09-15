@@ -3,13 +3,28 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "acid-engine"
-version = "0.2.14"
+name = "acid-judge"
+version = "0.2.15"
 description = "Fail-closed gate for a locked Python-tool body"
+readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Rodkin Aleksey"}]
+keywords = ["execution-integrity", "ai-agents", "fail-closed", "supply-chain"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/AleseyRodkin/acid-engine-2.0"
+Issues = "https://github.com/AleseyRodkin/acid-engine-2.0/issues"
+Changelog = "https://github.com/AleseyRodkin/acid-engine-2.0/blob/main/CHANGELOG.md"
 
 [project.scripts]
 acid-judge = "acid_engine.cli:main"

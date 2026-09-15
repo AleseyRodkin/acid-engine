@@ -36,7 +36,7 @@ Law: METHOD.md. Bones queue: PLAN.md. Product queue: COMMERCIAL.md.
 43. `toolchain.canon` = `python.ast.v1` next to identity. `level0`/`level4`/`services` in `research/`, same import path.
 44. Showcase: trust continuity. FAIL says “did not run”. `diff` is inspection, not a verdict. MCP and capability not started.
 45. `run` hidden from `--help`. Contour + `cli.py`/`resolve.py`. `execute_plan` without toolchain → SKIPPED. Receipt carries toolchain. Supervisor is a Release binary.
-46. CLI `acid-judge` after `pip install`. Reusable Action `uses: AleseyRodkin/acid-engine-2.0@…`. No PyPI rename. Windows/macOS — `release-bins`, not this sandbox.
+46. CLI `acid-judge` after `pip install`. Reusable Action `uses: AleseyRodkin/acid-engine-2.0@…`. Windows/macOS — `release-bins`, not this sandbox.
 47. Package 0.2.3 = tag `v0.2.3`. `release-bins` has `contents: write`. Action defaults to bind, not judge.
 48. `locks --judge` executes and writes a receipt. Action `judge: true` turns that on. Default without the flag is bind.
 49. CI blocks ruff and mypy --strict alongside pytest. A linter outside the workflow is fail-open.
@@ -50,6 +50,7 @@ Law: METHOD.md. Bones queue: PLAN.md. Product queue: COMMERCIAL.md.
 57. 0.2.12: documentation is English-only.
 58. 0.2.13: comments, docstrings, CLI help in English.
 59. 0.2.14: source_hash before import; seal against locked dep hashes, one read; supervisor PYTHONPATH is the trusted package, not cwd.
+60. 0.2.15: PyPI name is `acid-judge`. Import remains `acid_engine`. Do not upload over `pypi.org/project/acid-engine`.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.
