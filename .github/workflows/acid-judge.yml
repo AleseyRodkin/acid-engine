@@ -27,6 +27,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: pip install -e ".[dev]"
+      - name: Ruff
+        run: python -m ruff check acid_engine tests
+      - name: Mypy
+        run: python -m mypy --strict acid_engine
       - name: Pytest
         run: python -m pytest tests -q
 

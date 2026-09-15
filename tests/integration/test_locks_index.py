@@ -125,6 +125,8 @@ def test_ci_judge_script_never_calls_library_without_plan():
     assert "judge: true" in yaml
     assert "judge_script" not in yaml
     assert "pytest" in yaml
+    assert "ruff check" in yaml
+    assert "mypy --strict" in yaml
     assert "cargo test" in yaml
     assert "3.11" in yaml
     assert "3.12" in yaml

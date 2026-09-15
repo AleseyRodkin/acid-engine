@@ -34,7 +34,8 @@ def diff_lock(raw: Mapping[str, Any], script: ScriptModule) -> list[DiffRow]:
     from acid_engine.level2.implementation_canon import implementation_identity
 
     tool = _tool(raw)
-    hashes = raw.get("module_hashes") if isinstance(raw.get("module_hashes"), Mapping) else {}
+    raw_hashes = raw.get("module_hashes")
+    hashes: Mapping[str, Any] = raw_hashes if isinstance(raw_hashes, Mapping) else {}
     locked_body = str(hashes.get(script.name) or hashes.get(str(script.contract_id)) or "—")
     ident = implementation_identity(script.implementation)
     live_kind = "missing"
@@ -45,7 +46,8 @@ def diff_lock(raw: Mapping[str, Any], script: ScriptModule) -> list[DiffRow]:
     locked_canon = str(tool.get("canon") or "—")
     live_worker = source_hash()
     locked_worker = str(tool.get("worker_hash") or "—")
-    pinned_rt = tool.get("runtime_hashes") if isinstance(tool.get("runtime_hashes"), Mapping) else {}
+    raw_rt = tool.get("runtime_hashes")
+    pinned_rt: Mapping[str, Any] = raw_rt if isinstance(raw_rt, Mapping) else {}
     live_rt = runtime_hashes()
     rows = [
         DiffRow("body " + script.name, locked_body, script.content_hash, locked_body == script.content_hash),
