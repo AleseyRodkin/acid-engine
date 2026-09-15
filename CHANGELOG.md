@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6 — 2026-09-15
+
+- `lock` warns on `importlib.import_module` / `__import__` / `exec` / `eval`: local deps cannot be fully pinned.
+- `dependency_hash` expected/actual are file hashes, not name lists.
+
 ## 0.2.5 — 2026-09-15
 
 - Local project imports of a tool are hashed (`dep:` in `module_hashes`). Swap helper.py → FAIL before run.

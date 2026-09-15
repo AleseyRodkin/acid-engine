@@ -95,3 +95,62 @@ def test_helper_swap_fails_before_pass(tmp_path: Path):
     assert "dependency_hash" in swapped.stdout
     assert "was not executed" in swapped.stdout
     assert "4995" not in swapped.stdout
+    assert "helper.py" in swapped.stdout
+    assert "['helper.py']" not in swapped.stdout
+    assert "expected='missing'" not in swapped.stdout
+    assert "actual='missing'" not in swapped.stdout
+
+
+def test_dynamic_import_lock_warns_and_does_not_pin(tmp_path: Path):
+    helper = tmp_path / "helper.py"
+    helper.write_text("def process(d):\n    return {'r': 1}\n", encoding="utf-8")
+    entry = tmp_path / "entry.py"
+    entry.write_text(
+        """
+import importlib
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    helper = importlib.import_module("helper")
+    return helper.process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    plan = tmp_path / "entry.plan.json"
+    lock = _cli("lock", "--script", str(entry), "--out", str(plan), cwd=tmp_path)
+    assert lock.returncode == 0, lock.stderr + lock.stdout
+    assert "local imports pinned: 0" in lock.stdout
+    assert "dynamic import" in lock.stdout
+    assert "importlib.import_module" in lock.stdout
+    assert "cannot be fully pinned" in lock.stdout
+    payload = json.loads(plan.read_text(encoding="utf-8"))
+    assert payload["dependency_hashes"] == {}
+    helper.write_text("def process(d):\n    return {'r': 3330}\n", encoding="utf-8")
+    swapped = _cli(
+        "judge",
+        "--script",
+        str(entry),
+        "--plan",
+        str(plan),
+        "--input",
+        '{"n": 1}',
+        cwd=tmp_path,
+    )
+    assert swapped.returncode == 0, swapped.stderr + swapped.stdout
+    assert "PASS" in swapped.stdout
+    assert "3330" in swapped.stdout
+

@@ -11,7 +11,7 @@ Trust continuity: approved → unchanged → executed → observed → verified.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.5**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
+Пакет **0.2.6**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
 
@@ -20,7 +20,7 @@ Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. 
 ## Что защищает и что нет
 
 Защищает от подмены файла tool между `lock` и вызовом, если hook или CI сверяют хеш.
-Защищает от подмены **локальных** `.py`, которые файл инструмента импортирует (не stdlib, не site-packages, не `acid_engine`).
+Защищает от подмены **локальных** `.py`, которые файл инструмента импортирует статически (не stdlib, не site-packages, не `acid_engine`). `importlib.import_module` / `exec` / `eval` не пинятся — `lock` предупреждает.
 Не защищает от того, что делает само тело после PASS: нет изоляции fs/net/process.
 Не защищает обход через `bash` / любой shell вне `judge`.
 `Policy.pure` — **declared_pure**: runtime не инструментирует I/O. Пишет на диск при `pure=True` и не задекларировав effects → PASS. Пустые effects ≠ чистота.
@@ -58,7 +58,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.5
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.6
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.

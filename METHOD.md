@@ -31,7 +31,9 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 Локальные `.py`, которые файл инструмента импортирует (не stdlib, не
 site-packages, не `acid_engine`), входят в замок как `dep:<path>` =
 SHA-256 файла. Подмена helper при том же теле точки входа — FAIL, тело
-не запускать. Переименование локальной переменной меняет AST-канон.
+не запускать. `importlib.import_module` / `__import__` / `exec` / `eval`
+не обходятся: `lock` предупреждает, что локальные зависимости не полностью
+запинены. Переименование локальной переменной меняет AST-канон.
 Канон тела один: callable. `ArtifactRef` — локатор, не identity.
 Нет callable → `implementation` в identity = `{kind: missing}`.
 После резолва (`materialize_script`) identity — канон тела fn.

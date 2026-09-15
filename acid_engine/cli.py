@@ -152,6 +152,7 @@ def cmd_lock(args: argparse.Namespace) -> None:
     except Exception as e:
         print(f"ERROR: Failed to load script: {e}")
         sys.exit(1)
+    from acid_engine.level2.local_deps import detect_dynamic_imports
     from acid_engine.level3.script.runner import dump_script_lock
 
     payload = dump_script_lock(script)
@@ -165,6 +166,13 @@ def cmd_lock(args: argparse.Namespace) -> None:
         print(f"local imports pinned: {len(deps)}")
     else:
         print("local imports pinned: 0")
+    dynamic = detect_dynamic_imports(script.implementation)
+    if dynamic:
+        print(
+            "dynamic import: tool uses "
+            + ", ".join(dynamic)
+            + "; local deps cannot be fully pinned"
+        )
     policy = script.specification.policy
     if getattr(policy, "pure", False):
         print(

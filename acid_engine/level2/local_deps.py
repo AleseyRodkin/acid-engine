@@ -15,21 +15,57 @@ _STDLIB = frozenset(getattr(sys, "stdlib_module_names", ()))
 
 def collect_local_dep_hashes(fn: Callable[..., Any] | None) -> dict[str, str]:
     """SHA-256 of local .py files the tool file imports. Empty if none or no source."""
-    if fn is None or not callable(fn):
-        return {}
-    try:
-        origin = inspect.getsourcefile(fn) or inspect.getfile(fn)
-    except TypeError:
-        return {}
-    if not origin or origin.startswith("<"):
-        return {}
-    start = Path(origin).resolve()
-    if not start.is_file():
+    start = _origin_file(fn)
+    if start is None:
         return {}
     root = start.parent
     out: dict[str, str] = {}
     _walk(start, root, out, set())
     return dict(sorted(out.items()))
+
+
+def detect_dynamic_imports(fn: Callable[..., Any] | None) -> tuple[str, ...]:
+    """Names in the tool file AST: import_module, __import__, exec, eval. Not pinned."""
+    start = _origin_file(fn)
+    if start is None:
+        return ()
+    try:
+        tree = ast.parse(start.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return ()
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        qual = _call_qualname(node.func)
+        tail = qual.rsplit(".", 1)[-1]
+        if tail in {"exec", "eval", "__import__"}:
+            found.add(tail)
+        elif tail == "import_module":
+            found.add("importlib.import_module")
+    return tuple(sorted(found))
+
+
+def _origin_file(fn: Callable[..., Any] | None) -> Path | None:
+    if fn is None or not callable(fn):
+        return None
+    try:
+        origin = inspect.getsourcefile(fn) or inspect.getfile(fn)
+    except TypeError:
+        return None
+    if not origin or origin.startswith("<"):
+        return None
+    path = Path(origin).resolve()
+    return path if path.is_file() else None
+
+
+def _call_qualname(func: ast.AST) -> str:
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        left = _call_qualname(func.value)
+        return f"{left}.{func.attr}" if left else func.attr
+    return ""
 
 
 def _walk(file: Path, root: Path, out: dict[str, str], seen: set[Path]) -> None:

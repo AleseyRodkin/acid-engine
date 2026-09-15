@@ -76,6 +76,7 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> ConformanceResu
             }
         )
         detail = ",".join(changed[:8]) or "dependency_hash"
+        focus = changed[0] if changed else ""
         return ConformanceResult(
             status=ConformanceStatus.FAIL,
             level=ConformanceLevel.STRUCTURAL,
@@ -84,8 +85,8 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> ConformanceResu
                 node_id=script.name,
                 contract_id=str(script.contract_id),
                 property_name="dependency_hash",
-                expected=str(sorted(locked_deps)),
-                actual=str(sorted(live_deps)),
+                expected=str(locked_deps.get(focus, "missing")),
+                actual=str(live_deps.get(focus, "missing")),
                 detail=detail,
             ),
         )

@@ -11,8 +11,11 @@ and not an MCP gateway.
 ## In perimeter
 
 - Bytes of the locked tool's implementation (AST canon, else bytecode).
-- Local project `.py` files that the tool file imports (not stdlib, not
-  site-packages, not `acid_engine`). Stored as `dep:<path>` in `module_hashes`.
+- Local project `.py` files reached by **static** `import` / `from` in the
+  tool file (not stdlib, not site-packages, not `acid_engine`). Stored as
+  `dep:<path>` in `module_hashes`. `importlib.import_module`, `__import__`,
+  `exec`, and `eval` are not followed. `lock` prints a warning when those
+  appear in the AST.
 - Judge contour listed in `runtime_hashes` (`worker.py`, `cli.py`,
   `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`,
   `local_deps.py`).
@@ -28,6 +31,8 @@ and not an MCP gateway.
 - `Policy.pure` / declared_pure: not instrumented. A write to disk PASS-es
   unless the body itself records effects.
 - Imports from the standard library or from site-packages.
+- Dynamic import (`importlib.import_module`, `__import__`, `exec`, `eval`):
+  not pinned; `lock` warns.
 - MCP / Cursor / Copilot hooks (one harness: Claude Code PreToolUse bind).
 - Cosmetics that change AST (renaming a local variable) — that is FAIL by design.
 
