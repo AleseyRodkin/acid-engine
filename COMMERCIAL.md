@@ -8,10 +8,14 @@
 
 ## 1. Что продаём
 
-Продукт: **Acid Judge** (не зонтик AcidEngine, не PyPI-ренейм).  
+Продукт: **Acid Judge** — independent execution-integrity primitive, не control plane.  
 Фраза: verifies that the code approved for an AI agent is the code that actually executes.  
-Не policy gate («можно ли вызывать tool»). Не MCP-gateway. Не sandbox. Не SLSA.  
-Policy gate может ALLOW после смены файла. Этот gate ловит, что одобренный artifact — не тот, что сейчас на диске.
+Не policy gate. Не MCP-gateway. Не sandbox. Не SLSA. Сосед этих слоёв, не замена.
+
+ICP: команды, где AI меняет локальный tool с blast radius (payments, refunds, production data). Не «все, у кого есть агент».
+
+Четыре поверхности: CLI, library, один hook, receipt. [INTEROP.md](INTEROP.md).
+Адаптеры APort / AGT / Copilot — по запросу вызывающего, не в 0.2.
 
 Первый покупатель: **AI Platform / Developer Platform**. Потом AppSec. Governance — после receipts/evidence, не первым.
 

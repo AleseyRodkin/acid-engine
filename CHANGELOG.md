@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.11 — 2026-09-16
+
+- Primitive, not a control plane. Four surfaces: CLI, library, hook, receipt ([INTEROP.md](INTEROP.md)).
+- Receipt `context.agent` / `context.repository` optional. Not identity. Copilot/APort adapters not opened.
+
 ## 0.2.10 — 2026-09-16
 
 - Pre-execution bind ≠ post-execution PASS. README is a landing page; `./demo.sh` is the 60s proof.

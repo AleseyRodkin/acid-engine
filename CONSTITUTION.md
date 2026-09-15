@@ -46,6 +46,7 @@
 53. 0.2.8: продукт — execution integrity (wedge), не AcidEngine-ОС. Матрица атак + TCB. Второй harness (Copilot) не открывать в этом коммите.
 54. 0.2.9: формулировка Approved-to-Executed. Receipt — execution evidence, не SLSA. `evidence.missing` без risk score. Copilot/MCP не открывать.
 55. 0.2.10: pre ≠ post. demo.sh. seal local deps. symlink claimed. env/site-packages out. Copilot всё ещё закрыт.
+56. 0.2.11: interop primitive. Четыре поверхности. Receipt context optional. Без адаптеров платформ.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

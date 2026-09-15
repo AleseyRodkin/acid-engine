@@ -34,6 +34,8 @@ def test_cli_judge_help():
     assert result.returncode == 0
     assert "--script" in result.stdout
     assert "--plan" in result.stdout
+    assert "--agent" in result.stdout
+    assert "--repository" in result.stdout
 
 
 def test_cli_judge_requires_script():

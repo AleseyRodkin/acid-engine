@@ -42,4 +42,7 @@ def test_readme_thirty_seconds():
     assert "After execution" in readme
     assert "./demo.sh" in readme
     assert "Pre ≠ PASS" in readme
+    assert "Python-first" in readme
+    assert "INTEROP.md" in readme
+    assert "execution-integrity layer" in readme
 

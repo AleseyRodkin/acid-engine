@@ -28,6 +28,17 @@ def _missing(
     return missing_evidence(result, plan=plan, toolchain=toolchain)
 
 
+def _context(raw: Mapping[str, Any] | None) -> dict[str, str]:
+    if not isinstance(raw, Mapping):
+        return {}
+    out: dict[str, str] = {}
+    for key in ("agent", "repository", "environment"):
+        value = raw.get(key)
+        if isinstance(value, str) and value.strip():
+            out[key] = value.strip()
+    return out
+
+
 def _json_safe_output(data: Any) -> Any:
     if callable(data):
         raise TypeError("receipt cannot contain callable")
@@ -43,6 +54,7 @@ def build_receipt(
     plan: Any | None = None,
     toolchain: Mapping[str, Any] | None = None,
     timestamp: str | None = None,
+    context: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     script = materialize_script(script)
     conf = result.conformance
@@ -75,6 +87,9 @@ def build_receipt(
             "missing": _missing(result, plan=plan, toolchain=toolchain),
         },
     }
+    extra = _context(context)
+    if extra:
+        receipt["context"] = extra
     if toolchain is not None:
         nested = toolchain.get("toolchain") if isinstance(toolchain.get("toolchain"), Mapping) else toolchain
         if isinstance(nested, Mapping):

@@ -40,6 +40,7 @@ def test_receipt_bones_pass():
         script, {"n": 3}, result, plan=plan, toolchain=raw, timestamp="2026-08-31T00:00:00Z"
     )
     assert rec["schema"] == SCHEMA
+    assert "context" not in rec
     assert rec["script_name"] == "n_plus_one"
     assert rec["contract_id"] == "bones/n_plus_one"
     assert rec["body_hash"] == script.content_hash
@@ -55,6 +56,17 @@ def test_receipt_bones_pass():
     text = canonical_serialize(rec)
     assert "proven_pure" not in text
     assert "callable" not in text
+    with_ctx = build_receipt(
+        script,
+        {"n": 3},
+        result,
+        plan=plan,
+        toolchain=raw,
+        timestamp="2026-08-31T00:00:00Z",
+        context={"agent": "claude-code", "repository": "acme/pay", "secret": "nope"},
+    )
+    assert with_ctx["context"] == {"agent": "claude-code", "repository": "acme/pay"}
+    assert "secret" not in with_ctx["context"]
 
 
 def test_receipt_swapped_plan_fail_module_hash():
@@ -105,3 +117,24 @@ def test_cli_receipt_bones_pass_serializes():
         assert rec["output"] == {"n": 4}
         write_receipt(Path(tmp) / "copy.json", rec)
         assert "proven_pure" not in Path(out).read_text(encoding="utf-8")
+
+
+def test_cli_receipt_agent_context(tmp_path: Path):
+    out = tmp_path / "receipt.json"
+    proc = _cli(
+        "--script",
+        str(SCRIPT),
+        "--plan",
+        str(PLAN),
+        "--input",
+        '{"n": 3}',
+        "--agent",
+        "claude-code",
+        "--repository",
+        "acme/pay",
+        receipt=str(out),
+    )
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    rec = json.loads(out.read_text(encoding="utf-8"))
+    assert rec["context"] == {"agent": "claude-code", "repository": "acme/pay"}
+    assert rec["verdict"]["status"] == "PASS"

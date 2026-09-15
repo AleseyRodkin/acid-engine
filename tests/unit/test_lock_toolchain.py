@@ -66,9 +66,10 @@ def test_public_exports_are_the_gate():
         "judge_script_from_lock",
         "dump_script_lock",
         "lock_for_script",
+        "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.10"
+    assert acid_engine.__version__ == "0.2.11"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():

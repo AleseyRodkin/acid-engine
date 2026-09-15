@@ -246,9 +246,27 @@ def _maybe_write_receipt(
         return
     from acid_engine.receipt import build_receipt, write_receipt
 
-    payload = build_receipt(script, input_val, result, plan=plan, toolchain=toolchain)
+    payload = build_receipt(
+        script,
+        input_val,
+        result,
+        plan=plan,
+        toolchain=toolchain,
+        context=_receipt_context(args),
+    )
     write_receipt(path, payload)
     print(f"receipt: {path}")
+
+
+def _receipt_context(args: argparse.Namespace) -> dict[str, str]:
+    out: dict[str, str] = {}
+    agent = getattr(args, "agent", None)
+    repo = getattr(args, "repository", None)
+    if isinstance(agent, str) and agent.strip():
+        out["agent"] = agent.strip()
+    if isinstance(repo, str) and repo.strip():
+        out["repository"] = repo.strip()
+    return out
 
 
 def cmd_judge(args: argparse.Namespace) -> None:
@@ -444,6 +462,14 @@ def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--receipt",
         help="Куда писать receipt.json (факт + вердикт, без proven_pure)",
+    )
+    parser.add_argument(
+        "--agent",
+        help="Optional receipt context: who invoked. Not identity.",
+    )
+    parser.add_argument(
+        "--repository",
+        help="Optional receipt context: repo id. Not identity.",
     )
 
 

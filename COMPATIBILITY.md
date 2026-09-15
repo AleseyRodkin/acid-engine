@@ -5,6 +5,7 @@ Public contract for an adopter who pins a 0.2 lock and CLI in their own CI.
 - **Index:** `schema: acid.locks.v1`. Unknown keys are ignored.
 - **Receipt:** `schema: acid.receipt.v1`. Extra keys ignored. `evidence.missing`
   is a list of facts that were not present (SKIPPED). Empty on PASS and FAIL.
+  Optional `context.agent` / `context.repository` — attribution, not identity.
   Not a risk score. Not SLSA provenance.
 - **CLI in 0.2.x:** `lock`, `judge`, `locks`, `diff`, `receipt` keep their names
   and required flags (`--script`, `--plan`, `--out`, `--index`).

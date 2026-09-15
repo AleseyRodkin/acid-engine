@@ -14,6 +14,18 @@ We don't tell you that your code is safe. We tell you whether it is the code you
 
 **Approved-to-executed integrity** — Python-first, local, open source, no sandbox, no LLM, deterministic.
 
+Independent execution-integrity layer. Policy asks *allowed?*. This layer asks *which implementation?*. A sandbox asks *what can the process do?*. Embed this component; do not replace those layers.
+
+```text
+policy / authorization
+        ↓
+Acid Judge     ← this layer
+        ↓
+runtime / sandbox
+```
+
+Python is the first adapter, not the category. Four surfaces: [INTEROP.md](INTEROP.md).
+
 ## 60 seconds
 
 ```bash
@@ -30,7 +42,7 @@ acid-judge lock --script FILE --out LOCK.json
 acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
 
-GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.10`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.11`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ## What it protects
 
@@ -67,7 +79,7 @@ SKIPPED  = not enough facts. SKIPPED is not PASS.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.10**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
+Пакет **0.2.11**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -116,7 +128,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.10
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.11
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.
