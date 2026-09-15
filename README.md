@@ -12,6 +12,8 @@ Not a policy gate. A policy gate can ALLOW `compute_amount` after the file on di
 
 We don't tell you that your code is safe. We tell you whether it is the code you approved.
 
+An agent can write or change a tool. Acid Judge does not have to believe it. It checks that the approved body is what will run, then checks the observation against the contract. Not enough facts → SKIPPED, not PASS.
+
 **Approved-to-executed integrity** — Python-first, local, open source, no sandbox, no LLM, deterministic.
 
 Independent execution-integrity layer. Policy asks *allowed?*. This layer asks *which implementation?*. A sandbox asks *what can the process do?*. Embed this component; do not replace those layers.
@@ -25,6 +27,24 @@ runtime / sandbox
 ```
 
 Python is the first adapter, not the category. Four surfaces: [INTEROP.md](INTEROP.md).
+
+Trust continuity: approved → locked → verified → executed → observed → receipt. Not a checksum feature. The trust layer sits between the agent and the Python tool it is about to run.
+
+```text
+PASS     = enough facts to claim the approved body ran
+FAIL     = mismatch; the body was not the approved one (or the observation failed)
+SKIPPED  = not enough facts. SKIPPED is not PASS.
+```
+
+The lock catches a tool-file swap between `lock` and `judge`. It does not catch a shell, and it does not catch files outside `runtime_hashes`.
+
+Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
+
+Package **0.2.12**. MIT core. Supervisor binaries: GitHub Releases (`linux` / `windows` / `macos`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+
+Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
+
+Proof: [attacks/](attacks/README.md). Manual copies: [ATTACK.md](ATTACK.md). TCB: [TRUST.md](TRUST.md). Runtime law: [METHOD.md](METHOD.md).
 
 ## 60 seconds
 
@@ -40,106 +60,64 @@ Honest `compute_amount` is PASS. The swapped body is blocked. No sandbox, no LLM
 pip install "acid-engine @ git+https://github.com/AleseyRodkin/acid-engine-2.0.git"
 acid-judge lock --script FILE --out LOCK.json
 acid-judge judge --script FILE --plan LOCK.json --input '...'
-```
-
-GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.11`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
-
-## What it protects
-
-- Tool body swap between `lock` and `judge`
-- Static local `.py` imports (`dep:`)
-- Judge contour (`runtime_hashes`)
-- Symlink retarget after lock (bytes of the followed path)
-- Bind-then-disk-write of a lazy local import (sealed before run)
-
-## What it does not protect
-
-- Shell outside `judge`
-- What the body does after PASS (fs / net / process)
-- `importlib` / `exec` / `eval` (lock warns)
-- site-packages / stdlib supply chain (separate control: SBOM / SLSA)
-- Environment variables (not part of implementation identity)
-
-Security model: [TRUST.md](TRUST.md). Coverage: [attacks/](attacks/README.md). Method: [METHOD.md](METHOD.md).
-
-ИИ может написать или изменить tool. Acid Judge не обязан ему верить. Он проверяет, что будет запущен именно тот код, который был одобрен, и отдельно сверяет наблюдение с контрактом. Нет фактов — SKIPPED, не PASS.
-
-An agent can write or change a tool. Acid Judge does not have to believe it. It checks that the approved body is what will run, then checks the observation against the contract. Not enough facts → SKIPPED, not PASS.
-
-Trust continuity: approved → locked → verified → executed → observed → receipt. Not a checksum feature. The trust layer sits between the agent and the Python tool it is about to run.
-
-```text
-PASS     = enough facts to claim the approved body ran
-FAIL     = mismatch; the body was not the approved one (or the observation failed)
-SKIPPED  = not enough facts. SKIPPED is not PASS.
-```
-
-Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит файлы вне `runtime_hashes`.
-
-Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
-
-Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.11**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
-
-Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
-
-Доказательства: [attacks/](attacks/README.md). Ручной прогон: [ATTACK.md](ATTACK.md). TCB: [TRUST.md](TRUST.md). Закон рантайма: [METHOD.md](METHOD.md).
-
-
-
-## Что защищает и что нет
-
-Защищает от подмены файла tool между `lock` и вызовом, если hook или CI сверяют хеш.
-Защищает от подмены **локальных** `.py`, которые файл инструмента импортирует статически (не stdlib, не site-packages, не `acid_engine`). `importlib.import_module` / `exec` / `eval` не пинятся — `lock` предупреждает.
-Не защищает от того, что делает само тело после PASS: нет изоляции fs/net/process.
-Не защищает обход через `bash` / любой shell вне `judge`.
-`Policy.pure` — **declared_pure**: runtime не инструментирует I/O. Пишет на диск при `pure=True` и не задекларировав effects → PASS. Пустые effects ≠ чистота.
-Переименование локальной переменной меняет AST-канон тела — FAIL. Комментарии и пустые строки не входят в канон.
-Замок — отпечаток в конкретном toolchain. `python_version` и `canon_kind` сверяются; несовпадение — FAIL с текстом «re-take the lock», не «тело подменили».
-Supervisor сверяет SHA-256 контура (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
-
-Модель угроз и куда писать: [SECURITY.md](SECURITY.md). Матрица атак: [attacks/](attacks/README.md). TCB: [TRUST.md](TRUST.md).
-
-## Три команды
-
-| Команда | Роль |
-|---|---|
-| `lock` | замок на тело |
-| `judge` | bind до run + вердикт |
-| `receipt` | `judge … --receipt FILE` — Observation + PASS/FAIL/SKIPPED, без `proven_pure` |
-
-`locks --index` — сверка живого тела с замком в git. Не исполняет, не hosted.
-`diff --script --plan` — таблица approved vs live. Не исполняет, не PASS.
-`receipt --sign` / `receipt --verify` — Ed25519 на каноне receipt, локальный openssl. Не Sigstore.
-
-Продукт — Acid Judge. Import остаётся `acid_engine`. CLI — `acid-judge`. Репозиторий — `acid-engine-2.0`. На PyPI не публикуем: имя `acid-engine` уже занято чужим пакетом.
-
-```bash
-pip install "acid-engine @ git+https://github.com/AleseyRodkin/acid-engine-2.0.git"
-acid-judge lock --script FILE --out LOCK.json
-acid-judge judge --script FILE --plan LOCK.json --input '...'
 acid-judge locks --index locks/index.json
 acid-judge diff --script FILE --plan LOCK.json
 acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
 
-`python -m acid_engine` — тот же CLI. `PYTHONPATH=.` не нужен после `pip install`.
+`python -m acid_engine` is the same CLI. `PYTHONPATH=.` is not needed after `pip install`.
 
-Чужой репозиторий:
+GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.12`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.11
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.12
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.
 ```
 
-Без `judge: true` — только bind, тело не запускается. С флагом — `lock → judge → receipt`. Не песочница.
-Чужой CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke) — один tool, job `tamper` должен FAIL.
+Without `judge: true` — bind only, the body does not run. With the flag — `lock → judge → receipt`. Not a sandbox. The smoke repo's `tamper` job must FAIL.
 
-`judge` без `--plan` → SKIPPED, не PASS. Скрытый `run` ещё вызывается, в `--help` его нет.
+`judge` without `--plan` → SKIPPED, not PASS. Hidden `run` still works; it is not in `--help`.
 
-Витрина:
+## What it protects
+
+- Tool body swap between `lock` and `judge` (if a hook or CI checks the hash)
+- Static local `.py` imports (`dep:`). `importlib.import_module` / `exec` / `eval` are not pinned — `lock` warns
+- Judge contour (`runtime_hashes`)
+- Symlink retarget after lock (bytes of the followed path)
+- Bind-then-disk-write of a lazy local import (sealed before run)
+
+Renaming a local variable changes the AST canon — FAIL. Comments and blank lines are not in the canon.
+The lock is an imprint of a specific toolchain. `python_version` and `canon_kind` are checked; a mismatch is FAIL with "re-take the lock", not "the body was swapped".
+The supervisor checks SHA-256 of the contour (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) before identify. No pin → SKIPPED. Mismatch → FAIL. `locks --index` and CLI `judge --plan` without a pin → FAIL. `judge_script` without `toolchain` → SKIPPED. Incomplete pin → FAIL. `judge_script_from_lock` reads pins from the lock JSON.
+
+## What it does not protect
+
+- Shell outside `judge`
+- What the body does after PASS (fs / net / process). No isolation.
+- `importlib` / `exec` / `eval` (lock warns)
+- site-packages / stdlib supply chain (separate control: SBOM / SLSA)
+- Environment variables (not part of implementation identity)
+- `Policy.pure` is **declared_pure**: runtime does not instrument I/O. A disk write with `pure=True` and no recorded effects still PASS-es. Empty effects ≠ purity.
+
+Threat model: [SECURITY.md](SECURITY.md). Coverage: [attacks/](attacks/README.md). TCB: [TRUST.md](TRUST.md).
+
+## Three commands
+
+| Command | Role |
+|---|---|
+| `lock` | lock the body |
+| `judge` | bind before run + verdict |
+| `receipt` | `judge … --receipt FILE` — Observation + PASS/FAIL/SKIPPED, no `proven_pure` |
+
+`locks --index` — live body vs lock in git. Does not execute, not hosted.
+`diff --script --plan` — approved vs live table. Does not execute, not PASS.
+`receipt --sign` / `receipt --verify` — Ed25519 on the receipt canon, local openssl. Not Sigstore.
+
+The product is Acid Judge. The import stays `acid_engine`. The CLI is `acid-judge`. The repository is `acid-engine-2.0`. Not published to PyPI: the name `acid-engine` is taken.
+
+Showcase:
 
 ```bash
 acid-judge lock --help
@@ -147,20 +125,20 @@ acid-judge judge --script examples/bones/n_plus_one.json --plan examples/bones/n
 acid-judge judge --script examples/bones/n_plus_one.json --input '{"n": 3}'
 ```
 
-Коротко, почему не PASS: тело не то / не было исполнения / pure но effects / тип не совпал / замок не передан.
+Why not PASS, short: wrong body / no execution / pure but effects / type mismatch / lock not passed.
 
-Лицензия: [LICENSE](LICENSE).
+License: [LICENSE](LICENSE).
 
-## Supervisor, не второй канон
+## Supervisor, not a second canon
 
-Бинарь `acid-judge` — supervisor: identify → bind → run worker → verdict.
-Хеш тела считает только Python canon. Без worker — SKIPPED, не PASS. Observation без worker — не вердикт.
-Контур: `cwd/acid_engine/` (этот репозиторий), иначе `ACID_ENGINE_ROOT`, иначе установленный пакет. Не `cwd` чужого проекта.
+The `acid-judge` binary is a supervisor: identify → bind → run worker → verdict.
+Only the Python canon hashes the body. Without a worker — SKIPPED, not PASS. Observation without a worker is not a verdict.
+Contour: `cwd/acid_engine/` (this repository), else `ACID_ENGINE_ROOT`, else the installed package. Not a foreign project's `cwd`.
 Linux/Windows/macOS: [Releases](https://github.com/AleseyRodkin/acid-engine-2.0/releases).
 
-Совместимость 0.2.x: [COMPATIBILITY.md](COMPATIBILITY.md).
+0.2.x compatibility: [COMPATIBILITY.md](COMPATIBILITY.md).
 
-## Проверки
+## Checks
 
 ```bash
 pip install -e ".[dev]"
@@ -169,7 +147,7 @@ python locks/ci_judge.py
 cargo test --locked --manifest-path rust/acid-judge/Cargo.toml
 ```
 
-CI: [.github/workflows/acid-judge.yml](.github/workflows/acid-judge.yml) — pytest (3.11/3.12), `locks/index.json`, cargo. Job падает, если tool не PASS. Receipt — artifact. Без `plan` в индексе не судит.
+CI: [.github/workflows/acid-judge.yml](.github/workflows/acid-judge.yml) — pytest (3.11/3.12), `locks/index.json`, cargo. The job fails if a tool is not PASS. Receipt is an artifact. No `plan` in the index → does not judge.
 
 Dev: `pip install -e ".[dev]"` — pytest, ruff, mypy.
 
@@ -178,18 +156,18 @@ ruff check acid_engine tests examples
 mypy acid_engine
 ```
 
-## Что держит gate
+## What holds the gate
 
-- Хеш = декларация + канон тела (`ast.unparse`, иначе байткод). `ArtifactRef` не identity.
-- `plan.lock` до run. Несовпадение → FAIL, тело не запускается.
-- Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`.
-- Worker не пишет PASS/FAIL. `judge_script` без plan+iface → SKIPPED (self-lock не вердикт). `lock --script` только снимает JSON.
-- Бинарь `acid-judge` без `worker` не судит: SKIPPED.
+- Hash = declaration + body canon (`ast.unparse`, else bytecode). `ArtifactRef` is not identity.
+- `plan.lock` before run. Mismatch → FAIL, the body does not run.
+- No execution → not PASS. Not enough facts → SKIPPED. `bool ≠ int`.
+- The worker does not write PASS/FAIL. `judge_script` without plan+iface → SKIPPED (self-lock is not a verdict). `lock --script` only writes JSON.
+- The `acid-judge` binary without `worker` does not judge: SKIPPED.
 
-Пять tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — в [locks/index.json](locks/index.json) вместе с bones.
+Five tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — in [locks/index.json](locks/index.json) with bones.
 
-Hook (один): [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py) — Claude Code PreToolUse, только bind. Чужой хеш → deny. Pre ≠ PASS. MCP нет.
+One hook: [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py) — Claude Code PreToolUse, bind only. Foreign hash → deny. Pre ≠ PASS. No MCP.
 
-## Чего нет в 0.2
+## Not in 0.2
 
-Песочница, MCP hook, Sigstore-SaaS, hosted registry, markdown-спеки, WASM, JS-тело, STOL, ценники, второй канон хеша на Rust.
+Sandbox, MCP hook, Sigstore SaaS, hosted registry, markdown specs, WASM, JS bodies, STOL, prices, a second hash canon in Rust.

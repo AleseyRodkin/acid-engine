@@ -1,11 +1,11 @@
 # research/
 
-Лаборатория, не продукт. Код сюда, чтобы корень `acid_engine/` не выглядел как ОС.
+Lab, not product. Code lives here so the `acid_engine/` root does not look like an OS.
 
-Импорты **не менялись**:
+Imports **did not change**:
 
 - `acid_engine.level0` → `research/level0`
 - `acid_engine.level4` → `research/level4`
 - `acid_engine.services` → `research/services`
 
-Продукт: `lock` / `judge` / `receipt`. Закон: [METHOD.md](../METHOD.md).
+Product: `lock` / `judge` / `receipt`. Law: [METHOD.md](../METHOD.md).

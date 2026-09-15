@@ -1,54 +1,55 @@
-# AcidEngine — состояние
+# AcidEngine — state
 
-**Репозиторий:** https://github.com/AleseyRodkin/acid-engine-2.0
-Закон: METHOD.md. Очередь костей: PLAN.md. Очередь продукта: COMMERCIAL.md.
+**Repository:** https://github.com/AleseyRodkin/acid-engine-2.0
+Law: METHOD.md. Bones queue: PLAN.md. Product queue: COMMERCIAL.md.
 
-## Снимок 12.09.2026
+## Snapshot 12.09.2026
 
-Сборка 0.2: одно лицо Acid Judge. Не zip `8e1b2a7`.
+0.2 build: one face, Acid Judge. Not zip `8e1b2a7`.
 
-## Сделано
+## Done
 
-1–21. Контур до `judge_script` (хеш тела, SKIPPED, plan.lock, bones, JSON blank).
-22. Аудит: plan+iface вместе; obs.status в gate; Composite внешний lock.
-23. Один канон хеша после materialize; CompositeResult.conformance — вердикт графа.
-24. `rust/acid-judge` bind → python worker → verdict. Без worker SKIPPED.
-25. Identity: ArtifactRef не в хеше. CLI `run --script` без `--plan` → SKIPPED.
-26. `container_blank` несёт data; примеры сами находят корень репо; ARCHITECTURE — архив, не план.
-27. Worker: `acid_engine.worker` identify/run, без PASS/FAIL.
-28. Канон AST — `unparse`. Витринный `n_plus_one.plan.json` = живое тело.
+1–21. Contour up to `judge_script` (body hash, SKIPPED, plan.lock, bones, JSON blank).
+22. Audit: plan+iface together; obs.status in the gate; Composite external lock.
+23. One hash canon after materialize; CompositeResult.conformance is the graph verdict.
+24. `rust/acid-judge` bind → python worker → verdict. Without worker SKIPPED.
+25. Identity: ArtifactRef not in the hash. CLI `run --script` without `--plan` → SKIPPED.
+26. `container_blank` carries data; examples find the repo root themselves; ARCHITECTURE is an archive, not a plan.
+27. Worker: `acid_engine.worker` identify/run, no PASS/FAIL.
+28. AST canon is `unparse`. Showcase `n_plus_one.plan.json` = live body.
     cargo ≥ 1.75, lockfile v3. Rust verdict: type/status/pure/latency.
-29. C0: README Acid Judge; CLI `judge` = `run --script --plan`. Receipt нет.
-30. C1: `acid_engine/receipt.py`, `judge --receipt`. Без proven_pure.
-31. C2: `locks/index.json` + `.github/workflows/acid-judge.yml`. Без plan не судит.
-32. C3: пять tools в `examples/tools/` + plan.json; индекс bones+tools.
-33. C4: Claude Code PreToolUse, только bind. MCP нет. Pre не PASS.
-34. C5: `acid_engine locks --index`. Сверка тела с замком, не исполнение.
-35. C6: Ed25519 на каноне receipt. `receipt --verify`. Не Sigstore.
-36. C7: API=CLI. `judge_script` / Pipeline без plan+iface → SKIPPED. Self-lock не вердикт.
-37. H1–H5: бинарь без worker → SKIPPED. Observation без worker не вердикт.
-38. 0.2: ARCHITECTURE в `docs/archive/`. Threat model на витрине. `acid-judge` — supervisor, не второй канон.
-    CI: pytest 3.11/3.12 + locks + cargo. `toolchain` в JSON замка рядом с identity, не в хеше.
-39. Три разреза: property без hypothesis — skip; `init`/`validate` скрыты из `--help`; supervisor пинит SHA-256 `worker.py` до identify.
-40. Контур рантайма: `runtime_hashes` на `worker.py` + `python_runtime.py` + `runner.py` + `implementation_canon.py`. `locks --index` без пина → FAIL.
-41. `judge_script` без `toolchain` → SKIPPED. Неполный пин → FAIL. `judge_script_from_lock` читает JSON замка.
-42. Витрина: фраза рынка (не MCP-gateway), [ATTACK.md](ATTACK.md), ярусы в COMMERCIAL без ценников. Второй hook не начат.
-43. `toolchain.canon` = `python.ast.v1` рядом с identity. `level0`/`level4`/`services` в `research/`, import path тот же.
-44. Витрина: trust continuity. FAIL говорит «не запускали». `diff` — inspection, не вердикт. MCP и capability не начаты.
-45. `run` скрыт из `--help`. Контур + `cli.py`/`resolve.py`. `execute_plan` без toolchain → SKIPPED. Receipt несёт toolchain. Supervisor — бинарь в Release.
-46. CLI `acid-judge` после `pip install`. Reusable Action `uses: AleseyRodkin/acid-engine-2.0@…`. PyPI-ренейм нет. Windows/macOS — `release-bins`, не этот sandbox.
-47. Пакет 0.2.3 = тег `v0.2.3`. `release-bins` имеет `contents: write`. Action по умолчанию bind, не judge.
-48. `locks --judge` исполняет и пишет receipt. Action `judge: true` включает это. Default без флага — bind.
-49. CI блокирует ruff и mypy --strict наравне с pytest. Линтер вне workflow — fail-open.
-50. 0.2.5: локальные импорты в `dep:`; `python_version`/`canon_kind` сверяются; `pure` = declared_pure; контур + `local_deps.py`.
-51. 0.2.6: динамический импорт — предупреждение на lock, не пин. `dependency_hash` expected/actual — хеши файла.
-52. 0.2.7: supervisor резолвит контур из пакета / `ACID_ENGINE_ROOT`, не из cwd чужого репо. Toolchain action по SHA. `interface_contract_hash` не якорь.
-53. 0.2.8: продукт — execution integrity (wedge), не AcidEngine-ОС. Матрица атак + TCB. Второй harness (Copilot) не открывать в этом коммите.
-54. 0.2.9: формулировка Approved-to-Executed. Receipt — execution evidence, не SLSA. `evidence.missing` без risk score. Copilot/MCP не открывать.
-55. 0.2.10: pre ≠ post. demo.sh. seal local deps. symlink claimed. env/site-packages out. Copilot всё ещё закрыт.
-56. 0.2.11: interop primitive. Четыре поверхности. Receipt context optional. Без адаптеров платформ.
+29. C0: README Acid Judge; CLI `judge` = `run --script --plan`. No receipt yet.
+30. C1: `acid_engine/receipt.py`, `judge --receipt`. No proven_pure.
+31. C2: `locks/index.json` + `.github/workflows/acid-judge.yml`. Without a plan it does not judge.
+32. C3: five tools in `examples/tools/` + plan.json; index bones+tools.
+33. C4: Claude Code PreToolUse, bind only. No MCP. Pre is not PASS.
+34. C5: `acid_engine locks --index`. Body vs lock, not execution.
+35. C6: Ed25519 on the receipt canon. `receipt --verify`. Not Sigstore.
+36. C7: API=CLI. `judge_script` / Pipeline without plan+iface → SKIPPED. Self-lock is not a verdict.
+37. H1–H5: binary without worker → SKIPPED. Observation without a worker is not a verdict.
+38. 0.2: ARCHITECTURE in `docs/archive/`. Threat model on the showcase. `acid-judge` is a supervisor, not a second canon.
+    CI: pytest 3.11/3.12 + locks + cargo. `toolchain` in lock JSON next to identity, not in the hash.
+39. Three cuts: property without hypothesis — skip; `init`/`validate` hidden from `--help`; supervisor pins SHA-256 of `worker.py` before identify.
+40. Runtime contour: `runtime_hashes` on `worker.py` + `python_runtime.py` + `runner.py` + `implementation_canon.py`. `locks --index` without a pin → FAIL.
+41. `judge_script` without `toolchain` → SKIPPED. Incomplete pin → FAIL. `judge_script_from_lock` reads the lock JSON.
+42. Showcase: market phrase (not an MCP gateway), [ATTACK.md](ATTACK.md), tiers in COMMERCIAL without prices. Second hook not started.
+43. `toolchain.canon` = `python.ast.v1` next to identity. `level0`/`level4`/`services` in `research/`, same import path.
+44. Showcase: trust continuity. FAIL says “did not run”. `diff` is inspection, not a verdict. MCP and capability not started.
+45. `run` hidden from `--help`. Contour + `cli.py`/`resolve.py`. `execute_plan` without toolchain → SKIPPED. Receipt carries toolchain. Supervisor is a Release binary.
+46. CLI `acid-judge` after `pip install`. Reusable Action `uses: AleseyRodkin/acid-engine-2.0@…`. No PyPI rename. Windows/macOS — `release-bins`, not this sandbox.
+47. Package 0.2.3 = tag `v0.2.3`. `release-bins` has `contents: write`. Action defaults to bind, not judge.
+48. `locks --judge` executes and writes a receipt. Action `judge: true` turns that on. Default without the flag is bind.
+49. CI blocks ruff and mypy --strict alongside pytest. A linter outside the workflow is fail-open.
+50. 0.2.5: local imports in `dep:`; `python_version`/`canon_kind` checked; `pure` = declared_pure; contour + `local_deps.py`.
+51. 0.2.6: dynamic import — warning on lock, not a pin. `dependency_hash` expected/actual are file hashes.
+52. 0.2.7: supervisor resolves the contour from the package / `ACID_ENGINE_ROOT`, not from a foreign repo cwd. Toolchain action by SHA. `interface_contract_hash` is not an anchor.
+53. 0.2.8: product is execution integrity (wedge), not AcidEngine-OS. Attack matrix + TCB. Do not open a second harness (Copilot) in that commit.
+54. 0.2.9: Approved-to-Executed wording. Receipt is execution evidence, not SLSA. `evidence.missing` without a risk score. Copilot/MCP not opened.
+55. 0.2.10: pre ≠ post. demo.sh. seal local deps. symlink claimed. env/site-packages out. Copilot still closed.
+56. 0.2.11: interop primitive. Four surfaces. Receipt context optional. No platform adapters.
+57. 0.2.12: documentation is English-only.
 
-Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
-Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.
+Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
+Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.
 
-Не делать: STOL, JS/WASM, proven_pure, SaaS, markdown parser, веб-превью ядра.
+Do not: STOL, JS/WASM, proven_pure, SaaS, markdown parser, a web preview of the core.

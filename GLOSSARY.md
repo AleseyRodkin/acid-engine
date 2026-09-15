@@ -1,11 +1,11 @@
-# Глоссарий
+# Glossary
 
-- **lock** — JSON замка на тело. Не вердикт.
-- **judge** — bind до run + вердикт.
-- **receipt** — Observation + PASS/FAIL/SKIPPED, без `proven_pure`.
-- **plan.lock** — замороженные `module_hashes` и `interface_contract_hash`.
-- **content_hash** — декларация + канон тела. `ArtifactRef` не входит.
-- **Observation** — факты прогона. Observed ≠ Proven.
-- **SKIPPED** — фактов мало, чтобы судить. Не PASS.
-- **toolchain** — `python_version` + `canon_kind` + `canon` (`python.ast.v1`) + `worker_hash` + `runtime_hashes` рядом с замком, не в identity.
-- **supervisor** — бинарь `acid-judge`: bind → worker → verdict. Не канон тела.
+- **lock** — JSON lock on a body. Not a verdict.
+- **judge** — bind before run + verdict.
+- **receipt** — Observation + PASS/FAIL/SKIPPED, no `proven_pure`.
+- **plan.lock** — frozen `module_hashes` and `interface_contract_hash`.
+- **content_hash** — declaration + body canon. `ArtifactRef` is not included.
+- **Observation** — facts of a run. Observed ≠ Proven.
+- **SKIPPED** — not enough facts to judge. Not PASS.
+- **toolchain** — `python_version` + `canon_kind` + `canon` (`python.ast.v1`) + `worker_hash` + `runtime_hashes` next to the lock, not in identity.
+- **supervisor** — the `acid-judge` binary: bind → worker → verdict. Not the body canon.

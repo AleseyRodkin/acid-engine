@@ -1,71 +1,71 @@
-# Acid Judge — коммерческий план для сборщика
+# Acid Judge — commercial plan
 
-**Дата:** 12.09.2026  
-Закон только [METHOD.md](METHOD.md). [PLAN.md](PLAN.md) (кости 0.1) не переоткрывать.  
-База: снимок `c72ea42`. Если нет `worker.py` / `lock` / `--plan` — сначала актуальный zip.
+**Date:** 12.09.2026
+Law is only [METHOD.md](METHOD.md). Do not reopen [PLAN.md](PLAN.md) (0.1 bones).
+Base snapshot: `c72ea42`. If `worker.py` / `lock` / `--plan` are missing — get a current zip first.
 
-Курс: личный эксперимент достигнут. Дальше — ниша fail-closed gate тела tool. STOL не стенд.
+The personal experiment is done. Next: a fail-closed gate of a tool body. STOL is not a stand.
 
-## 1. Что продаём
+## 1. What we sell
 
-Продукт: **Acid Judge** — independent execution-integrity primitive, не control plane.  
-Фраза: verifies that the code approved for an AI agent is the code that actually executes.  
-Не policy gate. Не MCP-gateway. Не sandbox. Не SLSA. Сосед этих слоёв, не замена.
+Product: **Acid Judge** — an independent execution-integrity primitive, not a control plane.
+Phrase: verifies that the code approved for an AI agent is the code that actually executes.
+Not a policy gate. Not an MCP gateway. Not a sandbox. Not SLSA. A neighbor of those layers, not a replacement.
 
-ICP: команды, где AI меняет локальный tool с blast radius (payments, refunds, production data). Не «все, у кого есть агент».
+ICP: teams where AI changes a local tool with blast radius (payments, refunds, production data). Not “everyone who has an agent”.
 
-Четыре поверхности: CLI, library, один hook, receipt. [INTEROP.md](INTEROP.md).
-Адаптеры APort / AGT / Copilot — по запросу вызывающего, не в 0.2.
+Four surfaces: CLI, library, one hook, receipt. [INTEROP.md](INTEROP.md).
+APort / AGT / Copilot adapters — on the caller’s request, not in 0.2.
 
-Первый покупатель: **AI Platform / Developer Platform**. Потом AppSec. Governance — после receipts/evidence, не первым.
+First buyer: **AI Platform / Developer Platform**. Then AppSec. Governance — after receipts/evidence, not first.
 
-Ниша: approved-to-executed verification тела Python-tool.
+Niche: approved-to-executed verification of a Python-tool body.
 
-Три команды — единственный публичный контракт: `lock`, `judge`, `receipt`.
+Three commands are the only public contract: `lock`, `judge`, `receipt`.
 
-Ядро MIT. Платят потом за **evidence** (кто одобрил, что исполнилось, PASS/FAIL/SKIPPED, подпись), не за hosted registry lock-файлов. Ценники в README не писать.
+MIT core. They pay later for **evidence** (who approved, what ran, PASS/FAIL/SKIPPED, signature), not for a hosted registry of lock files. Do not write prices in the README.
 
-Ярусы (мысленно, не публиковать цены):
+Tiers (mental, do not publish prices):
 
-| Ярус | Что | Зачем |
+| Tier | What | Why |
 |---|---|---|
-| Open core (MIT) | `lock` / `judge` / `receipt`, CLI, supervisor, `locks/` в git | дистрибуция и аудит |
-| Team | central evidence, alerts on FAIL, история receipt | первая платная единица |
-| Enterprise | incident evidence, SIEM export, SSO, SLA | Governance после Platform |
+| Open core (MIT) | `lock` / `judge` / `receipt`, CLI, supervisor, `locks/` in git | distribution and audit |
+| Team | central evidence, alerts on FAIL, receipt history | first paid unit |
+| Enterprise | incident evidence, SIEM export, SSO, SLA | Governance after Platform |
 
-Никогда в этом плане: SaaS-ОС, self-hosting, профили, markdown-спеки, `proven_pure`, каркас любого проекта, агрегатор как продукт, конкуренция с Pydantic, JS/WASM/второй язык, STOL, SKIPPED→PASS, двадцать адаптеров, ценники в README, MCP как второй harness до закрытой витрины CLI, Copilot до зелёного Claude hook, risk score.
+Never in this plan: SaaS-OS, self-hosting, profiles, markdown specs, `proven_pure`, a scaffold for any project, aggregator-as-product, competing with Pydantic, JS/WASM/a second language, STOL, SKIPPED→PASS, twenty adapters, prices in README, MCP as a second harness before the CLI showcase is closed, Copilot before a green Claude hook, a risk score.
 
-## 2. Нельзя сломать
+## 2. Must not break
 
-- Хеш = декларация + канон тела (`ast.unparse`, иначе байткод). ArtifactRef не identity.
-- `plan.lock` до run. Несовпадение → FAIL, тело не запускать.
-- Нет исполнения → не PASS. Мало фактов → SKIPPED. `bool ≠ int`. pure+effects → FAIL.
-- CLI `run --script` без `--plan` → SKIPPED. Worker не пишет PASS/FAIL.
-- `judge_script` / Pipeline / Composite без пары plan+iface → SKIPPED. Без `toolchain` → SKIPPED. Self-lock не вердикт.
-- Rust без worker → SKIPPED. Observation без worker не вердикт. С worker: identify → bind → run → verdict.
+- Hash = declaration + body canon (`ast.unparse`, else bytecode). ArtifactRef is not identity.
+- `plan.lock` before run. Mismatch → FAIL, do not run the body.
+- No execution → not PASS. Not enough facts → SKIPPED. `bool ≠ int`. pure+effects → FAIL.
+- CLI `run --script` without `--plan` → SKIPPED. The worker does not write PASS/FAIL.
+- `judge_script` / Pipeline / Composite without a plan+iface pair → SKIPPED. Without `toolchain` → SKIPPED. Self-lock is not a verdict.
+- Rust without a worker → SKIPPED. Observation without a worker is not a verdict. With a worker: identify → bind → run → verdict.
 
-Стражи: `test_identity_hash`, `test_plan_lock_bind`, `test_purity_boundary`, `test_invariants`, `test_bones`, `test_committed_plan_matches_live_body`.
+Guards: `test_identity_hash`, `test_plan_lock_bind`, `test_purity_boundary`, `test_invariants`, `test_bones`, `test_committed_plan_matches_live_body`.
 
-Канон хеша не «улучшать» без пересъёма всех `plan.json`.
+Do not “improve” the hash canon without re-taking every `plan.json`.
 
-## 3. Очередь
+## 3. Queue
 
-| Ф | Суть | Готово | Не делать |
+| Phase | Point | Done | Do not |
 |---|---|---|---|
-| C0 | README + алиас `judge` | `4b87f13` копипаста зелёная | PyPI-ренейм, ценники |
-| C1 | `receipt.json` | `judge --receipt`; без `proven_pure` | dashboard |
-| C2 | GitHub Action + `locks/index.json` | workflow + index; подмена тела не PASS | hosted SaaS |
-| C3 | 5 tools в `examples/tools/` | `.py`+`.json`+`.plan.json`; index bones+tools | сущность «новость» в ядре |
-| C4 | один hook | PreToolUse bind; deny на чужой хеш; pre ≠ PASS | оба harness сразу |
-| C5 | реестр замков в git | `locks --index`; сверка, не hosted | Governance $40k |
-| C6 | подпись receipt | `receipt --verify`; Ed25519 локально | до стабильных C1–C2 |
-| C7 | ниша B/C, API=CLI, один судья | API=CLI: без plan+iface не PASS | ниша B/C и слияние судей |
+| C0 | README + `judge` alias | `4b87f13` copy-paste green | PyPI rename, prices |
+| C1 | `receipt.json` | `judge --receipt`; no `proven_pure` | dashboard |
+| C2 | GitHub Action + `locks/index.json` | workflow + index; body swap is not PASS | hosted SaaS |
+| C3 | 5 tools in `examples/tools/` | `.py`+`.json`+`.plan.json`; index bones+tools | a “news” entity in the core |
+| C4 | one hook | PreToolUse bind; deny on a foreign hash; pre ≠ PASS | both harnesses at once |
+| C5 | lock registry in git | `locks --index`; check, not hosted | Governance $40k |
+| C6 | receipt signature | `receipt --verify`; local Ed25519 | before C1–C2 are stable |
+| C7 | niche B/C, API=CLI, one judge | API=CLI: without plan+iface not PASS | niche B/C and merging judges |
 
-CLI `judge --plan` сверяет `runtime_hashes` (`c72ea42`). Второй hook (Cursor / Copilot / MCP) — не начинать, пока витрина CLI и один Claude hook зелёные. Готовые бинарники supervisor — GitHub Release, не `cargo` у покупателя; не в этом файле как фаза C.
+CLI `judge --plan` checks `runtime_hashes` (`c72ea42`). Do not start a second hook (Cursor / Copilot / MCP) until the CLI showcase and one Claude hook are green. Ready supervisor binaries — GitHub Release, not `cargo` on the buyer’s machine; not a C phase in this file.
 
-Стартовать с C0. Не с Action, не с хука, не с подписи. Не начинать C(n+1), пока Cn не зелёная.
+Start at C0. Not with the Action, not with the hook, not with the signature. Do not start C(n+1) until Cn is green.
 
-## 4. Старт
+## 4. Start
 
 ```bash
 PYTHONPATH=. python -m pytest tests -q

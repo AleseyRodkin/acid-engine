@@ -1,12 +1,12 @@
 # Tutorial
 
-Это не закон. Актуальный контур — [README.md](README.md). METHOD не переписывать по этому файлу.
+This is not the law. The live contour is [README.md](README.md). Do not rewrite METHOD from this file.
 
-Демо: залочить тело, прогнать `judge`, подменить формулу, увидеть FAIL и receipt.
+Demo: lock a body, run `judge`, swap the formula, see FAIL and a receipt.
 
-## 1. Bones с `--plan`
+## 1. Bones with `--plan`
 
-Из корня репозитория:
+From the repository root:
 
 ```bash
 PYTHONPATH=. python -m acid_engine judge \
@@ -16,9 +16,9 @@ PYTHONPATH=. python -m acid_engine judge \
   --receipt /tmp/bones.receipt.json
 ```
 
-Код 0, PASS, `{n: 4}`. Receipt без `proven_pure`.
+Exit 0, PASS, `{n: 4}`. Receipt has no `proven_pure`.
 
-Без `--plan` это не вердикт:
+Without `--plan` this is not a verdict:
 
 ```bash
 PYTHONPATH=. python -m acid_engine judge \
@@ -26,11 +26,11 @@ PYTHONPATH=. python -m acid_engine judge \
   --input '{"n": 3}'
 ```
 
-Код ≠ 0, SKIPPED. Self-lock не PASS.
+Exit ≠ 0, SKIPPED. Self-lock is not PASS.
 
 ## 2. Lock `compute_amount`
 
-Формула: `cents * qty`. Вход `{"cents": 1999, "qty": 2}` → `{"cents": 3998}`.
+Formula: `cents * qty`. Input `{"cents": 1999, "qty": 2}` → `{"cents": 3998}`.
 
 ```bash
 PYTHONPATH=. python -m acid_engine lock \
@@ -38,9 +38,9 @@ PYTHONPATH=. python -m acid_engine lock \
   --out examples/tools/compute_amount.plan.json
 ```
 
-`lock` пишет JSON замка, не ставит PASS.
+`lock` writes lock JSON; it does not set PASS.
 
-Честный прогон:
+Honest run:
 
 ```bash
 PYTHONPATH=. python -m acid_engine judge \
@@ -52,9 +52,9 @@ PYTHONPATH=. python -m acid_engine judge \
 
 PASS, `{"cents": 3998}`.
 
-## 3. Подмена тела
+## 3. Swap the body
 
-В `examples/tools/compute_amount.py` заменить `cents * qty` на `cents * qty + 1`. JSON и `plan.json` не трогать.
+In `examples/tools/compute_amount.py` replace `cents * qty` with `cents * qty + 1`. Do not touch the JSON or `plan.json`.
 
 ```bash
 PYTHONPATH=. python -m acid_engine judge \
@@ -64,10 +64,10 @@ PYTHONPATH=. python -m acid_engine judge \
   --receipt /tmp/amount-bad.receipt.json
 ```
 
-FAIL `module_hash`. Тело не исполняется. В receipt статус FAIL, поле `property`: `module_hash`. Не переснимать plan под новое тело — это уже другой замок.
+FAIL `module_hash`. The body does not run. Receipt status FAIL, `property`: `module_hash`. Do not re-take the plan for the new body — that is a different lock.
 
-Вернуть формулу `cents * qty`. Сломанное тело не коммитить.
+Restore `cents * qty`. Do not commit a broken body.
 
-## Чего здесь нет
+## What is not here
 
-Граф, `run` без `--plan` как успех, `judge_script` / Pipeline / Composite без пары plan+iface, semantic через ручной `run_script`, уровни 0–4.
+Graphs, `run` without `--plan` as success, `judge_script` / Pipeline / Composite without a plan+iface pair, semantics via a raw `run_script`, levels 0–4.

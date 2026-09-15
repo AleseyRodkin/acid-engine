@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.12 — 2026-09-16
+
+- Documentation is English-only (README, METHOD, PLAN, COMMERCIAL, CONSTITUTION, TUTORIAL, glossary, archive).
+
 ## 0.2.11 — 2026-09-16
 
 - Primitive, not a control plane. Four surfaces: CLI, library, hook, receipt ([INTEROP.md](INTEROP.md)).

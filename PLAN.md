@@ -1,103 +1,103 @@
-# AcidEngine 0.1 — план костей
+# AcidEngine 0.1 — bones plan
 
-Бриф для сборщика. Закон — только [METHOD.md](METHOD.md).
-ARCHITECTURE.md не план (хвост «ОС» до сужения 21.08). Архив: [docs/archive/ARCHITECTURE.md](docs/archive/ARCHITECTURE.md).
+Brief for the builder. Law is only [METHOD.md](METHOD.md).
+ARCHITECTURE.md is not a plan (the “OS” tail before the 21.08 narrowing). Archive: [docs/archive/ARCHITECTURE.md](docs/archive/ARCHITECTURE.md).
 
-**Дата:** 31.08.2026
-**Репо:** https://github.com/AleseyRodkin/acid-engine-2.0
-**HEAD старта:** `8e1b2a7`
-**Python ≥ 3.11, 0 runtime-зависимостей**
-**Старт тестов:** 165 passed
+**Date:** 31.08.2026
+**Repo:** https://github.com/AleseyRodkin/acid-engine-2.0
+**Start HEAD:** `8e1b2a7`
+**Python ≥ 3.11, 0 runtime dependencies**
+**Tests at start:** 165 passed
 
-Очередь жёсткая. Сборщик начинает с фазы 1. Не с Rust, не с README, не с ARCHITECTURE.
+The queue is strict. The builder starts at phase 1. Not Rust, not README, not ARCHITECTURE.
 
 ```text
-1 бланк → 2 ArtifactRef → 3 JSON-загрузчик → 4 тупая крышка →
-5 фикстура bones → 6 вход судьи → 7 Rust-судья
+1 blank → 2 ArtifactRef → 3 JSON loader → 4 dumb lid →
+5 bones fixture → 6 judge entry → 7 Rust judge
 ```
 
-Очередь работ по костям кончается на 7. Седьмая: бинарник делает
+The bones work queue ends at 7. Seventh: the binary does
 `bind → run python worker → verdict`. Lockfile v3, cargo ≥ 1.75.
-Нет фазы «написать запрет в код».
+There is no phase “write a prohibition into code”.
 
-## Форма продукта
+## Product shape
 
-Личный архитектурный эксперимент. Не коммерческий станок.
-STOL (лаборатория) — чужой проект: не стенд, не фикстура, не пример.
+A personal architecture experiment. Not a commercial mill.
+STOL (lab) is someone else’s project: not a stand, not a fixture, not an example.
 
-Четыре кости + судья. Реализация и runtime — мясо, в каркас не входят.
+Four bones + a judge. Implementation and runtime are meat; they are not in the frame.
 
-| Кость | Роль |
+| Bone | Role |
 |---|---|
-| Contract | обещание: кто, вход, выход, правила |
-| Container | снимок данных на порте |
-| Script | один шаг: контейнер → контейнер + след |
-| Graph | кто за кем (fan-in > 1 без merge запрещён) |
-| Judge | отпечаток тела, замок до run, факт, вердикт |
+| Contract | promise: who, input, output, rules |
+| Container | a data snapshot on a port |
+| Script | one step: container → container + trace |
+| Graph | who follows whom (fan-in > 1 without merge is forbidden) |
+| Judge | body imprint, lock before run, fact, verdict |
 
-Успех: нет пятой кости; тело не пишет закон; автор тела не патчит судью.
+Success: no fifth bone; the body does not write the law; the author of the body does not patch the judge.
 
-Не писать в README, пока не бежит: «каркас любого проекта», «любой язык», «судья на Rust», «ОС разработки».
+Do not write in README until it runs: “a scaffold for any project”, “any language”, “a judge in Rust”, “a development OS”.
 
-## Закон (нельзя сломать)
+## Law (must not break)
 
-Если этот бриф спорит с METHOD.md — прав METHOD. ИИ не арбитр. Observed ≠ Proven.
+If this brief disagrees with METHOD.md — METHOD is right. AI is not the arbiter. Observed ≠ Proven.
 
-- Хеш `ScriptModule` / `AsyncScriptModule` = декларация + тело. Канон: AST, иначе байткод. Замыкания и defaults входят.
-- Канон тела: `acid_engine/level2/implementation_canon.py`. Хеш: `canonical_serialize` + SHA-256 → `content_hash_of`.
-- Нет исполнения → не PASS. Мало фактов → SKIPPED.
-- `execute_plan` / `replay_run` сверяют хеш **до** run. Нет хешей в lock → SKIPPED. Несовпадение → FAIL, тело не запускать.
-- `bool ≠ int`. Ядро не печатает stdout. Пустые effects ≠ proven pure. `pure=True` + эффекты → FAIL.
-- CLI: load → resolve → execute. `run --script` через `execute_plan`. Markdown-спеки не парсятся.
-- `replay_run` без `expected_output` → SKIPPED. `find_record` — lookup, не откат.
+- Hash of `ScriptModule` / `AsyncScriptModule` = declaration + body. Canon: AST, else bytecode. Closures and defaults are in.
+- Body canon: `acid_engine/level2/implementation_canon.py`. Hash: `canonical_serialize` + SHA-256 → `content_hash_of`.
+- No execution → not PASS. Not enough facts → SKIPPED.
+- `execute_plan` / `replay_run` check the hash **before** run. No hashes in the lock → SKIPPED. Mismatch → FAIL, do not run the body.
+- `bool ≠ int`. The core does not print stdout. Empty effects ≠ proven pure. `pure=True` + effects → FAIL.
+- CLI: load → resolve → execute. `run --script` through `execute_plan`. Markdown specs are not parsed.
+- `replay_run` without `expected_output` → SKIPPED. `find_record` is lookup, not rollback.
 
-Тесты-стражи: `tests/unit/test_identity_hash.py`, `test_plan_lock_bind.py`, `test_purity_boundary.py`; `tests/architecture/test_invariants.py`.
+Guard tests: `tests/unit/test_identity_hash.py`, `test_plan_lock_bind.py`, `test_purity_boundary.py`; `tests/architecture/test_invariants.py`.
 
-## Фазы
+## Phases
 
-| Ф | Суть | Готово |
+| Phase | Point | Done |
 |---|---|---|
-| 0 | Форма: PLAN.md, CONSTITUTION. METHOD не переписывать | не повторять |
-| 1 | `level2/blank.py` + `tests/unit/test_blank.py`. Identity без смены `_identity_dict` | хеш бланка = content_hash; 165 живы |
-| 2a | ArtifactRef рядом; `artifact` опционально; хеш как сейчас | `49a7cb3`+ : `artifact.py`, хеш без новых ключей |
-| 2b | Ссылка вместо fn. Нет языка python → не PASS. Битая ссылка → FAIL | resolve.py: python file+entry; unknown language FAIL; missing SKIPPED |
-| 3 | JSON-почерк, CLI `.json`, `.md` отказ | blank_loader.py; JSON+py один хеш; max_latency_ms → float |
-| 4 | Крышка: Pipeline/Composite через execute_plan | нет публичного PASS без lock |
-| 5 | `examples/bones/` dict n:3→n:4 + .json + integration | n_plus_one.py/.json; хеш JSON=callable |
-| 6 | `judge.py` фасад → `execute_plan` | judge_script; CLI и Pipeline через него |
-| 7 | Rust только после стабильных 1–3 | bind → python worker → verdict; без worker — зеркало; cargo ≥ 1.75, lockfile v3 |
+| 0 | Shape: PLAN.md, CONSTITUTION. Do not rewrite METHOD | do not repeat |
+| 1 | `level2/blank.py` + `tests/unit/test_blank.py`. Identity without changing `_identity_dict` | blank hash = content_hash; 165 still live |
+| 2a | ArtifactRef beside; `artifact` optional; hash as now | `49a7cb3`+: `artifact.py`, hash without new keys |
+| 2b | Reference instead of fn. No python language → not PASS. Broken reference → FAIL | resolve.py: python file+entry; unknown language FAIL; missing SKIPPED |
+| 3 | JSON handwriting, CLI `.json`, `.md` refused | blank_loader.py; JSON+py one hash; max_latency_ms → float |
+| 4 | Lid: Pipeline/Composite through execute_plan | no public PASS without a lock |
+| 5 | `examples/bones/` dict n:3→n:4 + .json + integration | n_plus_one.py/.json; JSON hash = callable |
+| 6 | `judge.py` facade → `execute_plan` | judge_script; CLI and Pipeline through it |
+| 7 | Rust only after 1–3 are stable | bind → python worker → verdict; without worker — a mirror; cargo ≥ 1.75, lockfile v3 |
 
-## Не делать (это не фаза и не код)
+## Do not (this is not a phase and not code)
 
-Забор для следующего чата, не спринт. В репозиторий это не коммитится как фича.
+A fence for the next chat, not a sprint. This is not committed to the repo as a feature.
 
-- STOL — чужой проект: не стенд, не фикстура, не пример
-- JS-тело, WASM — второй runtime
-- JSON Schema как канон identity
+- STOL — someone else’s project: not a stand, not a fixture, not an example
+- JS body, WASM — a second runtime
+- JSON Schema as identity canon
 - `proven_pure` (Observed ≠ Proven)
-- SaaS / self-hosting / «ОС разработки»
-- парсер markdown-спек
+- SaaS / self-hosting / “development OS”
+- a markdown-spec parser
 
-Закон, который уже исполняет рантайм, живёт в METHOD.md. Этот список — чтобы не начать лишнее.
+Law that the runtime already enforces lives in METHOD.md. This list exists so extra work is not started.
 
-### Фаза 1 — детали
+### Phase 1 — details
 
-Файл `acid_engine/level2/blank.py`.
-Функции: `script_identity_blank`, `container_blank`, `plan_blank`, `graph_blank`, `observation_blank`, `conformance_blank`, `parse_script_identity_blank`.
+File `acid_engine/level2/blank.py`.
+Functions: `script_identity_blank`, `container_blank`, `plan_blank`, `graph_blank`, `observation_blank`, `conformance_blank`, `parse_script_identity_blank`.
 
-`script_identity_blank` = `_identity_dict` без `content_hash`.
-Обёртка `{schema,kind,identity}` можно; schema/kind не входят в хеш.
+`script_identity_blank` = `_identity_dict` without `content_hash`.
+A `{schema,kind,identity}` wrapper is allowed; schema/kind are not in the hash.
 
-Равенство: `content_hash_of(script_identity_blank(script)) == script.content_hash`
+Equality: `content_hash_of(script_identity_blank(script)) == script.content_hash`
 
-Нельзя: pydantic, JSON Schema, менять `ScriptModule.__init__`, менять состав `_identity_dict`, Rust, YAML, CLI, новые типы входа.
+Must not: pydantic, JSON Schema, change `ScriptModule.__init__`, change `_identity_dict` membership, Rust, YAML, CLI, new input types.
 
-Ключ в lock (`_locked_hash_for`) не ломать.
-`cmd_validate` не трогать в фазах 1–3.
+Do not break the lock key (`_locked_hash_for`).
+Do not touch `cmd_validate` in phases 1–3.
 
-Не начинать N+1, пока N не зелёная.
+Do not start N+1 until N is green.
 
-Проверка:
+Check:
 
 ```text
 PYTHONPATH=. python -m pytest tests -q
