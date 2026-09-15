@@ -11,7 +11,7 @@ Trust continuity: approved → unchanged → executed → observed → verified.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.4**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
+Пакет **0.2.5**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
 
@@ -20,11 +20,15 @@ Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. 
 ## Что защищает и что нет
 
 Защищает от подмены файла tool между `lock` и вызовом, если hook или CI сверяют хеш.
+Защищает от подмены **локальных** `.py`, которые файл инструмента импортирует (не stdlib, не site-packages, не `acid_engine`).
 Не защищает от того, что делает само тело после PASS: нет изоляции fs/net/process.
 Не защищает обход через `bash` / любой shell вне `judge`.
-`pure=True` ловит только эффекты, которые runtime занёс в `effects_observed`.
-Замок — отпечаток в конкретном toolchain. В JSON замка рядом с identity (не в хеше) пишутся `python_version`, `canon_kind`, `canon` (`python.ast.v1`), `worker_hash` и `runtime_hashes`. Смена CPython может потребовать пересъёма `plan.json`.
-Supervisor сверяет SHA-256 контура (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
+`Policy.pure` — **declared_pure**: runtime не инструментирует I/O. Пишет на диск при `pure=True` и не задекларировав effects → PASS. Пустые effects ≠ чистота.
+Переименование локальной переменной меняет AST-канон тела — FAIL. Комментарии и пустые строки не входят в канон.
+Замок — отпечаток в конкретном toolchain. `python_version` и `canon_kind` сверяются; несовпадение — FAIL с текстом «re-take the lock», не «тело подменили».
+Supervisor сверяет SHA-256 контура (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
+
+Модель угроз и куда писать: [SECURITY.md](SECURITY.md).
 
 ## Три команды
 
@@ -54,7 +58,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.4
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.5
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.

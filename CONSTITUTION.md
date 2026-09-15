@@ -40,6 +40,7 @@
 47. Пакет 0.2.3 = тег `v0.2.3`. `release-bins` имеет `contents: write`. Action по умолчанию bind, не judge.
 48. `locks --judge` исполняет и пишет receipt. Action `judge: true` включает это. Default без флага — bind.
 49. CI блокирует ruff и mypy --strict наравне с pytest. Линтер вне workflow — fail-open.
+50. 0.2.5: локальные импорты в `dep:`; `python_version`/`canon_kind` сверяются; `pure` = declared_pure; контур + `local_deps.py`.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

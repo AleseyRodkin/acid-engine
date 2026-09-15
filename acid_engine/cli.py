@@ -158,7 +158,19 @@ def cmd_lock(args: argparse.Namespace) -> None:
     out = Path(args.out)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"plan.lock written: {out}")
-    print(f"plan.lock: {payload['interface_contract_hash'][:16]}...")
+    print(f"interface_contract_hash: {payload['interface_contract_hash']}")
+    print(f"plan_content_hash: {payload['plan_content_hash']}")
+    deps = payload.get("dependency_hashes") or {}
+    if deps:
+        print(f"local imports pinned: {len(deps)}")
+    else:
+        print("local imports pinned: 0")
+    policy = script.specification.policy
+    if getattr(policy, "pure", False):
+        print(
+            "declared_pure: Policy.pure is declared; "
+            "runtime does not instrument I/O. File writes still PASS unless the body records effects."
+        )
 
 
 def cmd_run(args: argparse.Namespace) -> None:
@@ -186,9 +198,12 @@ def cmd_run(args: argparse.Namespace) -> None:
         except Exception as e:
             print(f"ERROR: Failed to load plan: {e}")
             sys.exit(1)
+        from acid_engine.level2.implementation_canon import live_canon_kind
         from acid_engine.worker import verify_runtime_pin
 
-        pin = verify_runtime_pin(raw)
+        pin = verify_runtime_pin(
+            raw, live_canon_kind=live_canon_kind(script.implementation)
+        )
         if pin is not None:
             result = PipelineResult(conformance=pin)
             print(explain_block(result.conformance))
@@ -200,7 +215,8 @@ def cmd_run(args: argparse.Namespace) -> None:
         )
         print(explain_block(result.conformance))
         print(f"output: {result.data}")
-        print(f"plan.lock: {plan.content_hash[:16]}...")
+        print(f"interface_contract_hash: {plan.interface_contract_hash}")
+        print(f"plan_content_hash: {plan.content_hash}")
         _maybe_write_receipt(args, script, input_val, result, plan=plan, toolchain=raw)
         if not result.ok:
             sys.exit(1)
@@ -438,7 +454,7 @@ def main() -> None:
         _hidden_cli(sys.argv[1:])
         return
     parser = argparse.ArgumentParser(
-        prog="acid-engine",
+        prog="acid-judge",
         description="Acid Judge: lock, judge, receipt.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

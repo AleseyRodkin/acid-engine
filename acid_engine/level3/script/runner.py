@@ -12,7 +12,8 @@ from acid_engine.level2.conformance import (
     check_conformance,
 )
 from acid_engine.level2.failure import FailureReason
-from acid_engine.level2.implementation_canon import canon_id_for, implementation_identity
+from acid_engine.level2.implementation_canon import canon_id_for, live_canon_kind
+from acid_engine.level2.local_deps import collect_local_dep_hashes
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -59,6 +60,35 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> ConformanceResu
                 detail=f"lock_key={key}",
             ),
         )
+    live_deps = collect_local_dep_hashes(script.implementation)
+    locked_deps = {
+        name[4:]: digest
+        for name, digest in plan.module_hashes.items()
+        if name.startswith("dep:")
+    }
+    if locked_deps != live_deps:
+        changed = sorted(
+            set(locked_deps) ^ set(live_deps)
+            | {
+                name
+                for name in locked_deps
+                if name in live_deps and locked_deps[name] != live_deps[name]
+            }
+        )
+        detail = ",".join(changed[:8]) or "dependency_hash"
+        return ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="plan.lock dependency hash mismatch",
+            failure=FailureReason(
+                node_id=script.name,
+                contract_id=str(script.contract_id),
+                property_name="dependency_hash",
+                expected=str(sorted(locked_deps)),
+                actual=str(sorted(live_deps)),
+                detail=detail,
+            ),
+        )
     return None
 
 
@@ -68,6 +98,10 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
     from acid_engine.level3.script.resolve import materialize_script
 
     script = materialize_script(script)
+    deps = collect_local_dep_hashes(script.implementation)
+    hashes = {script.name or script.contract_id.name: script.content_hash}
+    for rel, digest in deps.items():
+        hashes[f"dep:{rel}"] = digest
     iface = InterfaceContract(
         contract_id=script.contract_id,
         version=script.version,
@@ -76,7 +110,7 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
         constraints=script.specification.policy.to_canonical_dict()
         if hasattr(script.specification, "policy")
         else {},
-        module_hashes={script.name or script.contract_id.name: script.content_hash},
+        module_hashes=hashes,
     )
     plan = PlanLock.create(
         plan_id=f"lock-{script.name or script.contract_id.name}",
@@ -90,10 +124,7 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
 
 def lock_toolchain(script: ScriptModule) -> dict[str, Any]:
     """python_version + canon_kind + runtime pins рядом с замком. Не входят в identity."""
-    ident = implementation_identity(script.implementation)
-    kind = "missing"
-    if isinstance(ident, dict):
-        kind = str(ident.get("kind") or "missing")
+    kind = live_canon_kind(script.implementation)
     from acid_engine.worker import runtime_hashes, source_hash
 
     return {
@@ -111,13 +142,16 @@ def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
 
     script = materialize_script(script)
     iface, plan = lock_for_script(script)
+    deps = collect_local_dep_hashes(script.implementation)
     return {
         "plan_id": plan.plan_id,
         "interface_contract_hash": plan.interface_contract_hash,
         "resolved_policies": plan.resolved_policies,
         "module_hashes": dict(plan.module_hashes),
+        "dependency_hashes": dict(deps),
         "execution_mode": plan.execution_mode.value,
         "toolchain": lock_toolchain(script),
+        "plan_content_hash": plan.content_hash,
         "iface": {
             "contract_id": str(iface.contract_id),
             "version": str(iface.version),
@@ -183,7 +217,9 @@ def execute_plan(
         return PipelineResult(
             conformance=ConformanceResult.skipped("runtime not pinned")
         )
-    pin = verify_runtime_pin(toolchain)
+    pin = verify_runtime_pin(
+        toolchain, live_canon_kind=live_canon_kind(script.implementation)
+    )
     if pin is not None:
         return PipelineResult(conformance=pin)
 

@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from typing import Any, NamedTuple
 
 from acid_engine.level2.implementation_canon import canon_id_for
+from acid_engine.level2.local_deps import collect_local_dep_hashes
 from acid_engine.level3.script.module import ScriptModule
 from acid_engine.worker import RUNTIME_PIN_PATHS, runtime_hashes, source_hash
 
@@ -59,6 +60,17 @@ def diff_lock(raw: Mapping[str, Any], script: ScriptModule) -> list[DiffRow]:
         want = str(pinned_rt.get(rel) or "—")
         got = live_rt[rel]
         rows.append(DiffRow(rel, want, got, want == got))
+    live_deps = collect_local_dep_hashes(script.implementation)
+    locked_deps = {
+        name[4:]: str(digest)
+        for name, digest in hashes.items()
+        if isinstance(name, str) and name.startswith("dep:")
+    }
+    names = sorted(set(live_deps) | set(locked_deps))
+    for rel in names:
+        want = str(locked_deps.get(rel) or "—")
+        got = str(live_deps.get(rel) or "—")
+        rows.append(DiffRow("dep " + rel, want, got, want == got))
     return rows
 
 

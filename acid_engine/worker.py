@@ -22,6 +22,7 @@ RUNTIME_PIN_PATHS = (
     "acid_engine/level3/script/runner.py",
     "acid_engine/level3/script/resolve.py",
     "acid_engine/level2/implementation_canon.py",
+    "acid_engine/level2/local_deps.py",
 )
 
 
@@ -50,10 +51,18 @@ def runtime_hashes(root: Path | None = None) -> dict[str, str]:
 
 def live_toolchain() -> dict[str, Any]:
     """Live contour pin. Not a frozen lock. Same-process tests and demos only."""
-    return {"worker_hash": source_hash(), "runtime_hashes": runtime_hashes()}
+    return {
+        "worker_hash": source_hash(),
+        "runtime_hashes": runtime_hashes(),
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
+    }
 
 
-def verify_runtime_pin(data: Mapping[str, Any]) -> Any:
+def verify_runtime_pin(
+    data: Mapping[str, Any],
+    *,
+    live_canon_kind: str | None = None,
+) -> Any:
     """None = pinned. FAIL if pin missing or live files differ. Does not run a tool body."""
     from acid_engine.level2.conformance import (
         ConformanceLevel,
@@ -128,7 +137,66 @@ def verify_runtime_pin(data: Mapping[str, Any]) -> Any:
                     detail=rel,
                 ),
             )
+    locked_py = tool.get("python_version")
+    if locked_py:
+        live_py = f"{sys.version_info.major}.{sys.version_info.minor}"
+        if not _python_version_ok(str(locked_py), live_py, tool.get("canon_kind")):
+            return ConformanceResult(
+                status=ConformanceStatus.FAIL,
+                level=ConformanceLevel.STRUCTURAL,
+                message=(
+                    f"lock taken on CPython {locked_py}, running {live_py} — re-take the lock"
+                ),
+                failure=FailureReason(
+                    node_id="runtime",
+                    contract_id="runtime",
+                    property_name="python_version",
+                    expected=str(locked_py),
+                    actual=live_py,
+                ),
+            )
+    locked_kind = tool.get("canon_kind")
+    if live_canon_kind is not None and locked_kind:
+        if str(locked_kind) != str(live_canon_kind):
+            return ConformanceResult(
+                status=ConformanceStatus.FAIL,
+                level=ConformanceLevel.STRUCTURAL,
+                message=(
+                    f"lock taken with canon_kind {locked_kind}, "
+                    f"running {live_canon_kind} — re-take the lock"
+                ),
+                failure=FailureReason(
+                    node_id="runtime",
+                    contract_id="runtime",
+                    property_name="canon_kind",
+                    expected=str(locked_kind),
+                    actual=str(live_canon_kind),
+                ),
+            )
     return None
+
+
+def _python_version_ok(locked: str, live: str, canon_kind: object) -> bool:
+    """Major must match. Bytecode: exact minor. AST: neighboring minor (±1) only."""
+    def parts(text: str) -> tuple[int, int]:
+        bits = text.split(".")
+        try:
+            major = int(bits[0])
+        except (TypeError, ValueError):
+            return (-1, -1)
+        try:
+            minor = int(bits[1]) if len(bits) > 1 else 0
+        except ValueError:
+            minor = 0
+        return (major, minor)
+
+    lm, ln = parts(locked)
+    vm, vn = parts(live)
+    if lm != vm or lm < 0:
+        return False
+    if str(canon_kind) == "bytecode":
+        return ln == vn
+    return abs(ln - vn) <= 1
 
 
 def identify_script(script: ScriptModule) -> dict[str, Any]:

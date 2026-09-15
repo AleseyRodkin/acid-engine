@@ -1,0 +1,22 @@
+name: Bug
+description: Something the runtime does not match METHOD or README
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Command, expected, actual. Attach the lock JSON if it is not secret.
+    validations:
+      required: true
+  - type: dropdown
+    id: perimeter
+    attributes:
+      label: In perimeter?
+      options:
+        - Tool body or local import swap
+        - Judge contour / toolchain
+        - Verdict text / SKIPPED vs PASS
+        - Out of perimeter (shell, sandbox, MCP) — I still want to record it
+    validations:
+      required: true

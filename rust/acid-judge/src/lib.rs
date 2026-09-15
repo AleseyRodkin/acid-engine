@@ -258,6 +258,7 @@ const RUNTIME_PIN_PATHS: &[&str] = &[
     "acid_engine/level3/script/runner.py",
     "acid_engine/level3/script/resolve.py",
     "acid_engine/level2/implementation_canon.py",
+    "acid_engine/level2/local_deps.py",
 ];
 
 fn pin_rel_ok(rel: &str) -> bool {
@@ -675,6 +676,7 @@ mod tests {
             "acid_engine/level3/script/runner.py",
             "acid_engine/level3/script/resolve.py",
             "acid_engine/level2/implementation_canon.py",
+            "acid_engine/level2/local_deps.py",
         ];
         for rel in files {
             let path = tmp.join(rel);

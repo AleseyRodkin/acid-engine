@@ -19,7 +19,7 @@ class Parameters:
 
 @dataclass(frozen=True, slots=True)
 class Policy:
-    """Execution and governance policy."""
+    """Declared constraints. `pure` is declared_pure: runtime does not instrument I/O."""
     pure: bool = False
     max_latency_ms: float | None = None
     history: str = "none"  # none | compact | full

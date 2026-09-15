@@ -17,6 +17,7 @@ def test_cli_help():
     result = _run_cli("--help")
     assert result.returncode == 0
     assert "judge" in result.stdout
+    assert "usage: acid-judge" in result.stdout
     assert "lock" in result.stdout
     assert "receipt" in result.stdout
     assert "diff" in result.stdout

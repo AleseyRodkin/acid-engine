@@ -68,7 +68,7 @@ def test_public_exports_are_the_gate():
         "lock_for_script",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.4"
+    assert acid_engine.__version__ == "0.2.5"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():
@@ -92,6 +92,19 @@ def test_verify_runtime_pin_ok_and_mismatch():
     assert missing is not None
     assert missing.failure is not None
     assert missing.failure.property_name == "worker_hash"
+    wrong_py = dict(payload)
+    tool2 = dict(payload["toolchain"])
+    tool2["python_version"] = "3.7"
+    wrong_py["toolchain"] = tool2
+    pin_py = verify_runtime_pin(wrong_py)
+    assert pin_py is not None
+    assert pin_py.failure is not None
+    assert pin_py.failure.property_name == "python_version"
+    assert "re-take the lock" in pin_py.message
+    pin_kind = verify_runtime_pin(payload, live_canon_kind="bytecode")
+    assert pin_kind is not None
+    assert pin_kind.failure is not None
+    assert pin_kind.failure.property_name == "canon_kind"
 
 
 def test_research_shims_keep_import_path():

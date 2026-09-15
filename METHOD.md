@@ -28,6 +28,10 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 Замыкания и defaults входят в хеш: они часть того, что бежит.
 Разное тело → другой хеш. Подмена `x+1` на `x+100` при той же декларации
 ломает `content_hash` и `plan.lock`.
+Локальные `.py`, которые файл инструмента импортирует (не stdlib, не
+site-packages, не `acid_engine`), входят в замок как `dep:<path>` =
+SHA-256 файла. Подмена helper при том же теле точки входа — FAIL, тело
+не запускать. Переименование локальной переменной меняет AST-канон.
 Канон тела один: callable. `ArtifactRef` — локатор, не identity.
 Нет callable → `implementation` в identity = `{kind: missing}`.
 После резолва (`materialize_script`) identity — канон тела fn.
@@ -37,6 +41,7 @@ Parameters ≠ Policy ≠ ImplementationRequirements
 
 После прогона есть Observed.
 `Observed ≠ Proven`. Один чистый прогон не даёт `proven_pure`.
+`Policy.pure` — declared_pure. Runtime не инструментирует I/O.
 Пустые `effects_observed` ≠ доказательство чистоты.
 ИИ не арбитр.
 
@@ -73,7 +78,7 @@ Self-lock не вердикт. В том числе в библиотеке.
 
 Бинарь не считает хеш тела. Один канон — Python (`implementation_canon`).
 Один вход бинаря: нужен worker.
-До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
+До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
 Нет `worker_hash` или нет полного `runtime_hashes` → SKIPPED. Несовпадение → FAIL. Хеш рантайма не входит в identity тела.
 `locks --index` без `worker_hash` / `runtime_hashes` → FAIL, не fail-open.
 CLI `judge --plan` сверяет те же пины до run. Несовпадение → FAIL, тело не запускать.

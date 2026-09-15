@@ -1,13 +1,14 @@
 {
   "schema": "acid.locks.v1",
-  "worker_hash": "d3878d4a63793c1f64edd863a66a80e292827f1c131391c1e2b2163ade41c308",
+  "worker_hash": "d3a62d5db49c803dbbd65790acd7d67195734505bbb1ee9b635af5b979caab16",
   "runtime_hashes": {
-    "acid_engine/worker.py": "d3878d4a63793c1f64edd863a66a80e292827f1c131391c1e2b2163ade41c308",
-    "acid_engine/cli.py": "74ae822e1f8db126697e17c9276a99f1fcac8d192dc6a9375bd05abfce90c496",
+    "acid_engine/worker.py": "d3a62d5db49c803dbbd65790acd7d67195734505bbb1ee9b635af5b979caab16",
+    "acid_engine/cli.py": "6117caa8838c15173069df17eb48b8d38398648a08687a85e9f36f46297d4598",
     "acid_engine/level3/script/python_runtime.py": "8445144c7fabcc971f8bba15070452216264d73a369b0bc72983346ce2b0b84c",
-    "acid_engine/level3/script/runner.py": "6b74ce98d8fd609ddc46507da1399341eb09eb6067570878b975b97e24d7cb82",
+    "acid_engine/level3/script/runner.py": "3703278ce2fcaf9cc4926840d59ec0af8fd1ee8d04d08de470bb4b31a176116a",
     "acid_engine/level3/script/resolve.py": "47008a35a0ebbd5f84bb4507e3a5dc6aae8af54b869af362e8064b6918f2a22b",
-    "acid_engine/level2/implementation_canon.py": "dc8b45d1e1103b13478b86513946e129e93f41a1928d0c95d22b085e2eebc698"
+    "acid_engine/level2/implementation_canon.py": "3f82ad5447e3c97e5042361c3fc8c1daad2655071fbe8f49f8d1b261389b317e",
+    "acid_engine/level2/local_deps.py": "ff4e9d8b2b7903a8ff92178a78575e848661ff1cbc765e1aa099cab50133fcf5"
   },
   "entries": [
     {

@@ -245,6 +245,24 @@ def explain_block(result: ConformanceResult) -> str:
                 "worker.py differs from the approved contour (worker_hash).\n"
                 "The body was not executed."
             )
+    elif prop == "python_version":
+        why = (
+            "Execution blocked\n"
+            f"lock taken on CPython {fail.expected}, running {fail.actual} — re-take the lock.\n"
+            "The body was not executed."
+        )
+    elif prop == "canon_kind":
+        why = (
+            "Execution blocked\n"
+            f"lock taken with canon_kind {fail.expected}, running {fail.actual} — re-take the lock.\n"
+            "The body was not executed."
+        )
+    elif prop == "dependency_hash":
+        why = (
+            "Execution blocked\n"
+            f"A local import of the tool differs from the lock ({fail.detail or 'dependency_hash'}).\n"
+            "The body was not executed."
+        )
     elif prop == "output_type":
         why = (
             "Observation did not satisfy the contract\n"
@@ -255,8 +273,8 @@ def explain_block(result: ConformanceResult) -> str:
     elif prop == "pure":
         why = (
             "Observation did not satisfy the contract\n"
-            "pure=True but effects were observed (pure). "
-            "Empty effects would still not prove purity.\n"
+            "declared_pure (Policy.pure) but effects were observed. "
+            "Runtime does not instrument I/O; empty effects still do not prove purity.\n"
             "The body ran; this is not proven_pure."
         )
     elif prop == "max_latency_ms":
@@ -264,6 +282,12 @@ def explain_block(result: ConformanceResult) -> str:
             "Observation did not satisfy the contract\n"
             f"Latency {fail.actual} ms exceeded max_latency_ms {fail.expected}.\n"
             "The body ran."
+        )
+    elif prop == "status":
+        why = (
+            "Observation did not satisfy the contract\n"
+            f"The body ran and did not complete (status {fail.actual}).\n"
+            "This is not a pre-run block."
         )
     else:
         why = f"Execution blocked\n{fail.human()}\nThe body was not executed."

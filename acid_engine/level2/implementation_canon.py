@@ -175,6 +175,13 @@ def implementation_identity(fn: Callable[..., Any] | None) -> Any:
     return canonical_implementation(fn)
 
 
+def live_canon_kind(fn: Callable[..., Any] | None) -> str:
+    ident = implementation_identity(fn)
+    if isinstance(ident, dict):
+        return str(ident.get("kind") or "missing")
+    return "missing"
+
+
 def _jsonable(value: Any, seen: set[int]) -> Any:
     if isinstance(value, (bool, int, float, str)) or value is None:
         return value

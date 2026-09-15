@@ -26,6 +26,7 @@ def judge_script(
     toolchain: Mapping[str, Any] | None = None,
 ) -> PipelineResult:
     """Вердикт только по паре plan+iface и пину контура. Self-lock не вердикт."""
+    from acid_engine.level2.implementation_canon import live_canon_kind
     from acid_engine.level3.script.resolve import materialize_script
     from acid_engine.worker import verify_runtime_pin
 
@@ -44,7 +45,9 @@ def judge_script(
         return PipelineResult(
             conformance=ConformanceResult.skipped(RUNTIME_UNPINNED),
         )
-    pin = verify_runtime_pin(toolchain)
+    pin = verify_runtime_pin(
+        toolchain, live_canon_kind=live_canon_kind(script.implementation)
+    )
     if pin is not None:
         return PipelineResult(conformance=pin)
     return execute_plan(iface, plan, script, input_data, toolchain=toolchain)

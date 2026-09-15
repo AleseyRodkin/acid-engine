@@ -111,5 +111,21 @@ def test_explain_block_output_type_and_pure():
         ),
     )
     ptxt = explain_block(pure)
+    assert "declared_pure" in ptxt
     assert "not prove purity" in ptxt
     assert "proven_pure" in ptxt
+    crashed = ConformanceResult(
+        status=ConformanceStatus.FAIL,
+        level=ConformanceLevel.OPERATIONAL,
+        message="x",
+        failure=FailureReason(
+            node_id="n",
+            contract_id="c",
+            property_name="status",
+            expected="completed",
+            actual="failed",
+        ),
+    )
+    stxt = explain_block(crashed)
+    assert "did not complete" in stxt
+    assert "pre-run block" in stxt

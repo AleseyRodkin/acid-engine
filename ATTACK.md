@@ -76,6 +76,12 @@ Code ≠ 0. `runtime_hash`. No `PASS`. Guard: `tests/integration/test_cli.py::te
 
 Same class of miss as replacing `implementation_canon.py` on disk after the lock was taken.
 
+## 3. Swap a helper, not the entry
+
+`entry.py` imports `helper.py`. Lock pins `dep:helper.py`. Replace only helper.
+
+Code ≠ 0. `dependency_hash`. No `PASS`. Body does not run. Guard: `tests/integration/test_local_deps.py`.
+
 ## What this is not
 
 - Not MCP tool-description scanning.
