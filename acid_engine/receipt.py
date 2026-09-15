@@ -17,6 +17,17 @@ SCHEMA = "acid.receipt.v1"
 _FORBIDDEN = ("proven_pure",)
 
 
+def _missing(
+    result: PipelineResult,
+    *,
+    plan: Any | None,
+    toolchain: Mapping[str, Any] | None,
+) -> list[str]:
+    from acid_engine.evidence import missing_evidence
+
+    return missing_evidence(result, plan=plan, toolchain=toolchain)
+
+
 def _json_safe_output(data: Any) -> Any:
     if callable(data):
         raise TypeError("receipt cannot contain callable")
@@ -59,6 +70,9 @@ def build_receipt(
             "level": level,
             "message": conf.message,
             "property": prop,
+        },
+        "evidence": {
+            "missing": _missing(result, plan=plan, toolchain=toolchain),
         },
     }
     if toolchain is not None:

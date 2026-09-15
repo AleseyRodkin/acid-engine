@@ -52,4 +52,7 @@ The Rust binary does not re-implement the hasher. It pins the hasher's
 files, then asks Python to identify, then binds, then runs. Swap the
 hasher file → `runtime_hash` FAIL before identify.
 
-Reproduce: [ATTACK.md](ATTACK.md) §2, [attacks/](attacks/README.md).
+SLSA answers how an artifact was produced. This product answers which artifact
+actually ran. Receipts are execution evidence. They are not a competing
+provenance standard.
+

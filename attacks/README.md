@@ -1,7 +1,9 @@
-# Acid Judge Attack Lab
+# Integrity Coverage
 
 Not a product tour. Each row is a real guard. `?` means we do not claim it.
 Unknown is not safe — that is SKIPPED, not PASS.
+
+This is coverage of **approved → executed**, not a list of 100 CVE classes.
 
 | Attack | Detect | Block | Execute | Receipt | Guard |
 | --- | ---: | ---: | ---: | ---: | --- |

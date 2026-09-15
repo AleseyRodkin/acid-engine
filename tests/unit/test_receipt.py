@@ -51,6 +51,7 @@ def test_receipt_bones_pass():
     assert rec["toolchain"]["worker_hash"] == raw["toolchain"]["worker_hash"]
     assert rec["toolchain"]["runtime_hashes"] == raw["toolchain"]["runtime_hashes"]
     assert rec["toolchain"]["canon"] == "python.ast.v1"
+    assert rec["evidence"]["missing"] == []
     text = canonical_serialize(rec)
     assert "proven_pure" not in text
     assert "callable" not in text
@@ -66,6 +67,7 @@ def test_receipt_swapped_plan_fail_module_hash():
     rec = build_receipt(script, {"n": 3}, result, plan=plan)
     assert rec["verdict"]["status"] == "FAIL"
     assert rec["verdict"]["property"] == "module_hash"
+    assert rec["evidence"]["missing"] == []
     assert rec["observation"] is None
     assert rec["output"] is None
 
@@ -80,6 +82,7 @@ def test_cli_receipt_without_plan_is_skipped():
         assert rec["schema"] == SCHEMA
         assert rec["verdict"]["status"] == "SKIPPED"
         assert rec["plan_hash"] is None
+        assert "lock" in rec["evidence"]["missing"]
         assert "proven_pure" not in json.dumps(rec)
 
 

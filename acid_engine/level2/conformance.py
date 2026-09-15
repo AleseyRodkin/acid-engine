@@ -203,7 +203,14 @@ def explain_result(result: ConformanceResult) -> str:
         return f"[PASS] {result.message}"
     if result.failure:
         return result.failure.human()
-    return f"[{result.status.value}] {result.message}"
+    line = f"[{result.status.value}] {result.message}"
+    if result.status == ConformanceStatus.SKIPPED:
+        from acid_engine.evidence import missing_evidence
+
+        gaps = missing_evidence(result)
+        line += "\nMissing evidence: " + ", ".join(gaps)
+        line += "\nNot enough facts to verify."
+    return line
 
 
 def explain_block(result: ConformanceResult) -> str:

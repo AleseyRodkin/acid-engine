@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.9 — 2026-09-16
+
+- Claim is approved-to-executed, not a generic execution-integrity platform.
+- Receipt `evidence.missing`: facts absent on SKIPPED. Empty on PASS/FAIL. Not a risk score.
+- Paid path is evidence, not hosted lock registry. Copilot not in this release.
+
 ## 0.2.8 — 2026-09-16
 
 - Wedge language: execution integrity, not a platform. SKIPPED is a first-class state.

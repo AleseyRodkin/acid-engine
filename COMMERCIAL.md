@@ -9,25 +9,27 @@
 ## 1. Что продаём
 
 Продукт: **Acid Judge** (не зонтик AcidEngine, не PyPI-ренейм).  
-Фраза: file-byte lock on a locally approved Python tool body, checked immediately before the agent call.  
-Не MCP-gateway: шлюз ловит отравленные *описания* tool на сети; этот gate ловит подмену *файла* между одобрением и вызовом. Дополнение, не конкурент шлюзу.
+Фраза: verifies that the code approved for an AI agent is the code that actually executes.  
+Не policy gate («можно ли вызывать tool»). Не MCP-gateway. Не sandbox. Не SLSA.  
+Policy gate может ALLOW после смены файла. Этот gate ловит, что одобренный artifact — не тот, что сейчас на диске.
 
-Покупатель: Head of Platform / AppSec / AI Governance.  
-Ниша A: fail-closed gate тела Python-tool.
+Первый покупатель: **AI Platform / Developer Platform**. Потом AppSec. Governance — после receipts/evidence, не первым.
+
+Ниша: approved-to-executed verification тела Python-tool.
 
 Три команды — единственный публичный контракт: `lock`, `judge`, `receipt`.
 
-Ядро MIT. Платят потом за Action, реестр, подпись, инцидент — не в фазах C0–C3. Ценники в README не писать.
+Ядро MIT. Платят потом за **evidence** (кто одобрил, что исполнилось, PASS/FAIL/SKIPPED, подпись), не за hosted registry lock-файлов. Ценники в README не писать.
 
 Ярусы (мысленно, не публиковать цены):
 
 | Ярус | Что | Зачем |
 |---|---|---|
-| Open core (MIT) | `lock` / `judge` / `receipt`, CLI, supervisor, `locks/` в git | дистрибуция и аудит security-инструмента |
-| Team | hosted registry, audit trail, уведомление о FAIL | первая платная единица из C5 |
-| Enterprise | compliance-отчёт, инцидент, SLA | AI Governance из этого же файла |
+| Open core (MIT) | `lock` / `judge` / `receipt`, CLI, supervisor, `locks/` в git | дистрибуция и аудит |
+| Team | central evidence, alerts on FAIL, история receipt | первая платная единица |
+| Enterprise | incident evidence, SIEM export, SSO, SLA | Governance после Platform |
 
-Никогда в этом плане: SaaS-ОС, self-hosting, профили, markdown-спеки, `proven_pure`, каркас любого проекта, агрегатор как продукт, конкуренция с Pydantic, JS/WASM/второй язык, STOL, SKIPPED→PASS, двадцать адаптеров, ценники в README, MCP как второй harness до закрытой витрины CLI.
+Никогда в этом плане: SaaS-ОС, self-hosting, профили, markdown-спеки, `proven_pure`, каркас любого проекта, агрегатор как продукт, конкуренция с Pydantic, JS/WASM/второй язык, STOL, SKIPPED→PASS, двадцать адаптеров, ценники в README, MCP как второй harness до закрытой витрины CLI, Copilot до зелёного Claude hook, risk score.
 
 ## 2. Нельзя сломать
 
