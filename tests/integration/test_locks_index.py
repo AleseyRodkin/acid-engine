@@ -29,6 +29,7 @@ def test_index_entries_have_plan_and_live_hash():
         plan_raw = json.loads(plan_path.read_text(encoding="utf-8"))
         locked = plan_raw["module_hashes"][script.name]
         assert locked == script.content_hash, entry["id"]
+        assert plan_raw.get("source_hash")
         assert plan_raw["toolchain"]["worker_hash"] == source_hash()
         assert plan_raw["toolchain"]["runtime_hashes"] == runtime_hashes()
 

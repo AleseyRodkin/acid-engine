@@ -92,6 +92,7 @@ def test_rust_worker_bones_pass():
             "module_hashes": dict(plan["module_hashes"]),
             "worker_hash": source_hash(),
             "runtime_hashes": runtime_hashes(),
+            "source_hash": plan["source_hash"],
             "worker": {
                 "python": sys.executable,
                 "script": str(BONES_JSON),
@@ -121,6 +122,27 @@ def test_rust_worker_without_pin_is_skipped():
 
 
 def test_rust_worker_swapped_lock_fail_not_run_pass():
+    plan = json.loads(BONES_PLAN.read_text(encoding="utf-8"))
+    rust = rust_judge(
+        {
+            "module_hashes": {"n_plus_one": "0" * 64},
+            "worker_hash": source_hash(),
+            "runtime_hashes": runtime_hashes(),
+            "source_hash": plan["source_hash"],
+            "worker": {
+                "python": sys.executable,
+                "script": str(BONES_JSON),
+                "input": {"n": 3},
+                "cwd": str(ROOT),
+            },
+        }
+    )
+    assert rust["status"] == "FAIL"
+    assert rust.get("property") == "module_hash"
+    assert "data" not in rust or rust["data"] is None
+
+
+def test_rust_worker_without_source_hash_is_skipped():
     rust = rust_judge(
         {
             "module_hashes": {"n_plus_one": "0" * 64},
@@ -134,6 +156,36 @@ def test_rust_worker_swapped_lock_fail_not_run_pass():
             },
         }
     )
-    assert rust["status"] == "FAIL"
-    assert rust.get("property") == "module_hash"
-    assert "data" not in rust or rust["data"] is None
+    assert rust["status"] == "SKIPPED"
+    assert "source" in rust["message"]
+    assert rust["status"] != "PASS"
+
+
+def test_rust_ignores_hostile_cwd_package(tmp_path: Path):
+    plan = json.loads(BONES_PLAN.read_text(encoding="utf-8"))
+    pkg = tmp_path / "acid_engine"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text(
+        "from pathlib import Path\nPath('PWNED').write_text('pwn')\n",
+        encoding="utf-8",
+    )
+    (pkg / "worker.py").write_text(
+        "from pathlib import Path\nPath('PWNED').write_text('worker')\n",
+        encoding="utf-8",
+    )
+    rust = rust_judge(
+        {
+            "module_hashes": dict(plan["module_hashes"]),
+            "worker_hash": source_hash(),
+            "runtime_hashes": runtime_hashes(),
+            "source_hash": plan["source_hash"],
+            "worker": {
+                "python": sys.executable,
+                "script": str(BONES_JSON),
+                "input": {"n": 3},
+                "cwd": str(tmp_path),
+            },
+        }
+    )
+    assert rust["status"] == "PASS", rust
+    assert not (tmp_path / "PWNED").exists()

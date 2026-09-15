@@ -240,6 +240,14 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
     script_path = req.get("script")
     if not script_path:
         raise ValueError("worker request needs script path")
+    expected = req.get("source_hash")
+    from acid_engine.level2.local_deps import pin_source_bytes, snapshot_exec_target
+
+    target, src, actual = snapshot_exec_target(Path(str(script_path)))
+    if expected:
+        if actual != str(expected):
+            raise ValueError("source_hash mismatch")
+        pin_source_bytes(target, src)
     script = materialize_script(load_script_from_file(str(script_path)))
     if op == "identify":
         return identify_script(script)

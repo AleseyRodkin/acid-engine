@@ -12,6 +12,74 @@ from pathlib import Path
 from typing import Any
 
 _STDLIB = frozenset(getattr(sys, "stdlib_module_names", ()))
+# Bytes hashed at the source_hash gate. Import/exec must use these, not a second read.
+_PINNED_SOURCE: dict[str, bytes] = {}
+
+
+def pin_source_bytes(path: Path, src: bytes) -> None:
+    """Remember the bytes that matched the lock. Later loads must exec these."""
+    _PINNED_SOURCE[str(path.resolve())] = src
+
+
+def read_source_bytes(path: Path) -> bytes:
+    """Pinned snapshot if the gate already hashed this file, else a fresh disk read."""
+    key = str(Path(path).resolve())
+    pinned = _PINNED_SOURCE.get(key)
+    if pinned is not None:
+        return pinned
+    return Path(path).read_bytes()
+
+
+def snapshot_exec_target(path: Path) -> tuple[Path, bytes, str]:
+    """One read of the file that would be exec'd. JSON blanks resolve to implementation.file."""
+    target = _exec_target(Path(path))
+    src = target.read_bytes()
+    return target, src, hashlib.sha256(src).hexdigest()
+
+
+def exec_source_module(path: Path, src: bytes, mod_name: str) -> types.ModuleType:
+    """Exec already-read bytes. Caller hashed these."""
+    module = types.ModuleType(mod_name)
+    resolved = str(Path(path).resolve())
+    module.__file__ = resolved
+    module.__package__ = ""
+    sys.modules[mod_name] = module
+    exec(compile(src, resolved, "exec"), module.__dict__)  # noqa: S102
+    return module
+
+
+def source_bytes_hash(path: Path) -> str:
+    """SHA-256 of the file that would be exec'd. JSON blanks resolve to implementation.file."""
+    return hashlib.sha256(_exec_target(path).read_bytes()).hexdigest()
+
+
+def origin_source_hash(fn: Callable[..., Any] | None) -> str | None:
+    start = _origin_file(fn)
+    if start is None:
+        return None
+    return hashlib.sha256(start.read_bytes()).hexdigest()
+
+
+def _exec_target(path: Path) -> Path:
+    path = path.resolve()
+    if path.suffix.lower() != ".json":
+        return path
+    import json
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return path
+    impl = data.get("implementation") if isinstance(data, dict) else None
+    if not isinstance(impl, dict):
+        return path
+    rel = impl.get("file")
+    if not rel:
+        return path
+    cand = Path(str(rel))
+    if not cand.is_absolute():
+        cand = path.parent / cand
+    return cand.resolve() if cand.is_file() else path
 
 
 def collect_local_dep_hashes(fn: Callable[..., Any] | None) -> dict[str, str]:
@@ -152,19 +220,32 @@ def _py_file(candidate: Path, root: Path) -> Path | None:
     return None
 
 
-def seal_local_deps(fn: Callable[..., Any] | None) -> str | None:
-    """Load pinned local deps from the bytes just hashed. None = sealed.
+def seal_local_deps(
+    fn: Callable[..., Any] | None,
+    locked: dict[str, str] | None = None,
+) -> str | None:
+    """Load local deps from one read of each file. Compare to locked hashes, not a second scan.
 
     Import after this sees the sealed module, not a later disk write.
     Returns the relative path that drifted, or None.
+    locked=None: hash the tree as it is now (lock / tests).
+    locked={}: still walk; an undeclared local import is FAIL.
     """
-    hashes = collect_local_dep_hashes(fn)
-    if not hashes:
-        return None
     start = _origin_file(fn)
     if start is None:
         return None
-    return _seal_walk(start, start.parent, hashes, set(), is_root=True)
+    if locked is not None:
+        hashes = dict(locked)
+    else:
+        hashes = collect_local_dep_hashes(fn)
+        if not hashes:
+            return None
+    sealed: set[str] = set()
+    err = _seal_walk(start, start.parent, hashes, set(), sealed, is_root=True)
+    if err is not None:
+        return err
+    missing = sorted(set(hashes) - sealed)
+    return missing[0] if missing else None
 
 
 def _seal_walk(
@@ -172,6 +253,7 @@ def _seal_walk(
     root: Path,
     hashes: dict[str, str],
     seen: set[Path],
+    sealed: set[str],
     *,
     is_root: bool,
 ) -> str | None:
@@ -194,7 +276,7 @@ def _seal_walk(
             resolved = _resolve(mod, level, file, root)
             if resolved is None:
                 continue
-            err = _seal_walk(resolved, root, hashes, seen, is_root=False)
+            err = _seal_walk(resolved, root, hashes, seen, sealed, is_root=False)
             if err is not None:
                 return err
     if is_root:
@@ -202,9 +284,10 @@ def _seal_walk(
     rel = _relkey(file, root)
     digest = hashes.get(rel)
     if digest is None:
-        return None
+        return rel
     if hashlib.sha256(src).hexdigest() != digest:
         return rel
+    sealed.add(rel)
     name = rel[:-3].replace("/", ".") if rel.endswith(".py") else rel.replace("/", ".")
     module = types.ModuleType(name)
     module.__file__ = str(file)

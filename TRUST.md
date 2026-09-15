@@ -8,6 +8,9 @@ Acid Judge proves **execution identity**, not that the approved code is safe or
 correct. If the approved body is `return amount * 100` and the hash matches,
 the verdict is PASS even when the business rule is wrong.
 
+Acid Judge verifies software identity inside a trusted runtime; it does
+not establish runtime isolation.
+
 Root of trust for the supervisor path:
 
 ```text
@@ -30,6 +33,7 @@ is the process that can be swapped. Use the supervisor when that matters.
 
 ## In the TCB
 
+- Bytes of the tool file before import (`source_hash`).
 - Bytes of the locked callable (AST canon, else bytecode).
 - Static local `.py` imports (`dep:`).
 - Judge contour in `runtime_hashes` (7 files).
@@ -56,11 +60,12 @@ Hook / `locks --index` bind: the file about to run matches the lock. Not PASS.
 `judge` with a worker: bind, seal local deps from those bytes, run, observe,
 verdict. PASS exists only on this path.
 
-Local deps are sealed from the hashed bytes immediately before run. A write
-to `helper.py` after seal does not change what `import helper` sees.
+Local deps are sealed against the **locked** `dep:` hash from one read of each
+file immediately before run. A write to `helper.py` after that read does not
+change what `import helper` sees. An undeclared local import is FAIL.
 
 Symlinks are followed. Identity is the target's bytes. Retarget after lock
-is `module_hash` FAIL.
+is `source_hash` FAIL (the followed path's bytes changed before import).
 
 
 ## Who checks the checker

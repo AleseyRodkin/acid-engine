@@ -48,6 +48,8 @@ pub struct Request {
     #[serde(default)]
     pub runtime_hashes: BTreeMap<String, String>,
     #[serde(default)]
+    pub source_hash: Option<String>,
+    #[serde(default)]
     pub max_latency_ms: Option<f64>,
 }
 
@@ -127,7 +129,11 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     if let Some(pin) = pin_runtime(req, worker) {
         return pin;
     }
-    let ident = match spawn_worker(worker, "identify", None) {
+    let source_hash = match req.source_hash.as_deref() {
+        Some(h) if !h.is_empty() => h,
+        _ => return Response::skipped("source not pinned"),
+    };
+    let ident = match spawn_worker(worker, "identify", None, Some(source_hash)) {
         Ok(v) => v,
         Err(e) => return Response::fail(e, "worker"),
     };
@@ -161,7 +167,7 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     if bound.status != "BOUND" {
         return bound;
     }
-    let ran = match spawn_worker(worker, "run", worker.input.clone()) {
+    let ran = match spawn_worker(worker, "run", worker.input.clone(), Some(source_hash)) {
         Ok(v) => v,
         Err(e) => return Response::fail(e, "worker"),
     };
@@ -187,29 +193,32 @@ fn spawn_worker(
     worker: &WorkerSpec,
     op: &str,
     input: Option<Value>,
+    source_hash: Option<&str>,
 ) -> Result<WorkerOut, String> {
     let python = worker.python.as_deref().unwrap_or("python3");
     let cwd = worker.cwd.as_deref().unwrap_or(".");
+    let root = engine_root(worker)?;
+    let worker_py = root.join("acid_engine").join("worker.py");
+    if !worker_py.is_file() {
+        return Err(format!("worker source missing: {}", worker_py.display()));
+    }
     let mut payload = serde_json::Map::new();
     payload.insert("op".into(), Value::String(op.into()));
     payload.insert("script".into(), Value::String(worker.script.clone()));
     if op == "run" {
         payload.insert("input".into(), input.unwrap_or(Value::Null));
     }
-    let body = Value::Object(payload);
-    let mut path_parts: Vec<PathBuf> = vec![PathBuf::from(cwd)];
-    if let Ok(root) = engine_root(worker) {
-        if root != Path::new(cwd) {
-            path_parts.push(root);
-        }
+    if let Some(h) = source_hash {
+        payload.insert("source_hash".into(), Value::String(h.into()));
     }
+    let body = Value::Object(payload);
+    let mut path_parts: Vec<PathBuf> = vec![root];
     if let Some(existing) = std::env::var_os("PYTHONPATH") {
         path_parts.extend(std::env::split_paths(&existing));
     }
     let pythonpath = std::env::join_paths(&path_parts).unwrap_or_else(|_| cwd.into());
     let mut child = Command::new(python)
-        .arg("-m")
-        .arg("acid_engine.worker")
+        .arg(&worker_py)
         .current_dir(cwd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -316,10 +325,13 @@ fn engine_root(worker: &WorkerSpec) -> Result<PathBuf, String> {
         }
     }
     let cwd = worker.cwd.as_deref().unwrap_or(".");
-    if Path::new(cwd).join("acid_engine").join("worker.py").is_file() {
-        return Ok(Path::new(cwd).to_path_buf());
-    }
-    locate_via_python(worker)
+    locate_via_python(worker).or_else(|_| {
+        if Path::new(cwd).join("acid_engine").join("worker.py").is_file() {
+            Ok(Path::new(cwd).to_path_buf())
+        } else {
+            Err("acid_engine package not found".into())
+        }
+    })
 }
 
 fn resolve_root_dir(p: &Path) -> Result<PathBuf, String> {
@@ -342,10 +354,12 @@ fn resolve_root_dir(p: &Path) -> Result<PathBuf, String> {
 fn locate_via_python(worker: &WorkerSpec) -> Result<PathBuf, String> {
     let python = worker.python.as_deref().unwrap_or("python3");
     let out = Command::new(python)
+        .arg("-P")
         .args([
             "-c",
             "import acid_engine, pathlib; print(pathlib.Path(acid_engine.__file__).resolve().parent.parent)",
         ])
+        .env_remove("PYTHONPATH")
         .output()
         .map_err(|e| format!("locate acid_engine: {e}"))?;
     if !out.status.success() {
@@ -708,11 +722,13 @@ mod tests {
 
     #[test]
     fn worker_hash_without_runtime_hashes_is_skipped() {
+        let _guard = RootGuard;
         let tmp = std::env::temp_dir().join(format!("acid-worker-only-{}", std::process::id()));
         let pkg = tmp.join("acid_engine");
         std::fs::create_dir_all(&pkg).unwrap();
         std::fs::write(pkg.join("worker.py"), b"print('worker')\n").unwrap();
         let hex = sha256_file(&pkg.join("worker.py")).unwrap();
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
         let r = judge(&Request {
             module_hashes: hashes("s", "aaa"),
             worker_hash: Some(hex),
@@ -725,6 +741,47 @@ mod tests {
         });
         let _ = std::fs::remove_dir_all(&tmp);
         assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn missing_source_hash_is_skipped_after_runtime_pin() {
+        let _guard = RootGuard;
+        let tmp = std::env::temp_dir().join(format!("acid-source-skip-{}", std::process::id()));
+        let files = [
+            "acid_engine/worker.py",
+            "acid_engine/cli.py",
+            "acid_engine/level3/script/python_runtime.py",
+            "acid_engine/level3/script/runner.py",
+            "acid_engine/level3/script/resolve.py",
+            "acid_engine/level2/implementation_canon.py",
+            "acid_engine/level2/local_deps.py",
+        ];
+        for rel in files {
+            let path = tmp.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"print('ok')\n").unwrap();
+        }
+        let worker_hex = sha256_file(&tmp.join("acid_engine/worker.py")).unwrap();
+        let mut runtime = BTreeMap::new();
+        for rel in files {
+            runtime.insert(rel.to_string(), sha256_file(&tmp.join(rel)).unwrap());
+        }
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some(worker_hex),
+            runtime_hashes: runtime,
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(tmp.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&tmp);
+        assert_eq!(r.status, "SKIPPED");
+        assert!(r.message.contains("source"));
         assert_ne!(r.status, "PASS");
     }
 

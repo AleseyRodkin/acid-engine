@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.14 — 2026-09-16
+
+- `source_hash` of the exec target is compared to the lock **before import**. Mismatch → FAIL, the file is not imported. Missing pin → SKIPPED.
+- Those bytes are pinned: load/exec uses the hashed snapshot, not a second disk read.
+- `seal_local_deps` compares one read of each local import to the **locked** `dep:` hash (empty lock still walks; undeclared helper → FAIL).
+- Supervisor: trusted package on `PYTHONPATH` first, worker spawned by absolute path, `python -P` to locate the package (cwd last).
+
 ## 0.2.13 — 2026-09-16
 
 - Remaining Python comments, docstrings, and CLI `--help` translated to English.

@@ -1,7 +1,6 @@
 """Resolve the body: a live callable or ArtifactRef. Foreign languages are not eval'd."""
 from __future__ import annotations
 
-import importlib.util
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -76,12 +75,11 @@ def materialize_script(script: Any) -> Any:
 
 
 def _load_python_entry(path: Path, entry: str) -> Any:
+    from acid_engine.level2.local_deps import exec_source_module, read_source_bytes
+
+    src = read_source_bytes(path)
     mod_name = f"acid_artifact_{path.stem}_{abs(hash(str(path.resolve())))}"
-    spec = importlib.util.spec_from_file_location(mod_name, str(path))
-    if spec is None or spec.loader is None:
-        raise FileNotFoundError(str(path))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = exec_source_module(path, src, mod_name)
     obj: Any = module
     for part in entry.split("."):
         obj = getattr(obj, part)

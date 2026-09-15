@@ -38,6 +38,7 @@ def test_dump_includes_toolchain_outside_identity():
     live_rt = runtime_hashes()
     assert tool["runtime_hashes"] == live_rt
     assert set(tool["runtime_hashes"]) == set(RUNTIME_PIN_PATHS)
+    assert payload.get("source_hash")
     iface, plan = lock_for_script(script)
     assert payload["module_hashes"] == dict(plan.module_hashes)
     assert payload["interface_contract_hash"] == plan.interface_contract_hash
@@ -69,7 +70,7 @@ def test_public_exports_are_the_gate():
         "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.13"
+    assert acid_engine.__version__ == "0.2.14"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():

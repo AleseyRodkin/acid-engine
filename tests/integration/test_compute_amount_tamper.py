@@ -1,4 +1,4 @@
-"""Swap compute_amount body against frozen plan → FAIL module_hash. Repo file stays clean."""
+"""Swap compute_amount body against frozen plan → FAIL source_hash. Repo file stays clean."""
 from __future__ import annotations
 
 import json
@@ -46,7 +46,7 @@ def test_honest_compute_amount_pass_receipt(tmp_path: Path):
     assert "proven_pure" not in json.dumps(payload)
 
 
-def test_tampered_compute_amount_fails_module_hash(tmp_path: Path):
+def test_tampered_compute_amount_fails_source_hash(tmp_path: Path):
     original = SRC.read_text(encoding="utf-8")
     assert "cents * qty" in original
     assert "cents * qty + 1" not in original
@@ -67,10 +67,11 @@ def test_tampered_compute_amount_fails_module_hash(tmp_path: Path):
         str(rec),
     )
     assert proc.returncode != 0
-    assert "module_hash" in proc.stdout
+    assert "source_hash" in proc.stdout
+    assert "was not imported" in proc.stdout
     assert "PASS" not in proc.stdout
     payload = json.loads(rec.read_text(encoding="utf-8"))
     assert payload["verdict"]["status"] == "FAIL"
-    assert payload["verdict"].get("property") == "module_hash"
+    assert payload["verdict"].get("property") == "source_hash"
     assert payload.get("output") in (None, {})
     assert SRC.read_text(encoding="utf-8") == original

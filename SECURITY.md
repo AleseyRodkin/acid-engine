@@ -10,6 +10,8 @@ and not an MCP gateway.
 
 ## In perimeter
 
+- Bytes of the locked tool file **before import** (`source_hash`). A
+  top-level side effect in the file cannot run until this matches.
 - Bytes of the locked tool's implementation (AST canon, else bytecode).
   The live check is `module_hashes`. `interface_contract_hash` is derived
   from the same JSON for diffs; editing only `iface` in the lock file is
@@ -21,7 +23,11 @@ and not an MCP gateway.
   appear in the AST.
 - Judge contour listed in `runtime_hashes` (`worker.py`, `cli.py`,
   `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`,
-  `local_deps.py`).
+  `local_deps.py`). The supervisor puts the trusted package on
+  `PYTHONPATH` first, not the user `cwd`.
+- Local deps are sealed from **one read** of each file compared to the
+  locked hash, then those bytes are executed. A swap between check and
+  use is FAIL.
 - `python_version` (major.minor) and `canon_kind` in the lock's `toolchain`.
   AST: neighboring CPython minor (±1) is accepted. Bytecode: exact match.
   Distant versions FAIL with "re-take the lock", not module_hash.
@@ -43,3 +49,5 @@ and not an MCP gateway.
 
 [attacks/](attacks/README.md) (matrix). [ATTACK.md](ATTACK.md) (manual copies). [TRUST.md](TRUST.md) (TCB).
 Helper-module swap: `tests/integration/test_local_deps.py`.
+Import-time side effect: `tests/integration/test_import_time.py`.
+Dependency TOCTOU / undeclared helper: `tests/integration/test_toctou.py`.

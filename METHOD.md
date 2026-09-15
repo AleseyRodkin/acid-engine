@@ -31,6 +31,13 @@ declaration breaks `content_hash` and `plan.lock`.
 Local `.py` files that the tool file imports (not stdlib, not site-packages,
 not `acid_engine`) enter the lock as `dep:<path>` = SHA-256 of the file.
 Swapping a helper with the same entry body → FAIL, do not run the body.
+The exec target file (the `.py`, or `implementation.file` of a JSON blank)
+enters the lock as `source_hash` = SHA-256 of those bytes. CLI `judge` /
+`locks` / `diff` and the supervisor compare this **before import**.
+Mismatch → FAIL, the file is not imported. Missing `source_hash` → SKIPPED.
+The bytes that matched are the bytes that are imported (one read).
+`judge_script` on an already-constructed `ScriptModule` does not re-read the
+file: the caller already imported it.
 `importlib.import_module` / `__import__` / `exec` / `eval` are not followed:
 `lock` warns that local deps cannot be fully pinned. Renaming a local variable
 changes the AST canon.
@@ -80,10 +87,11 @@ Not Sigstore. Tampering the receipt body → verify fails.
 The binary does not hash the body. One canon — Python (`implementation_canon`).
 One binary entry: a worker is required.
 Before identify the supervisor checks SHA-256 of the runtime contour (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) against `runtime_hashes` and `worker_hash` in the request/lock.
-The contour is sought in `cwd/acid_engine/`, else `ACID_ENGINE_ROOT`, else the installed package (`import acid_engine`). Not in a foreign project's `cwd`.
+The contour is sought in `ACID_ENGINE_ROOT`, else the installed package (`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last. Not in a foreign project's `cwd` first.
 No `worker_hash` or no full `runtime_hashes` → SKIPPED. Mismatch → FAIL. The runtime hash is not in body identity.
 `locks --index` without `worker_hash` / `runtime_hashes` → FAIL, not fail-open.
-CLI `judge --plan` checks the same pins before run. Mismatch → FAIL, do not run the body.
+CLI `judge --plan` checks `source_hash` against the exec target **before import**, then the same runtime pins. `source_hash` mismatch → FAIL, the file is not imported. Missing `source_hash` → SKIPPED.
+Supervisor `PYTHONPATH` is the trusted package first, not the user `cwd`. The worker is spawned as an absolute path, not `python -m`.
 `judge_script` without `toolchain` → SKIPPED (`runtime not pinned`). With `toolchain` but without full `runtime_hashes` → FAIL.
 `judge_script_from_lock` reads plan+iface+toolchain from the lock JSON.
 `execute_plan` without `toolchain` → SKIPPED. This is not a public entry: outside, `judge_script` / CLI.
@@ -132,8 +140,10 @@ The output fact is `expected_output` or `record.output_data`. Mismatch → FAIL.
 
 `execute_plan` / `replay_run` check `script.content_hash` against `plan.module_hashes`
 **before** execution. Mismatch → FAIL, the body is not run.
+CLI / supervisor also check `source_hash` **before import**.
 No hashes in the lock → SKIPPED.
 `interface_contract_hash` is checked too.
+Local deps are sealed from **one read** compared to locked `dep:` hashes, then those bytes are exec'd. Undeclared local import → FAIL.
 `replay_run` without `expected_output` → SKIPPED.
 `execute_plan` returns `PipelineResult` (data + observation + conformance).
 
@@ -157,7 +167,7 @@ Without a plan — SKIPPED. Self-lock is not a verdict. Including for Composite.
 Does not bypass the lock via a raw `run_script`.
 `lock --script` writes lock JSON; that is not a verdict.
 `diff --script --plan` compares live vs lock. Does not execute, not PASS.
-In the lock JSON next to identity (not in `content_hash`) — `toolchain.python_version`, `toolchain.canon_kind`, `toolchain.canon` (`python.ast.v1` / `python.bytecode.v1`), `toolchain.worker_hash`, `toolchain.runtime_hashes`.
+In the lock JSON next to identity (not in `content_hash`) — `toolchain.python_version`, `toolchain.canon_kind`, `toolchain.canon` (`python.ast.v1` / `python.bytecode.v1`), `toolchain.worker_hash`, `toolchain.runtime_hashes`, `source_hash`.
 A new canon version (`python.ast.v2`) does not silently replace old semantics: the canon name sits beside the hash; the body hash algorithm stays until the name changes and locks are re-taken.
 
 ## History

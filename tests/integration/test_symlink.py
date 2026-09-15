@@ -86,4 +86,5 @@ def test_symlink_retarget_fails(tmp_path: Path) -> None:
     )
     assert swapped.returncode != 0
     assert "PASS" not in swapped.stdout
-    assert "module_hash" in swapped.stdout
+    assert "source_hash" in swapped.stdout
+    assert "was not imported" in swapped.stdout

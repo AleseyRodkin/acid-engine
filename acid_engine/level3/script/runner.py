@@ -13,7 +13,11 @@ from acid_engine.level2.conformance import (
 )
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level2.implementation_canon import canon_id_for, live_canon_kind
-from acid_engine.level2.local_deps import collect_local_dep_hashes, seal_local_deps
+from acid_engine.level2.local_deps import (
+    collect_local_dep_hashes,
+    origin_source_hash,
+    seal_local_deps,
+)
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -152,6 +156,7 @@ def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
         "dependency_hashes": dict(deps),
         "execution_mode": plan.execution_mode.value,
         "toolchain": lock_toolchain(script),
+        "source_hash": origin_source_hash(script.implementation),
         "plan_content_hash": plan.content_hash,
         "iface": {
             "contract_id": str(iface.contract_id),
@@ -245,7 +250,14 @@ def execute_plan(
     if bound is not None:
         return PipelineResult(conformance=bound)
 
-    leaked = seal_local_deps(script.implementation)
+    leaked = seal_local_deps(
+        script.implementation,
+        locked={
+            name[4:]: digest
+            for name, digest in plan.module_hashes.items()
+            if name.startswith("dep:")
+        },
+    )
     if leaked is not None:
         return PipelineResult(
             conformance=ConformanceResult(

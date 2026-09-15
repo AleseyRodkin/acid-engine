@@ -7,7 +7,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 
 | Attack | Detect | Block | Execute | Receipt | Guard |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Body swap | ✓ | ✓ | ✗ | ✓ | `test_compute_amount_tamper` |
+| Body swap | ✓ | ✓ | ✗ | ✓ | `test_compute_amount_tamper` (`source_hash`) |
+| Import-time side effect | ✓ | ✓ | ✗ | ✓ | `test_import_time` |
 | Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
 | Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |
@@ -19,7 +20,9 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | `Policy.pure` disk write | ✗ | ✗ | ✓ | ✓ | declared_pure; not instrumented |
 | Shell outside `judge` | ✗ | ✗ | ✓ | — | out of perimeter |
 | Symlink retarget | ✓ | ✓ | ✗ | ✓ | `test_symlink` |
-| Lazy import TOCTOU | ✓ | ✓ | ✗ | ✓ | `test_toctou` (sealed bytes) |
+| Lazy import TOCTOU | ✓ | ✓ | ✗ | ✓ | `test_toctou` (locked hash, one read) |
+| Undeclared helper after lock | ✓ | ✓ | ✗ | ✓ | `test_toctou` |
+| Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |
 | site-packages swap | ✗ | ✗ | ✓ | ✓ | supply chain, not this gate |
 | Malicious *approved* body | — | — | ✓ | ✓ | identity, not correctness |

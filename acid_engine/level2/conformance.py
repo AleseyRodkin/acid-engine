@@ -219,7 +219,13 @@ def explain_block(result: ConformanceResult) -> str:
         return explain_result(result)
     fail = result.failure
     prop = fail.property_name
-    if prop == "module_hash":
+    if prop == "source_hash":
+        why = (
+            "Execution blocked\n"
+            "The tool file bytes do not match the lock (source_hash).\n"
+            "The file was not imported."
+        )
+    elif prop == "module_hash":
         why = (
             "Execution blocked\n"
             "The locked tool body does not match the file on disk (module_hash).\n"

@@ -18,17 +18,18 @@
     "python_version": "3.11",
     "canon_kind": "ast",
     "canon": "python.ast.v1",
-    "worker_hash": "d3a62d5db49c803dbbd65790acd7d67195734505bbb1ee9b635af5b979caab16",
+    "worker_hash": "7f94478e42e4851053ddb64923a1c01aee183ba1aa2054e53d06e931aba97dfb",
     "runtime_hashes": {
-      "acid_engine/worker.py": "d3a62d5db49c803dbbd65790acd7d67195734505bbb1ee9b635af5b979caab16",
-      "acid_engine/cli.py": "a5d27135c740c3494108886bfb5c5c973062a5caa7f415c37a34f953ba6f0906",
+      "acid_engine/worker.py": "7f94478e42e4851053ddb64923a1c01aee183ba1aa2054e53d06e931aba97dfb",
+      "acid_engine/cli.py": "0c5b8deb52d202356ab60b72f2b2c47acf2596a21feeb9a4e34eace5f864984d",
       "acid_engine/level3/script/python_runtime.py": "8445144c7fabcc971f8bba15070452216264d73a369b0bc72983346ce2b0b84c",
-      "acid_engine/level3/script/runner.py": "1fe41e9f77ede6137cd6059e649f5ae750d3c82083d5b8098e9bc5effbe79fe7",
-      "acid_engine/level3/script/resolve.py": "d5209325cab5c97666fab01bf52aab9a9b1233eb09274c7a031a1a4d37afbd7a",
+      "acid_engine/level3/script/runner.py": "c3c1bb4ac7058dd29a8149d2547230f28835b5fedacfbad63869888cdd3dfa0c",
+      "acid_engine/level3/script/resolve.py": "4e68242a235ea6b23382bb7a24511a1ecae13c53b447becc5c69e2e6ada9e3e4",
       "acid_engine/level2/implementation_canon.py": "31a9d86048018bf7b23a9343842ab3cd6b171823746e9bad80bd510d49f7c27d",
-      "acid_engine/level2/local_deps.py": "5fe2b84cc44397aa43afa771c86fb59027b9299fcfeb85f69f9c3f4e3f00b651"
+      "acid_engine/level2/local_deps.py": "2d9a932dd5b4a3482fe899ec162c90f3963ff56e8fef65fa337b64aba76abc60"
     }
   },
+  "source_hash": "15e3c2b2168a59c8314788cc16e919f5a049059ce69faf38a0d6d949d8f41d26",
   "plan_content_hash": "d3e380eadf2aa1e192339330804f0c6cdb17ba1e34635f9f22a33598614f351d",
   "iface": {
     "contract_id": "tools/emit_forecast_card",

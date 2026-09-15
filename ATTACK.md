@@ -37,7 +37,7 @@ PYTHONPATH=. python -m acid_engine judge \
   --input '{"cents": 1999, "qty": 2}'
 ```
 
-Code ≠ 0. `module_hash`. No `PASS`. Body does not run. Guard: `tests/integration/test_compute_amount_tamper.py`.
+Code ≠ 0. `source_hash`. No `PASS`. File is not imported. Guard: `tests/integration/test_compute_amount_tamper.py`.
 
 Same drift as a table, still no execution:
 
@@ -47,7 +47,8 @@ PYTHONPATH=. python -m acid_engine diff \
   --plan examples/tools/compute_amount.plan.json
 ```
 
-`DRIFT`, `✗` on the body, no `PASS`.
+`DRIFT` is inspection **after** `source_hash` matches. A swapped file fails
+`source_hash` first and is not imported — including under `diff`.
 
 ## 2. Swap the hasher, not the tool
 

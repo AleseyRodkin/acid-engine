@@ -13,6 +13,8 @@ Public contract for an adopter who pins a 0.2 lock and CLI in their own CI.
   that existed in 0.2.4.
 - **Breaking** lock format or CLI → 0.3.0.
 
-Supervisor contour: checkout `acid_engine/`, else `ACID_ENGINE_ROOT`, else the
-installed package (`python -c "import acid_engine"`). User `cwd` is the project,
-not the package tree.
+Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
+(`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last.
+User `cwd` is the project, not the front of `PYTHONPATH`.
+`source_hash` is an extra lock key in 0.2.x. A 0.2.13 lock without it is
+SKIPPED, not PASS. Re-take the lock.

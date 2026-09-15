@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.13**. MIT core. Supervisor binaries: GitHub Releases (`linux` / `windows` / `macos`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.14**. MIT core. Supervisor binaries: GitHub Releases (`linux` / `windows` / `macos`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -80,10 +80,10 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 
 `python -m acid_engine` is the same CLI. `PYTHONPATH=.` is not needed after `pip install`.
 
-GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.13`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.14`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.13
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.14
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.
@@ -99,7 +99,8 @@ Without `judge: true` — bind only, the body does not run. With the flag — `l
 - Static local `.py` imports (`dep:`). `importlib.import_module` / `exec` / `eval` are not pinned — `lock` warns
 - Judge contour (`runtime_hashes`)
 - Symlink retarget after lock (bytes of the followed path)
-- Bind-then-disk-write of a lazy local import (sealed before run)
+- Bind-then-disk-write of a lazy local import (sealed against the **locked** hash, one read)
+- Top-level code in the tool file (hashed as `source_hash` before import)
 
 Renaming a local variable changes the AST canon — FAIL. Comments and blank lines are not in the canon.
 The lock is an imprint of a specific toolchain. `python_version` and `canon_kind` are checked; a mismatch is FAIL with "re-take the lock", not "the body was swapped".
@@ -112,7 +113,7 @@ The supervisor checks SHA-256 of the contour (`worker.py`, `cli.py`, `python_run
 - `importlib` / `exec` / `eval` (lock warns)
 - site-packages / stdlib supply chain (separate control: SBOM / SLSA)
 - Environment variables (not part of implementation identity)
-- `Policy.pure` is **declared_pure**: runtime does not instrument I/O. A disk write with `pure=True` and no recorded effects still PASS-es. Empty effects ≠ purity.
+- `judge_script` on an already-imported `ScriptModule` (library). The CLI and supervisor hash the file before import.
 
 Threat model: [SECURITY.md](SECURITY.md). Coverage: [attacks/](attacks/README.md). TCB: [TRUST.md](TRUST.md).
 
@@ -174,7 +175,7 @@ mypy acid_engine
 - Hash = declaration + body canon (`ast.unparse`, else bytecode). `ArtifactRef` is not identity.
 - `plan.lock` before run. Mismatch → FAIL, the body does not run.
 - No execution → not PASS. Not enough facts → SKIPPED. `bool ≠ int`.
-- The worker does not write PASS/FAIL. `judge_script` without plan+iface → SKIPPED (self-lock is not a verdict). `lock --script` only writes JSON.
+- The worker does not write PASS/FAIL. `judge_script` without plan+iface → SKIPPED (self-lock is not a verdict). `lock --script` only writes JSON. `judge_script` on an already-imported object does not re-check `source_hash` — the CLI and supervisor do, before import.
 - The `acid-judge` binary without `worker` does not judge: SKIPPED.
 
 Five tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — in [locks/index.json](locks/index.json) with bones.
