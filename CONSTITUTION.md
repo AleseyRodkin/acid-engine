@@ -43,6 +43,7 @@
 50. 0.2.5: локальные импорты в `dep:`; `python_version`/`canon_kind` сверяются; `pure` = declared_pure; контур + `local_deps.py`.
 51. 0.2.6: динамический импорт — предупреждение на lock, не пин. `dependency_hash` expected/actual — хеши файла.
 52. 0.2.7: supervisor резолвит контур из пакета / `ACID_ENGINE_ROOT`, не из cwd чужого репо. Toolchain action по SHA. `interface_contract_hash` не якорь.
+53. 0.2.8: продукт — execution integrity (wedge), не AcidEngine-ОС. Матрица атак + TCB. Второй harness (Copilot) не открывать в этом коммите.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

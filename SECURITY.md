@@ -41,4 +41,5 @@ and not an MCP gateway.
 
 ## Reproduce
 
-[ATTACK.md](ATTACK.md). Helper-module swap: `tests/integration/test_local_deps.py`.
+[attacks/](attacks/README.md) (matrix). [ATTACK.md](ATTACK.md) (manual copies). [TRUST.md](TRUST.md) (TCB).
+Helper-module swap: `tests/integration/test_local_deps.py`.

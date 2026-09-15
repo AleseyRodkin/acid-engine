@@ -354,6 +354,15 @@ def cmd_locks(args: argparse.Namespace) -> None:
         print(f"receipt: {rec_path}")
         if not result.ok:
             failed += 1
+    checked = len(entries)
+    print("")
+    print("Acid Judge")
+    print(f"Tools checked: {checked}")
+    print(f"Failed: {failed}")
+    if getattr(args, "judge", False):
+        print(f"Execution integrity: {'FAIL' if failed else 'PASS'}")
+    else:
+        print("Bind only. Bodies were not executed.")
     if failed:
         sys.exit(1)
 

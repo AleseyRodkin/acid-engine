@@ -1,0 +1,30 @@
+# Acid Judge Attack Lab
+
+Not a product tour. Each row is a real guard. `?` means we do not claim it.
+Unknown is not safe — that is SKIPPED, not PASS.
+
+| Attack | Detect | Block | Execute | Receipt | Guard |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Body swap | ✓ | ✓ | ✗ | ✓ | `test_compute_amount_tamper` |
+| Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
+| Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` |
+| Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |
+| `importlib.import_module` | ⚠ warn | ✗ | ✓ | ✓ | `test_dynamic_import_lock_warns` |
+| `exec` / `eval` in AST | ⚠ warn | ✗ | ✓ | ✓ | same detector |
+| `judge` without `--plan` | ✓ | SKIPPED | ✗ | ✓ | `test_cli` |
+| Wrong CPython (distant) | ✓ | ✓ | ✗ | ✓ | `test_lock_toolchain` |
+| `max_latency_ms` overrun | ✓ | ✓ | ran | ✓ | rust `latency_over_limit_fail` |
+| `Policy.pure` disk write | ✗ | ✗ | ✓ | ✓ | declared_pure; not instrumented |
+| Shell outside `judge` | ✗ | ✗ | ✓ | — | out of perimeter |
+| Symlink / path alias | ? | ? | ? | ? | not claimed |
+| Env mutation | ? | ? | ? | ? | not claimed |
+| Malicious *approved* body | — | — | ✓ | ✓ | identity, not correctness |
+
+How to run the claimed rows:
+
+```bash
+pip install -e ".[dev]"
+python -m pytest tests/integration/test_compute_amount_tamper.py tests/integration/test_local_deps.py tests/integration/test_cli.py -q
+```
+
+Manual copies: [ATTACK.md](../ATTACK.md). Trust model: [TRUST.md](../TRUST.md).

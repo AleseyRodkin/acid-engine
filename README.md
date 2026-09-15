@@ -1,21 +1,34 @@
 # Acid Judge
 
+**Execution integrity for AI agents.**
+
+Your AI agent changed the tool. Did it still run the code you approved?
+
+We don't tell you that your code is safe. We tell you whether it is the code you approved.
+
 ИИ может написать или изменить tool. Acid Judge не обязан ему верить. Он проверяет, что будет запущен именно тот код, который был одобрен, и отдельно сверяет наблюдение с контрактом. Нет фактов — SKIPPED, не PASS.
 
 An agent can write or change a tool. Acid Judge does not have to believe it. It checks that the approved body is what will run, then checks the observation against the contract. Not enough facts → SKIPPED, not PASS.
 
-Trust continuity: approved → unchanged → executed → observed → verified. Not a checksum feature. The trust layer sits between the agent and the Python tool it is about to run.
+Trust continuity: approved → locked → verified → executed → observed → receipt. Not a checksum feature. The trust layer sits between the agent and the Python tool it is about to run.
+
+```text
+PASS     = enough facts to claim the approved body ran
+FAIL     = mismatch; the body was not the approved one (or the observation failed)
+SKIPPED  = not enough facts. SKIPPED is not PASS.
+```
 
 Замок ловит подмену файла tool между `lock` и `judge`; не ловит shell и не ловит файлы вне `runtime_hashes`.
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.7**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
+Пакет **0.2.8**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
 
-Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
+Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
-Закон рантайма: [METHOD.md](METHOD.md).
+Доказательства: [attacks/](attacks/README.md). Ручной прогон: [ATTACK.md](ATTACK.md). TCB: [TRUST.md](TRUST.md). Закон рантайма: [METHOD.md](METHOD.md).
+
 
 ## Что защищает и что нет
 
@@ -28,7 +41,7 @@ Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. 
 Замок — отпечаток в конкретном toolchain. `python_version` и `canon_kind` сверяются; несовпадение — FAIL с текстом «re-take the lock», не «тело подменили».
 Supervisor сверяет SHA-256 контура (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) до identify. Нет пина — SKIPPED. Несовпадение — FAIL. `locks --index` и CLI `judge --plan` без пина — FAIL. `judge_script` без `toolchain` — SKIPPED. Неполный пин — FAIL. `judge_script_from_lock` читает пины из JSON замка.
 
-Модель угроз и куда писать: [SECURITY.md](SECURITY.md).
+Модель угроз и куда писать: [SECURITY.md](SECURITY.md). Матрица атак: [attacks/](attacks/README.md). TCB: [TRUST.md](TRUST.md).
 
 ## Три команды
 
@@ -58,7 +71,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.7
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.8
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.

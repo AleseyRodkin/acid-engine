@@ -21,7 +21,7 @@
     "worker_hash": "d3a62d5db49c803dbbd65790acd7d67195734505bbb1ee9b635af5b979caab16",
     "runtime_hashes": {
       "acid_engine/worker.py": "d3a62d5db49c803dbbd65790acd7d67195734505bbb1ee9b635af5b979caab16",
-      "acid_engine/cli.py": "c69d415496906ac861b2cdfb0c5a64cc60d47b3d72780d20b7ff0359b5367a3d",
+      "acid_engine/cli.py": "296dac795583b1ab77a1936ffb0c74f44a544d20c47a0feec4a69dd0e2fa580d",
       "acid_engine/level3/script/python_runtime.py": "8445144c7fabcc971f8bba15070452216264d73a369b0bc72983346ce2b0b84c",
       "acid_engine/level3/script/runner.py": "c8918da7eac90505c7f320191c83285c59c0320b057a32df4ad4d879b3ed80e0",
       "acid_engine/level3/script/resolve.py": "47008a35a0ebbd5f84bb4507e3a5dc6aae8af54b869af362e8064b6918f2a22b",

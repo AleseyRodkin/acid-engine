@@ -31,6 +31,11 @@ def test_readme_thirty_seconds():
     assert "does not have to believe it" in readme
     assert "Trust continuity" in readme
     assert "trust layer" in readme
+    assert "Execution integrity" in readme
+    assert "We don't tell you that your code is safe" in readme
+    assert "SKIPPED is not PASS" in readme
+    assert "attacks/" in readme
+    assert "TRUST.md" in readme
     assert "acid-judge lock --script FILE" in readme
     assert "uses: AleseyRodkin/acid-engine-2.0@" in readme
 

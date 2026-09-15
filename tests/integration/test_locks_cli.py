@@ -31,6 +31,8 @@ def test_locks_index_all_bound():
     assert "n_plus_one" in proc.stdout
     assert "clean_text" in proc.stdout
     assert "PASS" not in proc.stdout
+    assert "Tools checked:" in proc.stdout
+    assert "Bind only" in proc.stdout
 
 
 def test_locks_judge_pass_writes_receipt(tmp_path: Path):
@@ -38,6 +40,7 @@ def test_locks_judge_pass_writes_receipt(tmp_path: Path):
     assert proc.returncode == 0, proc.stderr + proc.stdout
     assert "[BOUND]" in proc.stdout
     assert "PASS" in proc.stdout
+    assert "Execution integrity: PASS" in proc.stdout
     rec = tmp_path / "n_plus_one.json"
     assert rec.is_file()
     payload = json.loads(rec.read_text(encoding="utf-8"))

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.8 — 2026-09-16
+
+- Wedge language: execution integrity, not a platform. SKIPPED is a first-class state.
+- Attack matrix: [attacks/](attacks/README.md). TCB: [TRUST.md](TRUST.md).
+- `locks --index` prints Tools checked / Failed / Execution integrity.
+
 ## 0.2.7 — 2026-09-15
 
 - Rust supervisor locates the judge contour via `cwd/acid_engine/`, `ACID_ENGINE_ROOT`, or the installed package — not only the user project cwd.
