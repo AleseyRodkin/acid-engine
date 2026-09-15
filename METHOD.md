@@ -81,6 +81,7 @@ Self-lock не вердикт. В том числе в библиотеке.
 Бинарь не считает хеш тела. Один канон — Python (`implementation_canon`).
 Один вход бинаря: нужен worker.
 До identify supervisor сверяет SHA-256 контура рантайма (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) с `runtime_hashes` и `worker_hash` в запросе/замке.
+Контур ищется в `cwd/acid_engine/`, иначе `ACID_ENGINE_ROOT`, иначе в установленном пакете (`import acid_engine`). Не в `cwd` чужого проекта.
 Нет `worker_hash` или нет полного `runtime_hashes` → SKIPPED. Несовпадение → FAIL. Хеш рантайма не входит в identity тела.
 `locks --index` без `worker_hash` / `runtime_hashes` → FAIL, не fail-open.
 CLI `judge --plan` сверяет те же пины до run. Несовпадение → FAIL, тело не запускать.

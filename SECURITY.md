@@ -11,6 +11,9 @@ and not an MCP gateway.
 ## In perimeter
 
 - Bytes of the locked tool's implementation (AST canon, else bytecode).
+  The live check is `module_hashes`. `interface_contract_hash` is derived
+  from the same JSON for diffs; editing only `iface` in the lock file is
+  not an independent second gate.
 - Local project `.py` files reached by **static** `import` / `from` in the
   tool file (not stdlib, not site-packages, not `acid_engine`). Stored as
   `dep:<path>` in `module_hashes`. `importlib.import_module`, `__import__`,

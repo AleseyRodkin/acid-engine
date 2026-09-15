@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -197,12 +197,16 @@ fn spawn_worker(
         payload.insert("input".into(), input.unwrap_or(Value::Null));
     }
     let body = Value::Object(payload);
-    let mut pythonpath = cwd.to_string();
-    if let Ok(existing) = std::env::var("PYTHONPATH") {
-        if !existing.is_empty() {
-            pythonpath = format!("{pythonpath}:{existing}");
+    let mut path_parts: Vec<PathBuf> = vec![PathBuf::from(cwd)];
+    if let Ok(root) = engine_root(worker) {
+        if root != Path::new(cwd) {
+            path_parts.push(root);
         }
     }
+    if let Some(existing) = std::env::var_os("PYTHONPATH") {
+        path_parts.extend(std::env::split_paths(&existing));
+    }
+    let pythonpath = std::env::join_paths(&path_parts).unwrap_or_else(|_| cwd.into());
     let mut child = Command::new(python)
         .arg("-m")
         .arg("acid_engine.worker")
@@ -242,8 +246,11 @@ fn pin_worker(req: &Request, worker: &WorkerSpec) -> Option<Response> {
         Some(h) if !h.is_empty() => h.to_lowercase(),
         _ => return Some(Response::skipped("worker not pinned")),
     };
-    let cwd = worker.cwd.as_deref().unwrap_or(".");
-    let path = Path::new(cwd).join("acid_engine").join("worker.py");
+    let root = match engine_root(worker) {
+        Ok(p) => p,
+        Err(e) => return Some(Response::fail(e, "worker_hash")),
+    };
+    let path = root.join("acid_engine").join("worker.py");
     match sha256_file(&path) {
         Ok(actual) if actual == expected => None,
         Ok(_) => Some(Response::fail("worker source hash mismatch", "worker_hash")),
@@ -277,12 +284,15 @@ fn pin_runtime(req: &Request, worker: &WorkerSpec) -> Option<Response> {
             return Some(Response::skipped("runtime not pinned"));
         }
     }
-    let cwd = worker.cwd.as_deref().unwrap_or(".");
+    let root = match engine_root(worker) {
+        Ok(p) => p,
+        Err(e) => return Some(Response::fail(e, "runtime_hash")),
+    };
     for (rel, want) in &req.runtime_hashes {
         if !pin_rel_ok(rel) {
             return Some(Response::fail("runtime path rejected", "runtime_hash"));
         }
-        let path = Path::new(cwd).join(rel);
+        let path = root.join(rel);
         let expected = want.to_lowercase();
         match sha256_file(&path) {
             Ok(actual) if actual == expected => {}
@@ -296,6 +306,58 @@ fn pin_runtime(req: &Request, worker: &WorkerSpec) -> Option<Response> {
         }
     }
     None
+}
+
+fn engine_root(worker: &WorkerSpec) -> Result<PathBuf, String> {
+    if let Ok(raw) = std::env::var("ACID_ENGINE_ROOT") {
+        if !raw.trim().is_empty() {
+            return resolve_root_dir(Path::new(&raw))
+                .map_err(|e| format!("ACID_ENGINE_ROOT: {e}"));
+        }
+    }
+    let cwd = worker.cwd.as_deref().unwrap_or(".");
+    if Path::new(cwd).join("acid_engine").join("worker.py").is_file() {
+        return Ok(Path::new(cwd).to_path_buf());
+    }
+    locate_via_python(worker)
+}
+
+fn resolve_root_dir(p: &Path) -> Result<PathBuf, String> {
+    if p.join("acid_engine").join("worker.py").is_file() {
+        return Ok(p.to_path_buf());
+    }
+    if p.join("worker.py").is_file()
+        && p.file_name().and_then(|n| n.to_str()) == Some("acid_engine")
+    {
+        if let Some(parent) = p.parent() {
+            return Ok(parent.to_path_buf());
+        }
+    }
+    Err(format!(
+        "worker source missing: {}",
+        p.join("acid_engine").join("worker.py").display()
+    ))
+}
+
+fn locate_via_python(worker: &WorkerSpec) -> Result<PathBuf, String> {
+    let python = worker.python.as_deref().unwrap_or("python3");
+    let out = Command::new(python)
+        .args([
+            "-c",
+            "import acid_engine, pathlib; print(pathlib.Path(acid_engine.__file__).resolve().parent.parent)",
+        ])
+        .output()
+        .map_err(|e| format!("locate acid_engine: {e}"))?;
+    if !out.status.success() {
+        let err = String::from_utf8_lossy(&out.stderr);
+        return Err(format!(
+            "acid_engine package not found (pip install the package or set ACID_ENGINE_ROOT). {}",
+            err.trim()
+        ));
+    }
+    let text = String::from_utf8_lossy(&out.stdout);
+    let root = PathBuf::from(text.trim());
+    resolve_root_dir(&root)
 }
 
 fn sha256_file(path: &Path) -> Result<String, String> {
@@ -706,5 +768,90 @@ mod tests {
         let _ = std::fs::remove_dir_all(&tmp);
         assert_eq!(r.status, "FAIL");
         assert_eq!(r.property.as_deref(), Some("runtime_hash"));
+    }
+
+    struct RootGuard;
+    impl Drop for RootGuard {
+        fn drop(&mut self) {
+            std::env::remove_var("ACID_ENGINE_ROOT");
+        }
+    }
+
+    #[test]
+    fn pin_uses_acid_engine_root_not_cwd() {
+        let _guard = RootGuard;
+        let pid = std::process::id();
+        let pkg_root = std::env::temp_dir().join(format!("acid-root-pkg-{pid}"));
+        let empty_cwd = std::env::temp_dir().join(format!("acid-root-cwd-{pid}"));
+        let files = [
+            "acid_engine/worker.py",
+            "acid_engine/cli.py",
+            "acid_engine/level3/script/python_runtime.py",
+            "acid_engine/level3/script/runner.py",
+            "acid_engine/level3/script/resolve.py",
+            "acid_engine/level2/implementation_canon.py",
+            "acid_engine/level2/local_deps.py",
+        ];
+        for rel in files {
+            let path = pkg_root.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"print('ok')\n").unwrap();
+        }
+        std::fs::create_dir_all(&empty_cwd).unwrap();
+        let worker_hex = sha256_file(&pkg_root.join("acid_engine/worker.py")).unwrap();
+        let mut runtime = BTreeMap::new();
+        for rel in files {
+            runtime.insert(rel.to_string(), sha256_file(&pkg_root.join(rel)).unwrap());
+        }
+        runtime.insert(
+            "acid_engine/level3/script/python_runtime.py".into(),
+            "0".repeat(64),
+        );
+        std::env::set_var("ACID_ENGINE_ROOT", &pkg_root);
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some(worker_hex),
+            runtime_hashes: runtime,
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(empty_cwd.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&pkg_root);
+        let _ = std::fs::remove_dir_all(&empty_cwd);
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("runtime_hash"));
+    }
+
+    #[test]
+    fn missing_cwd_package_is_not_worker_source_missing_in_cwd() {
+        let _guard = RootGuard;
+        std::env::remove_var("ACID_ENGINE_ROOT");
+        let empty_cwd = std::env::temp_dir().join(format!(
+            "acid-empty-cwd-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&empty_cwd).unwrap();
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some("0".repeat(64)),
+            worker: Some(WorkerSpec {
+                python: Some("python3".into()),
+                script: "tool.py".into(),
+                cwd: Some(empty_cwd.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&empty_cwd);
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("worker_hash"));
+        assert!(
+            !r.message.contains(&empty_cwd.join("acid_engine").to_string_lossy().to_string()),
+            "must not require acid_engine under the user cwd: {}",
+            r.message
+        );
     }
 }

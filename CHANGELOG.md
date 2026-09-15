@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.7 — 2026-09-15
+
+- Rust supervisor locates the judge contour via `cwd/acid_engine/`, `ACID_ENGINE_ROOT`, or the installed package — not only the user project cwd.
+- `dtolnay/rust-toolchain` pinned to commit SHA in CI and release-bins.
+- SECURITY.md: `module_hashes` is the trust anchor; `interface_contract_hash` is derived.
+- COMPATIBILITY.md: 0.2.x lock/CLI stability.
+
 ## 0.2.6 — 2026-09-15
 
 - `lock` warns on `importlib.import_module` / `__import__` / `exec` / `eval`: local deps cannot be fully pinned.

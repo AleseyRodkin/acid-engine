@@ -130,6 +130,11 @@ def test_ci_judge_script_never_calls_library_without_plan():
     assert "research" in yaml
     assert "mypy --strict" in yaml
     assert "cargo test" in yaml
+    assert "dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772" in yaml
+    assert "dtolnay/rust-toolchain@master" not in yaml
+    bins = (ROOT / ".github" / "workflows" / "release-bins.yml").read_text(encoding="utf-8")
+    assert "dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772" in bins
+    assert "dtolnay/rust-toolchain@master" not in bins
     assert "3.11" in yaml
     assert "3.12" in yaml
 

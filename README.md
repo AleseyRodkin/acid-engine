@@ -11,7 +11,7 @@ Trust continuity: approved → unchanged → executed → observed → verified.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.6**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`.
+Пакет **0.2.7**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute. Reproduce: [ATTACK.md](ATTACK.md).
 
@@ -58,7 +58,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.6
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.7
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.
@@ -85,7 +85,10 @@ acid-judge judge --script examples/bones/n_plus_one.json --input '{"n": 3}'
 
 Бинарь `acid-judge` — supervisor: identify → bind → run worker → verdict.
 Хеш тела считает только Python canon. Без worker — SKIPPED, не PASS. Observation без worker — не вердикт.
-Linux: [Releases](https://github.com/AleseyRodkin/acid-engine-2.0/releases). Windows/macOS собирает workflow `release-bins`.
+Контур: `cwd/acid_engine/` (этот репозиторий), иначе `ACID_ENGINE_ROOT`, иначе установленный пакет. Не `cwd` чужого проекта.
+Linux/Windows/macOS: [Releases](https://github.com/AleseyRodkin/acid-engine-2.0/releases).
+
+Совместимость 0.2.x: [COMPATIBILITY.md](COMPATIBILITY.md).
 
 ## Проверки
 
