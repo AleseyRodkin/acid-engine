@@ -1,4 +1,4 @@
-"""Фикстура костей: dict n:3 → n:4 через execute_plan и JSON-почерк."""
+"""Bones fixture: dict n:3 → n:4 through execute_plan and JSON handwriting."""
 import os
 import subprocess
 import sys
@@ -63,7 +63,7 @@ def test_json_and_py_same_hash_and_run():
 
 
 def test_committed_plan_matches_live_body():
-    """Витринный замок = текущее тело. Не переснимать bind, переснимать файл."""
+    """Showcase lock = current body. Do not re-take bind; re-take the file."""
     import json
 
     from acid_engine.level3.script.resolve import materialize_script

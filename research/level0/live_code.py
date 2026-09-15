@@ -1,4 +1,4 @@
-"""Представление живого исполняемого кода (уровень 0)."""
+"""Live executable-code view (level 0)."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -6,7 +6,7 @@ from typing import Any
 
 
 class LiveCodeView:
-    """Обёртка над живой Python-функцией."""
+    """Wrapper around a live Python function."""
     def __init__(self, func: Callable[[Any], Any]):
         self.func = func
 

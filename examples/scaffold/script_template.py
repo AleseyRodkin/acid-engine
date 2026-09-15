@@ -1,6 +1,6 @@
 """
-Шаблон ScriptModule.
-Скопируй этот файл, измени IMPLEMENTATION и метаданные.
+ScriptModule template.
+Copy this file, change IMPLEMENTATION and the metadata.
 """
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Parameters, Policy, Specification
@@ -15,6 +15,6 @@ script = ScriptModule(
     ),
     input_type="int",
     output_type="int",
-    implementation=lambda x: x * 2,  # <-- измени здесь
+    implementation=lambda x: x * 2,  # <-- change here
     name="my_script",
 )

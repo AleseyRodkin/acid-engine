@@ -60,7 +60,7 @@ def test_boolean_strengthen_merge(parent, child):
 @given(st.booleans(), st.booleans())
 def test_boolean_strengthen_compare(parent, child):
     s = BooleanStrengthenStrategy()
-    # конфликт: parent=True, child=False
+    # conflict: parent=True, child=False
     assert s.detect_conflict(parent, child) == (parent is True and child is False)
 
 @given(st.booleans(), st.booleans())
@@ -108,7 +108,7 @@ def test_resolver_pure_no_conflict(parent, child):
         effective = resolver.resolve_field("pure", parent, child)
         assert effective == (parent or child)
 
-# Проверка, что resolve_policy не меняет размер словаря (ключи сохраняются)
+# Check that resolve_policy does not change dict size (keys are kept)
 @given(st.dictionaries(
     st.text(min_size=1).filter(lambda k: k not in ConstraintResolver().strategies),
     st.integers(),

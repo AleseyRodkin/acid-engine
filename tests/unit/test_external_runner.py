@@ -24,8 +24,8 @@ def test_run_external_failure():
         contract_hash="hash",
         mode=ExecutionMode.LIGHT,
     )
-    # external runner всегда возвращает output snapshot,
-    # даже при неудаче, чтобы можно было проверить конформность
+    # external runner always returns an output snapshot,
+    # even on failure, so conformance can still be checked
     assert out.data["exit_code"] == 1
     assert out.data["stdout"] == ""
     assert obs.status == "failed"

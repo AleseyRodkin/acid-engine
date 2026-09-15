@@ -1,4 +1,4 @@
-"""Наблюдаемые эффекты прогона. ContextVar-коллектор, не proof of purity."""
+"""Observed effects of a run. ContextVar collector, not a proof of purity."""
 from __future__ import annotations
 
 from contextvars import ContextVar, Token
@@ -9,7 +9,7 @@ _current: ContextVar[EffectCollector | None] = ContextVar(
 
 
 class EffectCollector:
-    """Собирает effects_observed за один прогон."""
+    """Collect effects_observed for one run."""
 
     __slots__ = ("_effects", "_token")
 
@@ -35,7 +35,7 @@ class EffectCollector:
 
 
 def record_effect(effect: str) -> None:
-    """Записать эффект, если есть активный коллектор. Иначе no-op."""
+    """Record an effect if a collector is active. Else no-op."""
     collector = _current.get()
     if collector is not None:
         collector.record(effect)

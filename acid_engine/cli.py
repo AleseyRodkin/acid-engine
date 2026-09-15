@@ -21,7 +21,7 @@ from acid_engine.level3.script.module import ScriptModule
 
 
 def load_script_from_file(path: str | Path) -> ScriptModule:
-    """Load ScriptModule from .py (`script`) or .json blank. Markdown не парсится."""
+    """Load ScriptModule from .py (`script`) or .json blank. Markdown is not parsed."""
     source = Path(path)
     if not source.exists():
         raise FileNotFoundError(f"Script file not found: {source}")
@@ -49,7 +49,7 @@ def load_script_from_file(path: str | Path) -> ScriptModule:
 
 
 def parse_cli_input(raw: str | None, default: Any = 3) -> Any:
-    """Parse --input: int, JSON (list/dict/...), иначе строка. Без --input → default."""
+    """Parse --input: int, JSON (list/dict/...), else a string. Without --input → default."""
     if raw is None or raw == "":
         return default
     try:
@@ -63,10 +63,10 @@ def parse_cli_input(raw: str | None, default: Any = 3) -> Any:
 
 
 def cmd_init(args: argparse.Namespace) -> None:
-    """Создаёт шаблон ScriptModule (.py). Markdown-спеки не создаём — не парсятся."""
+    """Create a ScriptModule template (.py). Markdown specs are not written — they are not parsed."""
     target = Path(args.path or "script.py")
     if target.suffix == ".md":
-        # старый default был spec.md — не пишем мёртвый markdown
+        # old default was spec.md — do not write dead markdown
         target = Path("script.py")
         print("NOTE: markdown specs are not parsed; writing script.py instead")
 
@@ -94,7 +94,7 @@ script = ScriptModule(
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
-    """Проверка внешней команды по .py-контракту (переменная contract)."""
+    """Check an external command against a .py contract (`contract` variable)."""
     spec_path = Path(args.spec)
     if not spec_path.exists():
         print(f"ERROR: spec file not found: {spec_path}")
@@ -146,7 +146,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
 
 
 def cmd_lock(args: argparse.Namespace) -> None:
-    """Заморозить plan.lock текущего тела в JSON. Не вердикт."""
+    """Freeze the current body as plan.lock JSON. Not a verdict."""
     try:
         script = load_script_from_file(args.script)
     except Exception as e:
@@ -182,7 +182,7 @@ def cmd_lock(args: argparse.Namespace) -> None:
 
 
 def cmd_run(args: argparse.Namespace) -> None:
-    """Walking skeleton или пользовательский скрипт через judge_script."""
+    """Walking skeleton or a user script via judge_script."""
     if args.script:
         try:
             script = load_script_from_file(args.script)
@@ -270,7 +270,7 @@ def _receipt_context(args: argparse.Namespace) -> dict[str, str]:
 
 
 def cmd_judge(args: argparse.Namespace) -> None:
-    """Публичный вход: bind до run + вердикт. То же, что run --script --plan."""
+    """Public entry: bind before run + verdict. Same as run --script --plan."""
     if not args.script:
         print("ERROR: lock not passed — judge requires --script")
         sys.exit(1)
@@ -278,7 +278,7 @@ def cmd_judge(args: argparse.Namespace) -> None:
 
 
 def cmd_locks(args: argparse.Namespace) -> None:
-    """Сверка живого тела с plan.lock по индексу. Не исполняет, не hosted."""
+    """Check live bodies against plan.lock via an index. Does not execute, not hosted."""
     from acid_engine.level3.script.resolve import materialize_script
     from acid_engine.level3.script.runner import bind_script_to_plan, load_script_lock
 
@@ -386,7 +386,7 @@ def cmd_locks(args: argparse.Namespace) -> None:
 
 
 def cmd_diff(args: argparse.Namespace) -> None:
-    """Живое vs plan.lock. Не исполняет, не вердикт."""
+    """Live vs plan.lock. Does not execute, not a verdict."""
     from acid_engine.level3.script.resolve import materialize_script
     from acid_engine.lock_diff import diff_lock, format_diff
 
@@ -406,7 +406,7 @@ def cmd_diff(args: argparse.Namespace) -> None:
 
 
 def cmd_receipt(args: argparse.Namespace) -> None:
-    """Ed25519 на каноне receipt. Локальный ключ, не Sigstore."""
+    """Ed25519 on the receipt canon. Local key, not Sigstore."""
     from acid_engine.sign import keygen, sign_receipt, verify_receipt
 
     modes = [bool(args.keygen), bool(args.sign), bool(args.verify)]
@@ -450,18 +450,18 @@ def cmd_receipt(args: argparse.Namespace) -> None:
 
 
 def _add_script_plan_input(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--script", help="Путь к .py (переменная script) или .json blank")
+    parser.add_argument("--script", help="Path to a .py (`script` variable) or .json blank")
     parser.add_argument(
         "--plan",
-        help="JSON plan.lock (acid_engine lock --script). Без него SKIPPED",
+        help="JSON plan.lock (acid_engine lock --script). Without it SKIPPED",
     )
     parser.add_argument(
         "--input",
-        help="Вход: int, JSON (напр. '[1,2,3]') или строка. По умолчанию 3",
+        help="Input: int, JSON (e.g. '[1,2,3]'), or a string. Default 3",
     )
     parser.add_argument(
         "--receipt",
-        help="Куда писать receipt.json (факт + вердикт, без proven_pure)",
+        help="Where to write receipt.json (fact + verdict, no proven_pure)",
     )
     parser.add_argument(
         "--agent",
@@ -478,12 +478,12 @@ def _hidden_cli(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="acid-engine")
     sub = parser.add_subparsers(dest="command", required=True)
     p_init = sub.add_parser("init")
-    p_init.add_argument("--path", default="script.py", help="Путь к .py файлу скрипта")
-    p_init.add_argument("--script", help="Альтернативный путь к шаблону скрипта")
+    p_init.add_argument("--path", default="script.py", help="Path to the script .py file")
+    p_init.add_argument("--script", help="Alternate path for the script template")
     p_init.set_defaults(func=cmd_init)
     p_val = sub.add_parser("validate")
-    p_val.add_argument("spec", help="Путь к .py файлу с переменной contract")
-    p_val.add_argument("command", nargs="*", help="Команда для проверки")
+    p_val.add_argument("spec", help="Path to a .py file that defines contract")
+    p_val.add_argument("command", nargs="*", help="Command to check")
     p_val.set_defaults(func=cmd_validate)
     p_run = sub.add_parser("run")
     _add_script_plan_input(p_run)
@@ -504,34 +504,34 @@ def main() -> None:
 
     p_judge = subparsers.add_parser(
         "judge",
-        help="Bind plan.lock до исполнения + вердикт",
+        help="Bind plan.lock before execution + verdict",
     )
     _add_script_plan_input(p_judge)
     p_judge.set_defaults(func=cmd_judge)
 
-    p_lock = subparsers.add_parser("lock", help="Замок на тело (JSON plan.lock)")
-    p_lock.add_argument("--script", required=True, help="Путь к .py или .json blank")
-    p_lock.add_argument("--out", required=True, help="Куда писать JSON замка")
+    p_lock = subparsers.add_parser("lock", help="Lock the body (JSON plan.lock)")
+    p_lock.add_argument("--script", required=True, help="Path to a .py or .json blank")
+    p_lock.add_argument("--out", required=True, help="Where to write lock JSON")
     p_lock.set_defaults(func=cmd_lock)
 
     p_locks = subparsers.add_parser(
         "locks",
-        help="Сверить живые тела с plan.lock по индексу. Без --judge не исполняет.",
+        help="Check live bodies against plan.lock via an index. Without --judge does not execute.",
     )
     p_locks.add_argument("--index", required=True, help="locks/index.json")
     p_locks.add_argument(
         "--judge",
         action="store_true",
-        help="После bind исполнить тело и написать receipt. По умолчанию только bind.",
+        help="After bind, execute the body and write a receipt. Default is bind only.",
     )
-    p_locks.add_argument("--receipts", default="receipts", help="Каталог receipt при --judge")
+    p_locks.add_argument("--receipts", default="receipts", help="Receipt directory when --judge")
     p_locks.set_defaults(func=cmd_locks)
 
     p_diff = subparsers.add_parser(
         "diff",
-        help="Живое vs plan.lock (не исполняет, не вердикт)",
+        help="Live vs plan.lock (does not execute, not a verdict)",
     )
-    p_diff.add_argument("--script", required=True, help="Путь к .py или .json blank")
+    p_diff.add_argument("--script", required=True, help="Path to a .py or .json blank")
     p_diff.add_argument("--plan", required=True, help="JSON plan.lock")
     p_diff.set_defaults(func=cmd_diff)
 
@@ -539,14 +539,14 @@ def main() -> None:
         "receipt",
         help="Ed25519 sign/verify canonical receipt (local openssl, not Sigstore)",
     )
-    p_receipt.add_argument("--keygen", action="store_true", help="Создать пару Ed25519")
-    p_receipt.add_argument("--sign", help="Путь к receipt.json")
-    p_receipt.add_argument("--verify", help="Путь к receipt.json")
-    p_receipt.add_argument("--key", help="Секретный PEM")
-    p_receipt.add_argument("--pubkey", help="Публичный PEM")
-    p_receipt.add_argument("--sig", help="JSON подписи")
-    p_receipt.add_argument("--out", help="Куда писать подпись или ключи")
-    p_receipt.add_argument("--out-dir", help="Каталог для --keygen")
+    p_receipt.add_argument("--keygen", action="store_true", help="Create an Ed25519 key pair")
+    p_receipt.add_argument("--sign", help="Path to receipt.json")
+    p_receipt.add_argument("--verify", help="Path to receipt.json")
+    p_receipt.add_argument("--key", help="Secret PEM")
+    p_receipt.add_argument("--pubkey", help="Public PEM")
+    p_receipt.add_argument("--sig", help="Signature JSON")
+    p_receipt.add_argument("--out", help="Where to write the signature or keys")
+    p_receipt.add_argument("--out-dir", help="Directory for --keygen")
     p_receipt.set_defaults(func=cmd_receipt)
 
     args = parser.parse_args()

@@ -1,4 +1,4 @@
-"""Загрузка шага из JSON-почерка. Markdown и YAML не парсятся."""
+"""Load a step from JSON handwriting. Markdown and YAML are not parsed."""
 from __future__ import annotations
 
 import json

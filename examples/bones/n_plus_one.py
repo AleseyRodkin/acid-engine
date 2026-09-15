@@ -1,4 +1,4 @@
-"""Кость: dict {n: 3} → {n: 4}. Один шаг через execute_plan."""
+"""Bone: dict {n: 3} → {n: 4}. One step through execute_plan."""
 from __future__ import annotations
 
 import sys

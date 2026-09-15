@@ -1,7 +1,7 @@
 """
-Вертикальный use-case: нормализация списка чисел.
-Конвейер из двух скриптов: filter (>=0) → scale (/100).
-Демонстрирует CompositeModule и полный цикл Required → Provided → PASS.
+Vertical use-case: normalize a list of numbers.
+Pipeline of two scripts: filter (>=0) → scale (/100).
+Shows CompositeModule and the full Required → Provided → PASS cycle.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from acid_engine.worker import live_toolchain
 
 
 def build_pipeline():
-    # Скрипт 1: фильтр (убираем отрицательные)
+    # Script 1: filter (drop negatives)
     filter_script = ScriptModule(
         contract_id=ContractId("usecase", "filter"),
         version=Version(1, 0, 0),
@@ -36,7 +36,7 @@ def build_pipeline():
     )
     leaf_filter = LeafModule(module_id="filter_node", script=filter_script)
 
-    # Скрипт 2: масштабирование
+    # Script 2: scale
     scale_script = ScriptModule(
         contract_id=ContractId("usecase", "scale"),
         version=Version(1, 0, 0),
@@ -48,7 +48,7 @@ def build_pipeline():
     )
     leaf_scale = LeafModule(module_id="scale_node", script=scale_script)
 
-    # Граф: filter → scale
+    # Graph: filter → scale
     g = DependencyGraph()
     g.add_node("filter_node", payload=leaf_filter)
     g.add_node("scale_node", payload=leaf_scale)
@@ -69,7 +69,7 @@ def build_pipeline():
 def main():
     pipe = build_pipeline()
     resolver = ConstraintResolver()
-    # Для MVP политики всех модулей одинаковы, берём политику первого
+    # For the MVP every module shares a policy; take the first
     effective_policy = resolver.resolve_policy({}, pipe.modules["filter_node"].script.specification.policy.to_canonical_dict())
 
     input_data = [150, -10, 0, 250, 50]

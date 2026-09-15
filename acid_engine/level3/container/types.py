@@ -1,4 +1,4 @@
-"""Типы данных контейнера: scalar, list, record (с вложенностью и default)."""
+"""Container data types: scalar, list, record (with nesting and default)."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -10,20 +10,20 @@ class RecordField:
     name: str
     type_tag: str  # "int", "float", "str", "bool", "list", "record"
     optional: bool = False
-    default: Any = None  # значение по умолчанию, если поле отсутствует
-    schema: RecordSchema | None = None  # используется, если type_tag == "record"
+    default: Any = None  # default when the field is absent
+    schema: RecordSchema | None = None  # used when type_tag == "record"
 
 
 @dataclass(frozen=True, slots=True)
 class RecordSchema:
-    """Описание структуры record с возможной вложенностью."""
+    """Record structure, possibly nested."""
     fields: tuple[RecordField, ...] = field(default_factory=tuple)
 
     def validate(self, data: Any, apply_defaults: bool = True) -> tuple[bool, dict[str, Any] | None]:
         """
-        Валидирует данные и, если apply_defaults=True, возвращает 
-        заполненный словарь с учётом default-значений.
-        Возвращает (valid, filled_data).
+        Validate data and, if apply_defaults=True, return 
+        a filled dict applying default values.
+        Returns (valid, filled_data).
         """
         if not isinstance(data, dict):
             return False, None
@@ -38,11 +38,11 @@ class RecordSchema:
                 continue
 
             value = filled[f.name]
-            # Проверка типа
+            # Type check
             if not self._check_type(value, f):
                 return False, None
 
-            # Рекурсивная проверка вложенной record
+            # Recursive check of a nested record
             if f.type_tag == "record" and f.schema is not None:
                 ok, _ = f.schema.validate(value, apply_defaults)
                 if not ok:

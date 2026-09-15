@@ -1,4 +1,4 @@
-"""ArtifactRef — ссылка на тело рядом с callable. В фазе 2a не входит в хеш."""
+"""ArtifactRef — a locator next to the callable. Phase 2a: not in the hash."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -42,7 +42,7 @@ def artifact_ref_from_callable(
     file: str = "",
     entry: str = "",
 ) -> ArtifactRef:
-    """Собрать ссылку из живой функции. canon = kind из canonical_implementation."""
+    """Build a locator from a live function. canon = kind from canonical_implementation."""
     impl = canonical_implementation(fn)
     kind = impl.get("kind", "opaque")
     if kind not in CANON_KINDS:

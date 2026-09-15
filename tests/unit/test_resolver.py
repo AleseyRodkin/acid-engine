@@ -41,7 +41,7 @@ def test_pure_no_conflict_false_false():
 
 def test_fallback_no_strategy():
     r = ConstraintResolver()
-    # нет стратегии: child wins
+    # no strategy: child wins
     assert r.resolve_field("some_field", "parent", "child") == "child"
     assert r.resolve_field("some_field", None, "child") == "child"
     assert r.resolve_field("some_field", "parent", None) == "parent"
@@ -64,7 +64,7 @@ def test_history_merge_full_compact():
 
 def test_network_merge():
     r = ConstraintResolver()
-    # forbidden строже allowed
+    # forbidden is stricter than allowed
     assert r.resolve_field("network", "forbidden", "allowed") == "forbidden"
 
 def test_security_merge():

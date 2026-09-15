@@ -1,4 +1,4 @@
-"""Базовый класс контракта — единая грамматика для всех сущностей."""
+"""Base contract class — one grammar for every entity."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,7 +11,7 @@ from acid_engine.level2.identity import ContractId
 @dataclass(frozen=True, slots=True)
 class Contract:
     """
-    Универсальный интерфейс контракта. Наследники реализуют:
+    Universal contract interface. Subclasses implement:
     - get_entity() -> ContractId
     - get_characteristics() -> Tuple[Attribute, ...]
     - get_actions() -> Tuple[str, ...]

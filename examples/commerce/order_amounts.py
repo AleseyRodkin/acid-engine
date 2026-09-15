@@ -1,9 +1,9 @@
 """
-Слой A — пайплайн: нормализация сумм строк заказа.
+Layer A — pipeline: normalize order-line amounts.
 
-Вход: список сумм в минорных единицах (копейки/центы).
-Конвейер: filter (>=0, число; bool не число) → scale (/100 → major units).
-Каждый лист идёт через execute_plan (plan.lock связывает тело).
+Input: a list of amounts in minor units (cents).
+Pipeline: filter (>=0, number; bool is not a number) → scale (/100 → major units).
+Each leaf goes through execute_plan (plan.lock binds the body).
 """
 from __future__ import annotations
 

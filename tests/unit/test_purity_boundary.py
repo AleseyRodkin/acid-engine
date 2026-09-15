@@ -1,4 +1,4 @@
-"""Тест эпистемической границы: Observed не равно Proven для pure."""
+"""Epistemic boundary: Observed is not Proven for pure."""
 from acid_engine.level2.conformance import check_conformance
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Policy, Specification
@@ -10,10 +10,10 @@ from acid_engine.level3.script.python_runtime import run_script
 
 def test_purity_is_not_proven_by_single_observation():
     """
-    Проверяет, что:
-    - Observation не содержит поля proven_pure
-    - check_conformance не делает вывода о доказанности pure
-    при единичном прогоне без side effects.
+    Checks that:
+    - Observation has no proven_pure field
+    - check_conformance does not infer that pure is proven
+    on a single run without side effects.
     """
     def clean_func(x):
         return x + 1
@@ -34,36 +34,36 @@ def test_purity_is_not_proven_by_single_observation():
     )
     out_snap, obs, delta, state = run_script(script, snap)
 
-    # Observation не содержит поля proven_pure
+    # Observation has no proven_pure field
     assert not hasattr(obs, 'proven_pure'), \
         "Observation must not claim purity as proven"
 
-    # effects_observed пусты, но это не доказательство
+    # effects_observed is empty, but that is not a proof
     assert obs.effects_observed == ()
 
-    # check_conformance не добавляет proven_pure в результат
+    # check_conformance does not add proven_pure to the result
     result = check_conformance(
         required_output_type="int",
         provided_data=out_snap.data,
         obs=obs,
         policy=script.specification.policy,
     )
-    # Проверяем, что сообщение не содержит слова "proven"
+    # The message must not contain the word "proven"
     assert "proven" not in result.message.lower(), \
         f"Result message should not claim purity as proven, got: {result.message}"
 
-    # Но сам прогон прошёл успешно (PASS)
+    # The run itself succeeded (PASS)
     assert result.ok, f"Expected PASS, got {result.status}"
 
 def test_purity_boundary_with_hidden_side_effect():
     """
-    Функция с условным побочным эффектом, который не срабатывает
-    при обычном входе. Система не должна считать pure доказанным.
+    A function with a conditional side effect that does not fire
+    on a normal input. The system must not treat pure as proven.
     """
-    # Функция с "спящим" side effect
+    # Function with a dormant side effect
     def func_with_hidden_branch(x):
-        if x > 1_000_000:          # не сработает при малых x
-            import requests  # потенциальный сетевой вызов
+        if x > 1_000_000:          # will not fire for small x
+            import requests  # potential network call
             requests.get("http://example.com")
         return x + 1
 
@@ -83,14 +83,14 @@ def test_purity_boundary_with_hidden_side_effect():
     )
     out_snap, obs, delta, state = run_script(script, snap)
 
-    # Структурная гарантия: у Observation нет поля proven_pure
+    # Structural guarantee: Observation has no proven_pure field
     assert not hasattr(obs, 'proven_pure'), \
         "Observation must not claim purity as proven"
 
-    # В данном прогоне эффектов не наблюдалось
+    # No effects observed in this run
     assert obs.effects_observed == ()
 
-    # Проверка конформности не должна содержать "proven" в сообщении
+    # Conformance check must not contain "proven" in the message
     result = check_conformance(
         required_output_type="int",
         provided_data=out_snap.data,
@@ -100,5 +100,5 @@ def test_purity_boundary_with_hidden_side_effect():
     assert "proven" not in result.message.lower(), \
         f"Result message should not claim purity as proven, got: {result.message}"
     
-    # Прогон успешен (чисто синтаксически)
+    # The run succeeded (syntactically)
     assert result.ok

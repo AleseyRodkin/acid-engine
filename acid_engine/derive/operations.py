@@ -14,8 +14,8 @@ def derive_map(
     new_name: str = "mapped",
 ) -> ScriptModule:
     """
-    Создаёт новый ScriptModule, применяющий func к каждому элементу списка.
-    Контракт: list → list, тип элементов определяется автоматически.
+    Build a new ScriptModule that applies func to each list element.
+    Contract: list → list; element type is inferred.
     """
     return ScriptModule(
         contract_id=ContractId(source.contract_id.namespace, f"{source.contract_id.name}_{new_name}"),
@@ -34,7 +34,7 @@ def derive_filter(
     new_name: str = "filtered",
 ) -> ScriptModule:
     """
-    Создаёт ScriptModule с фильтрацией списка.
+    Build a ScriptModule that filters a list.
     """
     return ScriptModule(
         contract_id=ContractId(source.contract_id.namespace, f"{source.contract_id.name}_{new_name}"),

@@ -1,4 +1,4 @@
-"""Исполнение по замороженному плану. plan.lock связывает тело реализации."""
+"""Execute against a frozen plan. plan.lock binds the implementation body."""
 from __future__ import annotations
 
 import sys
@@ -32,9 +32,9 @@ def _locked_hash_for(plan: PlanLock, script: ScriptModule) -> tuple[str | None, 
 
 def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> ConformanceResult | None:
     """
-    None = bound, можно исполнять.
-    SKIPPED = в lock нет факта, чем сверять.
-    FAIL = тело не то, что заморожено. Реализацию не запускать.
+    None = bound, may execute.
+    SKIPPED = the lock has no fact to check against.
+    FAIL = the body is not what was frozen. Do not run the implementation.
     """
     if not plan.module_hashes:
         return ConformanceResult.skipped(
@@ -94,7 +94,7 @@ def bind_script_to_plan(plan: PlanLock, script: ScriptModule) -> ConformanceResu
 
 
 def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
-    """Заморозить plan.lock на текущее тело скрипта. Публичный PASS только после bind."""
+    """Freeze plan.lock on the current script body. Public PASS only after bind."""
     from acid_engine.level3.script.modes import ExecutionMode
     from acid_engine.level3.script.resolve import materialize_script
 
@@ -124,7 +124,7 @@ def lock_for_script(script: ScriptModule) -> tuple[InterfaceContract, PlanLock]:
 
 
 def lock_toolchain(script: ScriptModule) -> dict[str, Any]:
-    """python_version + canon_kind + runtime pins рядом с замком. Не входят в identity."""
+    """python_version + canon_kind + runtime pins next to the lock. Not in identity."""
     kind = live_canon_kind(script.implementation)
     from acid_engine.worker import runtime_hashes, source_hash
 
@@ -138,7 +138,7 @@ def lock_toolchain(script: ScriptModule) -> dict[str, Any]:
 
 
 def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
-    """JSON-safe замок после materialize. Не тавтология CLI: файл хранится отдельно."""
+    """JSON-safe lock after materialize. Not a CLI tautology: the file is stored separately."""
     from acid_engine.level3.script.resolve import materialize_script
 
     script = materialize_script(script)
@@ -165,7 +165,7 @@ def dump_script_lock(script: ScriptModule) -> dict[str, Any]:
 
 
 def load_script_lock(data: Mapping[str, Any]) -> tuple[InterfaceContract, PlanLock]:
-    """Восстановить iface+plan из JSON замка. Без materialize текущего тела."""
+    """Restore iface+plan from lock JSON. Without materializing the current body."""
     from acid_engine.level2.identity import ContractId, Version
     from acid_engine.level3.script.modes import ExecutionMode
 
@@ -210,7 +210,7 @@ def execute_plan(
     *,
     toolchain: Mapping[str, Any] | None = None,
 ) -> PipelineResult:
-    """Исполняет скрипт только если он совпадает с plan.lock и контур запинен."""
+    """Run the script only if it matches plan.lock and the contour is pinned."""
     from acid_engine.level3.script.resolve import materialize_script
     from acid_engine.worker import verify_runtime_pin
 
@@ -302,10 +302,10 @@ def replay_run(
     expected_output: Any | None = None,
 ) -> ConformanceResult:
     """
-    Replay по plan.lock.
-    Без expected_output — SKIPPED («не упало» ≠ replay).
-    Хеш не совпал — FAIL, тело не запускается.
-    Выход ≠ expected — FAIL.
+    Replay against plan.lock.
+    Without expected_output — SKIPPED ("did not crash" ≠ replay).
+    Hash mismatch — FAIL, the body is not run.
+    Output ≠ expected — FAIL.
     """
     from acid_engine.level3.script.resolve import materialize_script
 

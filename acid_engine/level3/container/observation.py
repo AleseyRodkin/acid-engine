@@ -40,7 +40,7 @@ class ExecutionObservation:
             input_hash=input_hash,
             output_hash=output_hash,
         )
-        # Лог только opt-in: через переданный logger. Ядро не печатает в stdout.
+        # Log is opt-in via a passed logger. The core does not print to stdout.
         if logger is not None:
             logger.log(obs)
         return obs

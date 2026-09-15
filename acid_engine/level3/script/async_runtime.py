@@ -1,4 +1,4 @@
-"""Асинхронный раннер для AsyncScriptModule."""
+"""Async runner for AsyncScriptModule."""
 from __future__ import annotations
 
 import time
@@ -22,8 +22,8 @@ async def run_async_script(
     logger: Any = None,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
-    Выполняет асинхронный ScriptModule.
-    Возвращает output snapshot, observation, delta, state.
+    Run an async ScriptModule.
+    Returns output snapshot, observation, delta, state.
     """
     state = ExecutionState()
     state.mark_running()

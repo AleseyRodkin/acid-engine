@@ -1,4 +1,4 @@
-"""Бланк костей: JSON-safe identity без callable и без content_hash внутри identity."""
+"""Bones blank: JSON-safe identity without a callable and without content_hash inside identity."""
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -34,13 +34,13 @@ _ENVELOPE_KEYS = frozenset({"schema", "kind", "identity"})
 
 
 def script_identity_blank(script: Any) -> dict[str, Any]:
-    """Identity скрипта = `_identity_dict` (без content_hash). Хеш совпадает."""
+    """Script identity = `_identity_dict` (no content_hash). The hash matches."""
     ident: dict[str, Any] = script._identity_dict()
     return ident
 
 
 def script_identity_envelope(script: Any) -> dict[str, Any]:
-    """Обёртка. schema/kind не входят в content_hash identity."""
+    """Wrapper. schema/kind are not in the identity content_hash."""
     return {
         "schema": SCHEMA_SCRIPT,
         "kind": "script",
@@ -49,7 +49,7 @@ def script_identity_envelope(script: Any) -> dict[str, Any]:
 
 
 def parse_script_identity_blank(obj: Mapping[str, Any]) -> dict[str, Any]:
-    """Разобрать identity или конверт {schema,kind,identity}. Неизвестный ключ — ошибка."""
+    """Parse identity or an envelope {schema,kind,identity}. Unknown key is an error."""
     if not isinstance(obj, Mapping):
         raise TypeError(f"script blank must be a mapping, got {type(obj)!r}")
     data = dict(obj)
@@ -71,7 +71,7 @@ def parse_script_identity_blank(obj: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def container_blank(snapshot: Any) -> dict[str, Any]:
-    """JSON-safe снимок включая data. Без data шаг из бланка не собрать."""
+    """JSON-safe snapshot including data. Without data a step cannot be built from a blank."""
     return {
         "port_ref": str(snapshot.port_ref),
         "contract_id": str(snapshot.contract_id),
@@ -84,7 +84,7 @@ def container_blank(snapshot: Any) -> dict[str, Any]:
 
 
 def parse_container_blank(obj: Mapping[str, Any]) -> Any:
-    """Собрать ContainerSnapshot из бланка. content_hash должен совпасть с data."""
+    """Build ContainerSnapshot from a blank. content_hash must match data."""
     from acid_engine.level2.identity import ContractId
     from acid_engine.level3.container.port import PortRef
     from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -111,7 +111,7 @@ def parse_container_blank(obj: Mapping[str, Any]) -> Any:
 
 
 def plan_blank(plan: Any) -> dict[str, Any]:
-    """Тело замка без created_at (он не входит в хеш PlanLock)."""
+    """Lock body without created_at (it is not in the PlanLock hash)."""
     return {
         "plan_id": plan.plan_id,
         "interface_contract_hash": plan.interface_contract_hash,
@@ -124,7 +124,7 @@ def plan_blank(plan: Any) -> dict[str, Any]:
 
 
 def graph_blank(graph: Any) -> dict[str, Any]:
-    """Узлы и рёбра без payload (callable не сериализуется)."""
+    """Nodes and edges without payload (a callable is not serialized)."""
     return {
         "nodes": sorted(graph.nodes.keys()),
         "edges": [
@@ -134,7 +134,7 @@ def graph_blank(graph: Any) -> dict[str, Any]:
 
 
 def observation_blank(obs: Any) -> dict[str, Any]:
-    """Факт прогона. run_id не входит — это идентификатор записи, не identity скрипта."""
+    """Run fact. run_id is not included — it identifies the record, not the script."""
     return {
         "status": obs.status,
         "latency_ms": obs.latency_ms,

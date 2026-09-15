@@ -1,4 +1,4 @@
-"""Pipeline — замкнутый контур: контракт → execute_plan → conformance."""
+"""Pipeline — closed loop: contract → execute_plan → conformance."""
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -17,7 +17,7 @@ from acid_engine.level3.script.module import ScriptModule
 
 @dataclass(frozen=True, slots=True)
 class PipelineResult:
-    """Факт прогона: данные, observation (если было исполнение), conformance."""
+    """Run fact: data, observation (if there was execution), conformance."""
 
     conformance: ConformanceResult
     data: Any = None
@@ -41,7 +41,7 @@ class PipelineResult:
 
 
 class Pipeline:
-    """Замкнутый контур. ScriptModule исполняется только через execute_plan / plan.lock."""
+    """Closed loop. ScriptModule runs only through execute_plan / plan.lock."""
 
     def __init__(
         self,

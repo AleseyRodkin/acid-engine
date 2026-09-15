@@ -1,4 +1,4 @@
-"""Судья — один вход к execute_plan. Тело не пишет закон."""
+"""Judge — one entry to execute_plan. The body does not write the law."""
 from __future__ import annotations
 
 import json
@@ -25,7 +25,7 @@ def judge_script(
     iface: InterfaceContract | None = None,
     toolchain: Mapping[str, Any] | None = None,
 ) -> PipelineResult:
-    """Вердикт только по паре plan+iface и пину контура. Self-lock не вердикт."""
+    """Verdict only from a plan+iface pair and a contour pin. Self-lock is not a verdict."""
     from acid_engine.level2.implementation_canon import live_canon_kind
     from acid_engine.level3.script.resolve import materialize_script
     from acid_engine.worker import verify_runtime_pin
@@ -58,7 +58,7 @@ def judge_script_from_lock(
     input_data: Any,
     lock_path: str | Path,
 ) -> PipelineResult:
-    """Читает plan+iface+toolchain из JSON замка. Безопасный путь — самый простой."""
+    """Reads plan+iface+toolchain from lock JSON. The safe path is the simplest one."""
     from acid_engine.level3.script.runner import load_script_lock
 
     raw = json.loads(Path(lock_path).read_text(encoding="utf-8"))

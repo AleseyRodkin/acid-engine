@@ -1,4 +1,4 @@
-"""Абстрактный интерфейс загрузчика контрактов."""
+"""Abstract contract loader interface."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -8,21 +8,21 @@ from acid_engine.level3.interface.contract import InterfaceContract
 
 
 class ContractLoader(ABC):
-    """Базовый класс для загрузки InterfaceContract из любого источника."""
+    """Base class for loading InterfaceContract from any source."""
 
     @abstractmethod
     def can_load(self, source: str | Path) -> bool:
-        """Проверяет, может ли этот загрузчик обработать источник."""
+        """Whether this loader can handle the source."""
         ...
 
     @abstractmethod
     def load(self, source: str | Path) -> InterfaceContract:
-        """Загружает InterfaceContract из источника."""
+        """Load InterfaceContract from the source."""
         ...
 
 
 class DictLoader(ContractLoader):
-    """Загрузчик из готового словаря (для тестов и inline-определений)."""
+    """Loader from a ready dict (tests and inline definitions)."""
 
     def __init__(self, contracts: dict[str, InterfaceContract]):
         self._contracts = contracts
@@ -38,7 +38,7 @@ class DictLoader(ContractLoader):
 
 
 class PythonLoader(ContractLoader):
-    """Загружает InterfaceContract из Python-модуля (ожидает переменную 'contract')."""
+    """Load InterfaceContract from a Python module (expects a `contract` variable)."""
 
     def can_load(self, source: str | Path) -> bool:
         path = Path(source)
@@ -63,8 +63,8 @@ class PythonLoader(ContractLoader):
 
 def load_contract(source: str | Path, loaders: list[ContractLoader] | None = None) -> InterfaceContract:
     """
-    Универсальная функция загрузки: пробует все переданные загрузчики.
-    Если loaders не указан, использует только PythonLoader.
+    Universal load: try every passed loader.
+    If loaders is omitted, use PythonLoader only.
     """
     if loaders is None:
         loaders = [PythonLoader()]

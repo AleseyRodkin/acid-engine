@@ -56,6 +56,6 @@ def test_required_methods_present():
         ),
         input_type="int",
         output_type="int",
-        implementation=impl,   # передаём сам callable объект
+        implementation=impl,   # pass the callable itself
     )
     assert validate_implementation_requirements(script) == []

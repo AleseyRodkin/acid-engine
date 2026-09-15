@@ -19,7 +19,7 @@ def test_leaf_module_delegation():
     )
     leaf = LeafModule(module_id="leaf1", script=script)
 
-    # Выполнение через leaf
+    # Execute through leaf
     in_port = PortRef(module=script.contract_id.name, direction="input", name="val")
     input_snap = ContainerSnapshot.create(
         port_ref=in_port,

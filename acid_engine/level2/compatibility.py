@@ -44,7 +44,7 @@ def compare_types(old: str, new: str) -> CompatibilityResult:
 
 
 def compare_contracts(old_hash: str, new_hash: str) -> CompatibilityResult:
-    """Сравнение контрактов по хешам (минимально)."""
+    """Compare contracts by hash (minimal)."""
     if old_hash == new_hash:
         return CompatibilityResult(CompatibilityKind.IDENTICAL)
     return CompatibilityResult(

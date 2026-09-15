@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.13 — 2026-09-16
+
+- Remaining Python comments, docstrings, and CLI `--help` translated to English.
+
 ## 0.2.12 — 2026-09-16
 
 - Documentation is English-only (README, METHOD, PLAN, COMMERCIAL, CONSTITUTION, TUTORIAL, glossary, archive).

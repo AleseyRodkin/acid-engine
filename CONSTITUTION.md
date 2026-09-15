@@ -48,6 +48,7 @@ Law: METHOD.md. Bones queue: PLAN.md. Product queue: COMMERCIAL.md.
 55. 0.2.10: pre ≠ post. demo.sh. seal local deps. symlink claimed. env/site-packages out. Copilot still closed.
 56. 0.2.11: interop primitive. Four surfaces. Receipt context optional. No platform adapters.
 57. 0.2.12: documentation is English-only.
+58. 0.2.13: comments, docstrings, CLI help in English.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.

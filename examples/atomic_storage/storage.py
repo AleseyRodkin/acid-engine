@@ -1,4 +1,4 @@
-"""Изолированное хранилище атомов (AtomicStorage)."""
+"""Isolated atom store (AtomicStorage)."""
 from __future__ import annotations
 
 import json
@@ -11,8 +11,8 @@ from acid_engine.level4.registry import ContractRegistry
 
 class AtomicStorage:
     """
-    Постоянное хранилище ScriptModule с версионированием и поиском.
-    Использует DataPlane для хранения данных (по умолчанию in-memory).
+    Persistent ScriptModule store with versioning and lookup.
+    Uses DataPlane for data (in-memory by default).
     """
     def __init__(self, data_plane: DataPlane | None = None):
         self.registry = ContractRegistry()
@@ -20,35 +20,35 @@ class AtomicStorage:
         self._index: dict[str, list[str]] = {}  # contract_id -> list of hashes
 
     def store(self, module: ScriptModule) -> None:
-        """Сохраняет модуль в хранилище и реестре."""
+        """Save the module in the store and the registry."""
         key = str(module.contract_id)
-        # Сохраняем модуль как JSON в DataPlane
+        # Store the module as JSON in DataPlane
         serialized = json.dumps(module.to_canonical_dict(), ensure_ascii=False)
         content_hash = module.content_hash
         self.data_plane.store(f"{key}:{content_hash}", serialized.encode("utf-8"))
-        # Обновляем индекс версий
+        # Update the version index
         if key not in self._index:
             self._index[key] = []
         self._index[key].append(content_hash)
-        # Регистрируем в реестре
+        # Register in the registry
         self.registry.register(module)
 
     def load(self, contract_id: ContractId, version_hash: str | None = None) -> ScriptModule:
-        """Загружает модуль по идентификатору и (опционально) версии."""
+        """Load a module by id and (optionally) version."""
         key = str(contract_id)
         if version_hash is None:
-            # Последняя версия
+            # Latest version
             if key not in self._index or not self._index[key]:
                 raise KeyError(f"No versions for {key}")
             version_hash = self._index[key][-1]
         data = self.data_plane.load(f"{key}:{version_hash}")
-        # Восстанавливаем объект из словаря (упрощённо)
+        # Restore the object from a dict (simplified)
         d = json.loads(data.decode("utf-8"))
-        # Создаём ScriptModule (implementation будет заглушкой)
+        # Build ScriptModule (implementation will be a stub)
         return ScriptModule(
             contract_id=contract_id,
             version=Version(*(d.get("version", "0.0.0").split("."))),
-            specification=None,  # не восстанавливаем
+            specification=None,  # not restored
             input_type=d.get("input_type", "any"),
             output_type=d.get("output_type", "any"),
             implementation=lambda x: x,
@@ -56,11 +56,11 @@ class AtomicStorage:
         )
 
     def list_versions(self, contract_id: ContractId) -> list[str]:
-        """Возвращает список хешей всех версий модуля."""
+        """Return hashes of every module version."""
         return self._index.get(str(contract_id), [])
 
     def search_by_hash(self, content_hash: str) -> ContractId | None:
-        """Ищет модуль по хешу содержимого."""
+        """Find a module by content hash."""
         for cid, hashes in self._index.items():
             if content_hash in hashes:
                 ns, name = cid.split("/", 1)

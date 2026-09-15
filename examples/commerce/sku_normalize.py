@@ -1,8 +1,8 @@
 """
-Слой A — пайплайн: нормализация SKU каталога.
+Layer A — pipeline: normalize catalog SKUs.
 
-Вход: сырые артикулы. Конвейер: clean (strip+upper) → dedupe (порядок).
-Каждый лист идёт через execute_plan (plan.lock связывает тело).
+Input: raw SKUs. Pipeline: clean (strip+upper) → dedupe (order-preserving).
+Each leaf goes through execute_plan (plan.lock binds the body).
 """
 from __future__ import annotations
 

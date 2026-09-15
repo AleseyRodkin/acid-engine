@@ -19,9 +19,9 @@ def test_human_readable_script():
     )
     hr = HumanReadableView()
     text = hr.render(script)
-    assert "Спецификация" in text
-    assert "Вход: int" in text
-    assert "Реализация" in text
+    assert "Specification" in text
+    assert "Input: int" in text
+    assert "Implementation" in text
 
 def test_human_readable_graph():
     g = DependencyGraph()

@@ -1,4 +1,4 @@
-"""External runner: исполнение произвольной команды с расширенными возможностями."""
+"""External runner: run an arbitrary command with extra options."""
 from __future__ import annotations
 
 import subprocess
@@ -22,18 +22,18 @@ def run_external(
     mode: ExecutionMode = ExecutionMode.NORMAL,
     logger: Any = None,
     timeout: float | None = None,
-    stdin_data: str | None = None,       # данные для stdin процесса
-    text_mode: bool = True,                 # text mode (str) или bytes
+    stdin_data: str | None = None,       # data for process stdin
+    text_mode: bool = True,                 # text mode (str) or bytes
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
-    Запускает внешнюю команду, собирает stdout/stderr, exit code и latency.
-    Возвращает output snapshot, observation, delta, state.
+    Run an external command; collect stdout/stderr, exit code, and latency.
+    Returns output snapshot, observation, delta, state.
     """
     state = ExecutionState()
     state.mark_running()
     start = time.perf_counter()
 
-    # Формируем input snapshot
+    # Build the input snapshot
     in_port = PortRef(module=contract_id.name, direction="input", name="stdin")
     input_snapshot = ContainerSnapshot.create(
         port_ref=in_port,

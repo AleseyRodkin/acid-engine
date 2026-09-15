@@ -74,7 +74,7 @@ def check_conformance(
     semantic_rules: dict[str, Any] | None = None,
     invariants: tuple[Any, ...] | None = None,
 ) -> ConformanceResult:
-    # Нет completed — нет права PASS. failed/skipped не маскировать type-check.
+    # No completed — no right to PASS. Do not mask failed/skipped with a type-check.
     if obs.status == "skipped":
         return ConformanceResult.skipped("execution was skipped")
     if obs.status != "completed":
@@ -144,7 +144,7 @@ def check_conformance(
                     ),
                 )
 
-    # Проверка Property-Based инвариантов (если переданы)
+    # Property-based invariants (if passed)
     if invariants:
         for inv in invariants:
             ok, msg = check_semantic("invariant", provided_data, inv)

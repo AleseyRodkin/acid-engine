@@ -1,4 +1,4 @@
-"""Второй реальный пайплайн (слой A): SKU normalize через честный контур."""
+"""Second real pipeline (layer A): SKU normalize through the honest contour."""
 import os
 import subprocess
 import sys

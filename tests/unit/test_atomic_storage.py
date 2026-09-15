@@ -29,7 +29,7 @@ def test_versioning():
     store = AtomicStorage()
     mod_v1 = make_module("m2")
     store.store(mod_v1)
-    # Сохраняем "вторую версию" (с тем же id, но другой хеш)
+    # Save a "second version" (same id, different hash)
     mod_v2 = ScriptModule(
         contract_id=ContractId("test", "m2"),
         version=Version(2, 0, 0),
@@ -42,6 +42,6 @@ def test_versioning():
     store.store(mod_v2)
     versions = store.list_versions(ContractId("test", "m2"))
     assert len(versions) == 2
-    # Загружаем последнюю версию
+    # Load the latest version
     latest = store.load(ContractId("test", "m2"))
     assert latest.name == "m2_v2"

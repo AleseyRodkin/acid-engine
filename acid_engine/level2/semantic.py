@@ -1,4 +1,4 @@
-"""Семантические предикаты для проверки выходных значений."""
+"""Semantic predicates for checking output values."""
 from __future__ import annotations
 
 import re
@@ -6,10 +6,10 @@ from typing import Any
 
 
 class SemanticPredicate:
-    """Базовый класс предиката."""
+    """Base predicate class."""
 
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        """Возвращает (passed, message)."""
+        """Return (passed, message)."""
         raise NotImplementedError
 
 
@@ -22,19 +22,19 @@ class EqualsPredicate(SemanticPredicate):
 
 class ContainsPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # если provided — строка, ищем подстроку
+        # if provided is a string, look for a substring
         if isinstance(provided, str):
             if expected in provided:
                 return True, "contains"
             return False, f"'{expected}' not found in output"
-        # для словаря или списка ищем в JSON-представлении
+        # for a dict or list, search the JSON representation
         if isinstance(provided, (dict, list)):
             import json
             as_str = json.dumps(provided, ensure_ascii=False)
             if expected in as_str:
                 return True, "contains"
             return False, f"'{expected}' not found in output"
-        # остальные типы
+        # other types
         if expected in str(provided):
             return True, "contains"
         return False, f"'{expected}' not found in {provided!r}"
@@ -69,7 +69,7 @@ class CardinalityPredicate(SemanticPredicate):
 
 class JsonSchemaPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # expected — словарь с простой JSON Schema (поля + типы)
+        # expected is a dict with a simple JSON Schema (fields + types)
         if not isinstance(provided, dict):
             return False, "Provided is not a dict"
         if not isinstance(expected, dict):
@@ -95,7 +95,7 @@ class JsonSchemaPredicate(SemanticPredicate):
         return True, "json_schema valid"
 
 class JsonPathPredicate(SemanticPredicate):
-    """Проверка JSON-поля по пути (например, $.stdout или result.name)."""
+    """Check a JSON field by path (e.g. $.stdout or result.name)."""
 
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
         if isinstance(expected, str) and "==" in expected:
@@ -110,7 +110,7 @@ class JsonPathPredicate(SemanticPredicate):
         else:
             return False, "Invalid jsonpath format"
 
-        # нормализуем путь: убираем начальный '$' или '$.'
+        # normalize the path: strip a leading '$' or '$.'
         if path.startswith("$."):
             path = path[2:]
         elif path.startswith("$"):
@@ -130,13 +130,13 @@ class JsonPathPredicate(SemanticPredicate):
         return False, f"Unknown op {op}"
 
     def _extract(self, data: Any, path: str) -> Any:
-        """Извлекает значение по простому пути (без $)."""
+        """Extract a value by a simple path (no $)."""
         parts = path.split(".")
         current = data
         for part in parts:
             if current is None:
                 return None
-            # Обработка индексов [n]
+            # Handle [n] indexes
             if "[" in part and part.endswith("]"):
                 field, idx_str = part.split("[", 1)
                 idx = int(idx_str[:-1])
@@ -155,10 +155,10 @@ class JsonPathPredicate(SemanticPredicate):
         return current
 
 class InvariantPredicate(SemanticPredicate):
-    """Проверяет переданную функцию-инвариант на provided_data."""
+    """Run the given invariant function on provided_data."""
 
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # expected должна быть callable
+        # expected must be callable
         if not callable(expected):
             return False, "Invariant must be callable"
         try:
@@ -186,8 +186,8 @@ def check_semantic(
     expected: Any,
 ) -> tuple[bool, str]:
     """
-    Проверяет provided против expected с помощью именованного предиката.
-    Возвращает (passed, message).
+    Check provided against expected with a named predicate.
+    Returns (passed, message).
     """
     pred = PREDICATES.get(predicate_name)
     if pred is None:
@@ -200,8 +200,8 @@ def check_semantic_rules(
     provided_data: Any,
 ) -> list[tuple[bool, str, str]]:
     """
-    Применяет набор правил: {"predicate_name": expected_value, ...}
-    Возвращает список (passed, predicate_name, message).
+    Apply a set of rules: {"predicate_name": expected_value, ...}
+    Returns a list of (passed, predicate_name, message).
     """
     results = []
     for pred_name, expected in rules.items():

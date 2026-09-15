@@ -1,4 +1,4 @@
-"""Абстракция хранилища данных (уровень 1). Запись — наблюдаемый эффект."""
+"""Data store abstraction (level 1). A write is an observed effect."""
 from __future__ import annotations
 
 import hashlib
@@ -39,7 +39,7 @@ class InMemoryDataPlane(DataPlane):
 
 
 class FileSystemDataPlane(DataPlane):
-    """Файловое хранилище: blob по sha256(key), индекс key→digest."""
+    """File store: blob by sha256(key), index key→digest."""
 
     def __init__(self, root: str | Path) -> None:
         self.root = Path(root)

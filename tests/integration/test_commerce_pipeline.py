@@ -1,4 +1,4 @@
-"""Первый реальный пайплайн (слой A): order amounts через честный контур."""
+"""First real pipeline (layer A): order amounts through the honest contour."""
 import subprocess
 import sys
 from pathlib import Path
@@ -56,7 +56,7 @@ def test_commerce_happy_path_gate():
 
 
 def test_agent_swap_impl_breaks_plan_lock():
-    """Подмена тела scale при той же декларации меняет hash и plan.lock."""
+    """Swapping the scale body with the same declaration changes the hash and plan.lock."""
     good = build_scale_script()
     bad = ScriptModule(
         contract_id=good.contract_id,
@@ -64,7 +64,7 @@ def test_agent_swap_impl_breaks_plan_lock():
         specification=good.specification,
         input_type=good.input_type,
         output_type=good.output_type,
-        implementation=lambda data: [x / 50 for x in data],  # другая реализация
+        implementation=lambda data: [x / 50 for x in data],  # different implementation
         name=good.name,
     )
     assert good.content_hash != bad.content_hash
@@ -76,7 +76,7 @@ def test_agent_swap_impl_breaks_plan_lock():
 
 
 def test_commerce_type_fail():
-    """Неверный тип выхода → FAIL, не PASS."""
+    """Wrong output type → FAIL, not PASS."""
     script = ScriptModule(
         contract_id=ContractId("commerce", "bad"),
         version=Version(0, 1, 0),

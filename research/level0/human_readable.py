@@ -1,11 +1,11 @@
-"""Человекочитаемое представление (уровень 0)."""
+"""Human-readable view (level 0)."""
 from __future__ import annotations
 
 from typing import Any
 
 
 class HumanReadableView:
-    """Рендерит контракты и графы в текстовом виде."""
+    """Render contracts and graphs as text."""
 
     def render(self, entity: Any) -> str:
         if hasattr(entity, 'contract_id') and hasattr(entity, 'specification'):
@@ -17,12 +17,12 @@ class HumanReadableView:
     def _render_script(self, script: Any) -> str:
         lines = [
             f"=== Script: {script.name or script.contract_id.name} ===",
-            "Спецификация:",
-            f"  Вход: {script.input_type}",
-            f"  Выход: {script.output_type}",
-            f"  Политика: {script.specification.policy.to_canonical_dict() if hasattr(script.specification, 'policy') else 'нет'}",
-            "Реализация:",
-            f"  (живая функция {getattr(script.implementation, '__name__', 'lambda')})"
+            "Specification:",
+            f"  Input: {script.input_type}",
+            f"  Output: {script.output_type}",
+            f"  Policy: {script.specification.policy.to_canonical_dict() if hasattr(script.specification, 'policy') else 'none'}",
+            "Implementation:",
+            f"  (live function {getattr(script.implementation, '__name__', 'lambda')})"
         ]
         return "\n".join(lines)
 
@@ -33,5 +33,5 @@ class HumanReadableView:
             lines.append(f"  {edge.source} → {edge.target}")
         cycle = detect_cycle(graph)
         if cycle:
-            lines.append(f"  ВНИМАНИЕ: обнаружен цикл {cycle}")
+            lines.append(f"  WARNING: cycle detected {cycle}")
         return "\n".join(lines)

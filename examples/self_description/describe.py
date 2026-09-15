@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Запуск самоописания AcidEngine.
+Run AcidEngine self-description.
 """
 import json
 import sys

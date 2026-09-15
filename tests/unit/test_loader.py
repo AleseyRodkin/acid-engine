@@ -19,7 +19,7 @@ def test_dict_loader():
     assert loaded.content_hash == iface.content_hash
 
 def test_python_loader():
-    # Создаём временный .py файл с переменной contract
+    # Create a temporary .py file with a contract variable
     code = '''from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level2.identity import ContractId, Version
 contract = InterfaceContract(
@@ -41,6 +41,6 @@ contract = InterfaceContract(
         Path(tmp_path).unlink()
 
 def test_load_contract_fallback():
-    # без загрузчиков — должен упасть на несуществующем файле
+    # without loaders — must fail on a missing file
     with pytest.raises(ValueError):
         load_contract("/nonexistent/file.py", loaders=[])

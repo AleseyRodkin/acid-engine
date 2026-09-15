@@ -1,4 +1,4 @@
-"""Walking skeleton: Script(x+1) через judge_script / plan.lock."""
+"""Walking skeleton: Script(x+1) via judge_script / plan.lock."""
 from __future__ import annotations
 
 import sys

@@ -1,4 +1,4 @@
-"""AsyncScriptModule — асинхронный вариант ScriptModule."""
+"""AsyncScriptModule — async variant of ScriptModule."""
 from __future__ import annotations
 
 from collections.abc import Callable, Coroutine
@@ -15,7 +15,7 @@ from acid_engine.level3.script.artifact import ArtifactRef
 @dataclass(frozen=True, slots=True)
 class AsyncScriptModule:
     """
-    Аналог ScriptModule, но implementation — асинхронная функция (async def).
+    Like ScriptModule, but implementation is an async function (async def).
     """
     contract_id: ContractId
     version: Version

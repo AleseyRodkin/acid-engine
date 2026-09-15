@@ -1,6 +1,6 @@
-"""История запусков: запись и replay по факту записи.
+"""Run history: record and replay from the record.
 
-Отката состояния нет — только lookup по run_id.
+No state rollback — lookup by run_id only.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from acid_engine.level3.container.observation import ExecutionObservation
 
 @dataclass
 class RunRecord:
-    """Запись одного выполнения."""
+    """Record of one execution."""
     run_id: str
     plan_hash: str
     timestamp: float
@@ -26,7 +26,7 @@ class RunRecord:
 
 @dataclass
 class HistoryStore:
-    """In-memory хранилище истории. Не БД и не журнал с откатом."""
+    """In-memory history store. Not a DB and not a journal with rollback."""
     records: list[RunRecord] = field(default_factory=list)
 
     def add(self, record: RunRecord) -> None:
@@ -40,7 +40,7 @@ class HistoryStore:
 
 
 def find_record(history: HistoryStore, run_id: str) -> RunRecord | None:
-    """Lookup by run_id. Не восстанавливает состояние и не отменяет эффекты."""
+    """Lookup by run_id. Does not restore state and does not undo effects."""
     for r in reversed(history.records):
         if r.run_id == run_id:
             return r
@@ -54,8 +54,8 @@ def replay_from_record(
     plan: Any = None,
 ) -> ConformanceResult:
     """
-    Переигрывает скрипт на input из записи и сверяет выход с фактом.
-    Без plan.lock — SKIPPED. Не обходит bind.
+    Re-run the script on the recorded input and check the output against the fact.
+    Without plan.lock — SKIPPED. Does not bypass bind.
     """
     if plan is None:
         return ConformanceResult.skipped(

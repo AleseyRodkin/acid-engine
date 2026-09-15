@@ -1,4 +1,4 @@
-"""LeafModule — содержит один ScriptModule."""
+"""LeafModule — holds one ScriptModule."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -10,7 +10,7 @@ from acid_engine.level3.script.module import ScriptModule
 
 @dataclass(frozen=True, slots=True)
 class LeafModule:
-    """Модуль, содержащий ровно один скрипт."""
+    """A module that contains exactly one script."""
     module_id: str
     script: ScriptModule
 

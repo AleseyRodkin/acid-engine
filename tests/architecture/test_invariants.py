@@ -34,7 +34,7 @@ def test_plan_lock_frozen():
 
 
 def test_plan_lock_tracks_implementation_body():
-    """Подмена тела при той же декларации меняет module hash в plan.lock."""
+    """Swapping the body with the same declaration changes the module hash in plan.lock."""
 
     def plus_one(x):
         return x + 1

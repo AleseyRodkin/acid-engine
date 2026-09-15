@@ -91,7 +91,7 @@ def test_async_module_hash_includes_implementation():
 
 
 def test_unmaterialized_artifact_is_missing_not_ref():
-    """Ссылка не подменяет канон тела. Нет fn — missing, не dict ArtifactRef."""
+    """A locator does not replace the body canon. No fn — missing, not an ArtifactRef dict."""
     from acid_engine.level3.script.artifact import ArtifactRef
 
     art = ArtifactRef(
@@ -119,7 +119,7 @@ def test_unmaterialized_artifact_is_missing_not_ref():
 
 
 def test_ast_canon_is_unparse_not_dump():
-    """ast.dump плывёт с полями узла (3.12 type_params). Канон — unparse."""
+    """ast.dump drifts with node fields (3.12 type_params). Canon is unparse."""
     from acid_engine.level2.implementation_canon import canonical_implementation
 
     def plus(x):

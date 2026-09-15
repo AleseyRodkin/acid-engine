@@ -1,4 +1,4 @@
-"""Структурированное логирование выполнения."""
+"""Structured execution logging."""
 from __future__ import annotations
 
 import json
@@ -10,7 +10,7 @@ from acid_engine.level3.container.observation import ExecutionObservation
 
 
 class ExecutionLogger:
-    """Пишет записи выполнения в JSON-файл (одна строка на запуск)."""
+    """Write execution records to a JSON file (one line per run)."""
 
     def __init__(self, log_path: str | Path = "execution_log.jsonl"):
         self.log_path = Path(log_path)

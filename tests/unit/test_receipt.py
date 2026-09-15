@@ -1,4 +1,4 @@
-"""Receipt: PASS bones, чужой plan FAIL, CLI без plan SKIPPED, serialize живой."""
+"""Receipt: PASS bones, foreign plan FAIL, CLI without plan SKIPPED, live serialize."""
 from __future__ import annotations
 
 import json

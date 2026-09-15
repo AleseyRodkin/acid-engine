@@ -1,4 +1,4 @@
-"""Адаптер для подключения внешних оркестраторов."""
+"""Adapter for attaching external orchestrators."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -8,26 +8,26 @@ from acid_engine.level3.bootstrap.plan_lock import PlanLock
 
 
 class OrchestratorAdapter(ABC):
-    """Интерфейс адаптера для внешнего оркестратора."""
+    """Adapter interface for an external orchestrator."""
 
     @abstractmethod
     def submit_plan(self, plan: PlanLock) -> str:
-        """Отправить план на исполнение, вернуть external_run_id."""
+        """Submit a plan for execution, return external_run_id."""
         ...
 
     @abstractmethod
     def get_status(self, external_run_id: str) -> str:
-        """Получить статус выполнения."""
+        """Get execution status."""
         ...
 
     @abstractmethod
     def get_result(self, external_run_id: str) -> ConformanceResult | None:
-        """Получить результат выполнения, если готов."""
+        """Get the execution result if ready."""
         ...
 
 
 class LocalAdapter(OrchestratorAdapter):
-    """Placeholder. Не исполняет план и не имеет права возвращать PASS."""
+    """Placeholder. Does not execute the plan and has no right to return PASS."""
 
     def submit_plan(self, plan: PlanLock) -> str:
         return f"local-{plan.plan_id}"

@@ -8,7 +8,7 @@ README = Path(__file__).resolve().parents[2] / "README.md"
 def test_tutorial_does_not_teach_run_without_plan():
     text = TUTORIAL.read_text(encoding="utf-8")
     assert "run --script my_script.py --input 5" not in text
-    assert "покажет PASS" not in text
+    assert "will show PASS" not in text
 
 
 def test_readme_does_not_point_at_tutorial():
@@ -19,9 +19,9 @@ def test_readme_does_not_point_at_tutorial():
 
 def test_readme_does_not_revive_agent_slogan():
     readme = README.read_text(encoding="utf-8")
-    assert "агент вызовет только" not in readme
+    assert "the agent will only call" not in readme
     commercial = Path(__file__).resolve().parents[2] / "COMMERCIAL.md"
-    assert "агент вызовет только" not in commercial.read_text(encoding="utf-8")
+    assert "the agent will only call" not in commercial.read_text(encoding="utf-8")
 
 
 def test_readme_thirty_seconds():

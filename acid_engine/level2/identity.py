@@ -8,7 +8,7 @@ from enum import Enum
 
 class HashAlgorithm(str, Enum):
     SHA256 = "sha256"
-    BLAKE3 = "blake3"  # зарезервировано, пока используем SHA-256
+    BLAKE3 = "blake3"  # reserved; SHA-256 is used for now
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,4 +1,4 @@
-"""Резолв тела: живой callable или ArtifactRef. Чужой язык не eval."""
+"""Resolve the body: a live callable or ArtifactRef. Foreign languages are not eval'd."""
 from __future__ import annotations
 
 import importlib.util
@@ -23,8 +23,8 @@ BODY_HASH = "body_hash"
 
 def resolve_script(script: Any) -> tuple[Callable[..., Any] | None, str | None]:
     """
-    (fn, None) — можно вызывать.
-    (None, code) — не исполнять. code: missing_implementation | unknown_language:... | broken_ref:... | body_hash:...
+    (fn, None) — may be called.
+    (None, code) — do not execute. code: missing_implementation | unknown_language:... | broken_ref:... | body_hash:...
     """
     impl = getattr(script, "implementation", None)
     if callable(impl):
@@ -63,7 +63,7 @@ def resolve_script(script: Any) -> tuple[Callable[..., Any] | None, str | None]:
 
 
 def materialize_script(script: Any) -> Any:
-    """После резолва identity = тело fn. Не резолвится — скрипт как был."""
+    """After resolve, identity is the fn body. If it does not resolve — the script as it was."""
     from dataclasses import replace
 
     impl = getattr(script, "implementation", None)

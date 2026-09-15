@@ -1,4 +1,4 @@
-"""locks/index.json: пары script/plan/input. Подмена тела не PASS. CI не судит без plan."""
+"""locks/index.json: script/plan/input pairs. Body swap is not PASS. CI does not judge without a plan."""
 from __future__ import annotations
 
 import json

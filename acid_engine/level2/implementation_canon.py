@@ -92,7 +92,7 @@ def _ast_dump(fn: Callable[..., Any]) -> str | None:
         return None
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         node.name = "_"
-    # unparse, не ast.dump: поля узла растут с версией CPython (3.12 type_params).
+    # unparse, not ast.dump: node fields grow with CPython (3.12 type_params).
     return ast.unparse(node)
 
 
@@ -169,7 +169,7 @@ def _const_canon(value: Any) -> Any:
 
 
 def implementation_identity(fn: Callable[..., Any] | None) -> Any:
-    """Канон тела для identity. Нет callable — missing. Ссылка сюда не входит."""
+    """Body canon for identity. No callable — missing. A locator is not included."""
     if fn is None:
         return {"kind": "missing"}
     return canonical_implementation(fn)

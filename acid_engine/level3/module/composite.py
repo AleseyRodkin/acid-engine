@@ -1,4 +1,4 @@
-"""CompositeModule — модуль, состоящий из графа подмодулей."""
+"""CompositeModule — a module made of a graph of submodules."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,7 +20,7 @@ from acid_engine.level3.module.leaf import LeafModule
 
 @dataclass(frozen=True, slots=True)
 class CompositeResult:
-    """Факт прогона графа: данные, наблюдения, вердикт. Нет conformance — не PASS."""
+    """Graph run fact: data, observations, verdict. No conformance — not PASS."""
 
     data: Any
     observations: tuple[ExecutionObservation, ...] = ()
@@ -41,7 +41,7 @@ class CompositeResult:
 
 @dataclass(frozen=True, slots=True)
 class CompositeModule:
-    """Модуль, реализованный как граф модулей (Leaf или Composite)."""
+    """A module implemented as a graph of modules (Leaf or Composite)."""
     module_id: str
     graph: DependencyGraph
     modules: dict[str, Any]

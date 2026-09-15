@@ -1,4 +1,4 @@
-"""Минимальная система миграции контрактов."""
+"""Minimal contract migration."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -58,10 +58,10 @@ class MigrationPlan:
 
 
 def plan_migration(old: InterfaceContract, new: InterfaceContract) -> MigrationPlan:
-    """Строит план миграции между двумя версиями InterfaceContract."""
+    """Build a migration plan between two InterfaceContract versions."""
     steps: list[MigrationStep] = []
 
-    # Сравниваем inputs
+    # Compare inputs
     all_input_keys = set(old.inputs.keys()) | set(new.inputs.keys())
     for k in all_input_keys:
         old_type = old.inputs.get(k)
@@ -89,7 +89,7 @@ def plan_migration(old: InterfaceContract, new: InterfaceContract) -> MigrationP
                 note=compat.message,
             ))
 
-    # Сравниваем outputs
+    # Compare outputs
     all_output_keys = set(old.outputs.keys()) | set(new.outputs.keys())
     for k in all_output_keys:
         old_type = old.outputs.get(k)
@@ -117,7 +117,7 @@ def plan_migration(old: InterfaceContract, new: InterfaceContract) -> MigrationP
                 note=compat.message,
             ))
 
-    # Сравниваем constraints (пока просто фиксируем изменения)
+    # Compare constraints (for now just record changes)
     all_constraint_keys = set(old.constraints.keys()) | set(new.constraints.keys())
     for k in all_constraint_keys:
         old_val = old.constraints.get(k)

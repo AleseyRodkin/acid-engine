@@ -58,7 +58,7 @@ contract = ScriptModule(
         reg = ContractRegistry()
         mod = reg.load_from_file(tmp_path)
         assert mod.contract_id.name == "test"
-        # Проверяем, что зарегистрирован
+        # Check that it is registered
         assert reg.resolve(ContractId("tmp", "test")) is mod
     finally:
         Path(tmp_path).unlink()

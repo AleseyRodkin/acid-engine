@@ -1,4 +1,4 @@
-"""Стратегия для строковых полей с упорядоченными значениями (строгость)."""
+"""Strategy for string fields with ordered values (strictness)."""
 from __future__ import annotations
 
 from typing import Any
@@ -8,9 +8,9 @@ from acid_engine.level2.strategies.base import ConstraintStrategy
 
 class StringEnumStrategy(ConstraintStrategy):
     """
-    Для полей с набором значений, упорядоченных по строгости.
-    Порядок: от самого слабого (индекс 0) к самому строгому (последний).
-    effective = самое строгое из parent и child.
+    For fields with a set of values ordered by strictness.
+    Order: weakest (index 0) to strictest (last).
+    effective = the stricter of parent and child.
     """
     def __init__(self, order: tuple[str, ...]):
         self.order = order
@@ -25,7 +25,7 @@ class StringEnumStrategy(ConstraintStrategy):
             return c_val
         if c_val is None:
             return p_val
-        # более высокий ранг = более строгое
+        # higher rank = stricter
         if self._rank[p_val] >= self._rank[c_val]:
             return p_val
         return c_val
@@ -34,7 +34,7 @@ class StringEnumStrategy(ConstraintStrategy):
         return value is None or value in self._rank
 
     def compare_provided_required(self, provided: Any, required: Any) -> bool:
-        # Provided должно быть не слабее Required (ранг >=)
+        # Provided must not be weaker than Required (rank >=)
         if required is None:
             return True
         if provided is None:

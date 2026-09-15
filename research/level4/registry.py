@@ -1,4 +1,4 @@
-"""ContractRegistry — библиотека атомов (уровень 4)."""
+"""ContractRegistry — atom library (level 4)."""
 from __future__ import annotations
 
 import importlib.util
@@ -10,15 +10,15 @@ from acid_engine.level3.script.module import ScriptModule
 
 class ContractRegistry:
     """
-    Хранит ScriptModule проекта и список версий.
-    Не журнал прогонов: регистрация — не исполнение.
+    Holds the project ScriptModule and a version list.
+    Not a run journal: registration is not execution.
     """
     def __init__(self) -> None:
         self._modules: dict[str, ScriptModule] = {}
         self._versions: dict[str, list[str]] = {}
 
     def register(self, module: ScriptModule) -> None:
-        """Зарегистрировать модуль. Не создаёт RunRecord и не ставит success."""
+        """Register a module. Does not create a RunRecord and does not set success."""
         key = str(module.contract_id)
         self._modules[key] = module
         vers = str(module.version)
@@ -27,18 +27,18 @@ class ContractRegistry:
             known.append(vers)
 
     def resolve(self, contract_id: ContractId) -> ScriptModule:
-        """Получить актуальную реализацию модуля по идентификатору."""
+        """Get the current implementation of a module by id."""
         key = str(contract_id)
         if key not in self._modules:
             raise KeyError(f"Contract '{key}' not found in registry")
         return self._modules[key]
 
     def list_versions(self, contract_id: ContractId) -> list[str]:
-        """Версии, с которыми модуль регистрировали. Не run_id."""
+        """Versions the module was registered with. Not run_id."""
         return list(self._versions.get(str(contract_id), []))
 
     def load_from_file(self, path: str | Path) -> ScriptModule:
-        """Загрузить ScriptModule из .py (`script` или `contract`) и зарегистрировать."""
+        """Load ScriptModule from .py (`script` or `contract`) and register it."""
         source = Path(path)
         spec = importlib.util.spec_from_file_location(
             f"acid_registry_{source.stem}_{id(source)}", str(source)

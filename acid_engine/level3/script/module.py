@@ -1,4 +1,4 @@
-"""ScriptModule — минимальная исполняемая единица."""
+"""ScriptModule — the smallest executable unit."""
 from __future__ import annotations
 
 from collections.abc import Callable
