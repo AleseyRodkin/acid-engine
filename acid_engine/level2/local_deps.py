@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import inspect
 import sys
+import types
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -148,4 +149,66 @@ def _py_file(candidate: Path, root: Path) -> Path | None:
     for path in (Path(str(candidate) + ".py"), candidate / "__init__.py"):
         if path.is_file() and _under(path, root):
             return path.resolve()
+    return None
+
+
+def seal_local_deps(fn: Callable[..., Any] | None) -> str | None:
+    """Load pinned local deps from the bytes just hashed. None = sealed.
+
+    Import after this sees the sealed module, not a later disk write.
+    Returns the relative path that drifted, or None.
+    """
+    hashes = collect_local_dep_hashes(fn)
+    if not hashes:
+        return None
+    start = _origin_file(fn)
+    if start is None:
+        return None
+    return _seal_walk(start, start.parent, hashes, set(), is_root=True)
+
+
+def _seal_walk(
+    file: Path,
+    root: Path,
+    hashes: dict[str, str],
+    seen: set[Path],
+    *,
+    is_root: bool,
+) -> str | None:
+    file = file.resolve()
+    if file in seen or not file.is_file():
+        return None
+    seen.add(file)
+    try:
+        src = file.read_bytes()
+        tree = ast.parse(src.decode("utf-8"))
+    except (OSError, SyntaxError, UnicodeDecodeError):
+        return None
+    for node in ast.walk(tree):
+        specs: list[tuple[str, int]] = []
+        if isinstance(node, ast.Import):
+            specs.extend((alias.name, 0) for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            specs.append((node.module or "", node.level))
+        for mod, level in specs:
+            resolved = _resolve(mod, level, file, root)
+            if resolved is None:
+                continue
+            err = _seal_walk(resolved, root, hashes, seen, is_root=False)
+            if err is not None:
+                return err
+    if is_root:
+        return None
+    rel = _relkey(file, root)
+    digest = hashes.get(rel)
+    if digest is None:
+        return None
+    if hashlib.sha256(src).hexdigest() != digest:
+        return rel
+    name = rel[:-3].replace("/", ".") if rel.endswith(".py") else rel.replace("/", ".")
+    module = types.ModuleType(name)
+    module.__file__ = str(file)
+    module.__package__ = name.rpartition(".")[0]
+    sys.modules[name] = module
+    exec(compile(src, str(file), "exec"), module.__dict__)  # noqa: S102
     return None

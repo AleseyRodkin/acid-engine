@@ -45,6 +45,23 @@ is the process that can be swapped. Use the supervisor when that matters.
 - `interface_contract_hash` (derived from the same JSON as `module_hashes`).
 - Semantic / business correctness.
 - OS, kernel, hardware.
+- `os.environ` and other process environment. Implementation identity is
+  bytes + CPython minor + canon kind, not the environment the bytes run in.
+- Packages in site-packages / the standard library. That is a supply-chain
+  control (SBOM / SLSA), not this gate.
+
+## Pre-execution vs post-execution
+
+Hook / `locks --index` bind: the file about to run matches the lock. Not PASS.
+`judge` with a worker: bind, seal local deps from those bytes, run, observe,
+verdict. PASS exists only on this path.
+
+Local deps are sealed from the hashed bytes immediately before run. A write
+to `helper.py` after seal does not change what `import helper` sees.
+
+Symlinks are followed. Identity is the target's bytes. Retarget after lock
+is `module_hash` FAIL.
+
 
 ## Who checks the checker
 

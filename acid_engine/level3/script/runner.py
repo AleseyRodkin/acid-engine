@@ -13,7 +13,7 @@ from acid_engine.level2.conformance import (
 )
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level2.implementation_canon import canon_id_for, live_canon_kind
-from acid_engine.level2.local_deps import collect_local_dep_hashes
+from acid_engine.level2.local_deps import collect_local_dep_hashes, seal_local_deps
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
@@ -244,6 +244,24 @@ def execute_plan(
     bound = bind_script_to_plan(plan, script)
     if bound is not None:
         return PipelineResult(conformance=bound)
+
+    leaked = seal_local_deps(script.implementation)
+    if leaked is not None:
+        return PipelineResult(
+            conformance=ConformanceResult(
+                status=ConformanceStatus.FAIL,
+                level=ConformanceLevel.STRUCTURAL,
+                message="plan.lock dependency hash mismatch",
+                failure=FailureReason(
+                    node_id=script.name,
+                    contract_id=str(iface.contract_id),
+                    property_name="dependency_hash",
+                    expected="sealed",
+                    actual="drift",
+                    detail=leaked,
+                ),
+            )
+        )
 
     from acid_engine.level3.script.python_runtime import run_script
     from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance

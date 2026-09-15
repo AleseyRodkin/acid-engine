@@ -6,9 +6,49 @@ Acid Judge verifies that the code approved for an AI agent is the code that actu
 
 Not a policy gate. A policy gate can ALLOW `compute_amount` after the file on disk has already changed. This gate asks a different question: **is this still the approved artifact?**
 
+**Before execution:** the implementation bound for execution matches the approved artifact. The Claude Code hook is this step. Pre ≠ PASS.
+
+**After execution:** Acid Judge records evidence that the verified implementation ran, and whether the observation conforms to the contract. PASS lives only here.
+
 We don't tell you that your code is safe. We tell you whether it is the code you approved.
 
-**Approved-to-executed integrity** — Python-first, local, open source, no sandbox, no LLM, deterministic. Execution integrity is the category, not a claim that we govern the agent.
+**Approved-to-executed integrity** — Python-first, local, open source, no sandbox, no LLM, deterministic.
+
+## 60 seconds
+
+```bash
+./demo.sh
+```
+
+Honest `compute_amount` is PASS. The swapped body is blocked. No sandbox, no LLM.
+
+## Install
+
+```bash
+pip install "acid-engine @ git+https://github.com/AleseyRodkin/acid-engine-2.0.git"
+acid-judge lock --script FILE --out LOCK.json
+acid-judge judge --script FILE --plan LOCK.json --input '...'
+```
+
+GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.10`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+
+## What it protects
+
+- Tool body swap between `lock` and `judge`
+- Static local `.py` imports (`dep:`)
+- Judge contour (`runtime_hashes`)
+- Symlink retarget after lock (bytes of the followed path)
+- Bind-then-disk-write of a lazy local import (sealed before run)
+
+## What it does not protect
+
+- Shell outside `judge`
+- What the body does after PASS (fs / net / process)
+- `importlib` / `exec` / `eval` (lock warns)
+- site-packages / stdlib supply chain (separate control: SBOM / SLSA)
+- Environment variables (not part of implementation identity)
+
+Security model: [TRUST.md](TRUST.md). Coverage: [attacks/](attacks/README.md). Method: [METHOD.md](METHOD.md).
 
 ИИ может написать или изменить tool. Acid Judge не обязан ему верить. Он проверяет, что будет запущен именно тот код, который был одобрен, и отдельно сверяет наблюдение с контрактом. Нет фактов — SKIPPED, не PASS.
 
@@ -27,11 +67,12 @@ SKIPPED  = not enough facts. SKIPPED is not PASS.
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS.
 
 Fail-closed gate тела Python-tool. Не ОС разработки, не SaaS, не `proven_pure`, не песочница.
-Пакет **0.2.9**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
+Пакет **0.2.10**. Ядро MIT. Бинари supervisor: GitHub Releases (`linux` / `windows` / `macos`), без локального `cargo`. После `pip install` бинарь находит контур в установленном пакете, не в `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
 Доказательства: [attacks/](attacks/README.md). Ручной прогон: [ATTACK.md](ATTACK.md). TCB: [TRUST.md](TRUST.md). Закон рантайма: [METHOD.md](METHOD.md).
+
 
 
 ## Что защищает и что нет
@@ -75,7 +116,7 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 Чужой репозиторий:
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.9
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.10
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.

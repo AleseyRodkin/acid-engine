@@ -38,6 +38,8 @@ def test_readme_thirty_seconds():
     assert "SKIPPED is not PASS" in readme
     assert "attacks/" in readme
     assert "TRUST.md" in readme
-    assert "acid-judge lock --script FILE" in readme
-    assert "uses: AleseyRodkin/acid-engine-2.0@" in readme
+    assert "Before execution" in readme
+    assert "After execution" in readme
+    assert "./demo.sh" in readme
+    assert "Pre ≠ PASS" in readme
 

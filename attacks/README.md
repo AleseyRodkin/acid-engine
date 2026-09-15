@@ -18,8 +18,10 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | `max_latency_ms` overrun | ✓ | ✓ | ran | ✓ | rust `latency_over_limit_fail` |
 | `Policy.pure` disk write | ✗ | ✗ | ✓ | ✓ | declared_pure; not instrumented |
 | Shell outside `judge` | ✗ | ✗ | ✓ | — | out of perimeter |
-| Symlink / path alias | ? | ? | ? | ? | not claimed |
-| Env mutation | ? | ? | ? | ? | not claimed |
+| Symlink retarget | ✓ | ✓ | ✗ | ✓ | `test_symlink` |
+| Lazy import TOCTOU | ✓ | ✓ | ✗ | ✓ | `test_toctou` (sealed bytes) |
+| Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |
+| site-packages swap | ✗ | ✗ | ✓ | ✓ | supply chain, not this gate |
 | Malicious *approved* body | — | — | ✓ | ✓ | identity, not correctness |
 
 How to run the claimed rows:

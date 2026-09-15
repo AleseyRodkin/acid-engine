@@ -45,6 +45,7 @@
 52. 0.2.7: supervisor резолвит контур из пакета / `ACID_ENGINE_ROOT`, не из cwd чужого репо. Toolchain action по SHA. `interface_contract_hash` не якорь.
 53. 0.2.8: продукт — execution integrity (wedge), не AcidEngine-ОС. Матрица атак + TCB. Второй harness (Copilot) не открывать в этом коммите.
 54. 0.2.9: формулировка Approved-to-Executed. Receipt — execution evidence, не SLSA. `evidence.missing` без risk score. Copilot/MCP не открывать.
+55. 0.2.10: pre ≠ post. demo.sh. seal local deps. symlink claimed. env/site-packages out. Copilot всё ещё закрыт.
 
 Фазы 1–6 закрыты. Фаза 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Без worker — SKIPPED. Worker не пишет вердикт. Хеш тела — только Python canon.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.10 — 2026-09-16
+
+- Pre-execution bind ≠ post-execution PASS. README is a landing page; `./demo.sh` is the 60s proof.
+- Local deps sealed from hashed bytes before run (lazy-import TOCTOU).
+- Symlink followed; retarget after lock is FAIL.
+- Env and site-packages stay out of identity. Copilot not opened.
+
 ## 0.2.9 — 2026-09-16
 
 - Claim is approved-to-executed, not a generic execution-integrity platform.
