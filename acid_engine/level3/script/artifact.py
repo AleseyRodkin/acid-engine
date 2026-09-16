@@ -1,8 +1,10 @@
 """ArtifactRef — a locator next to the callable. Phase 2a: not in the hash."""
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from acid_engine.level2.implementation_canon import canonical_implementation
@@ -18,6 +20,7 @@ class ArtifactRef:
     entry: str
     canon: str
     body_hash: str
+    source_hash: str = ""
 
     def __post_init__(self) -> None:
         if self.canon not in CANON_KINDS:
@@ -32,6 +35,7 @@ class ArtifactRef:
             "entry": self.entry,
             "canon": self.canon,
             "body_hash": self.body_hash,
+            "source_hash": self.source_hash,
         }
 
 
@@ -52,10 +56,16 @@ def artifact_ref_from_callable(
         code = getattr(fn, "__code__", None)
         path = getattr(code, "co_filename", "") or ""
     name = entry or getattr(fn, "__qualname__", "") or getattr(fn, "__name__", "") or ""
+    source_hash = ""
+    if path:
+        loc = Path(path)
+        if loc.is_file():
+            source_hash = hashlib.sha256(loc.read_bytes()).hexdigest()
     return ArtifactRef(
         language=language,
         file=path,
         entry=name,
         canon=kind,
         body_hash=content_hash_of(impl),
+        source_hash=source_hash,
     )

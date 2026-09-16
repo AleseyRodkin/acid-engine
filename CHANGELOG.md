@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.19 — 2026-09-16
+
+- `ArtifactRef` does not import until `source_hash` / `body_hash` match a snapshot of the file. Same flow as the root tool: snapshot → hash → compare → pin → exec pinned bytes.
+- `body_hash` is the AST canon of the entry callable (previewed from file bytes, no exec). `source_hash` is SHA-256 of those bytes — same function plus extra module-level payload fails this, not `body_hash`.
+- Empty hashes still load (phase 2b). Mismatch does not run module-level side effects.
+- Signed lock, `ExecutionSnapshot` type, sandbox, MCP: not this release.
+
 ## 0.2.18 — 2026-09-16
 
 - Sealed local imports are bound per judge context, not under a shared `sys.modules` name. Two tools that both have `helper.py` cannot PASS each other's body under concurrent `judge_script`.

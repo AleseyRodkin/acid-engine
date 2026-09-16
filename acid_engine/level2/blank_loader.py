@@ -1,6 +1,7 @@
 """Load a step from JSON handwriting. Markdown and YAML are not parsed."""
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Mapping
 from pathlib import Path
@@ -33,7 +34,7 @@ _AUTHORING_KEYS = frozenset(
         "implementation",
     }
 )
-_IMPL_KEYS = frozenset({"language", "file", "entry", "canon", "body_hash"})
+_IMPL_KEYS = frozenset({"language", "file", "entry", "canon", "body_hash", "source_hash"})
 
 
 def load_script_blank(path: str | Path) -> ScriptModule:
@@ -86,6 +87,7 @@ def script_from_authoring_dict(
     file_s = str(impl_raw.get("file") or "")
     entry = str(impl_raw.get("entry") or "")
     body_hash = str(impl_raw.get("body_hash") or "")
+    source_hash = str(impl_raw.get("source_hash") or "")
     canon = str(impl_raw.get("canon") or "ast")
     if canon not in CANON_KINDS:
         raise ValueError(f"canon must be one of {sorted(CANON_KINDS)}, got {canon!r}")
@@ -100,25 +102,35 @@ def script_from_authoring_dict(
         entry=entry,
         canon=canon,
         body_hash=body_hash,
+        source_hash=source_hash,
     )
 
     fn = None
     if language.strip().lower() == "python" and file_s and entry:
         if not path.is_file():
             raise FileNotFoundError(str(path))
-        fn = _load_python_entry(path, entry)
+        fn = _load_python_entry(
+            path,
+            entry,
+            expected_body_hash=body_hash,
+            expected_source_hash=source_hash,
+        )
         if not callable(fn):
             raise TypeError(f"entry {entry!r} is not callable")
         actual = content_hash_of(canonical_implementation(fn))
         if body_hash and actual != body_hash:
             raise ValueError("body_hash does not match resolved implementation")
-        if not body_hash:
+        if not body_hash or not source_hash:
+            from acid_engine.level2.local_deps import read_source_bytes
+
+            file_digest = hashlib.sha256(read_source_bytes(path)).hexdigest()
             artifact = ArtifactRef(
                 language="python",
                 file=str(path),
                 entry=entry,
                 canon=canonical_implementation(fn).get("kind", canon),
-                body_hash=actual,
+                body_hash=body_hash or actual,
+                source_hash=source_hash or file_digest,
             )
 
     return ScriptModule(

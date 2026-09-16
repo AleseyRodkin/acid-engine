@@ -20,3 +20,5 @@ Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
 User `cwd` is the project, not the front of `PYTHONPATH`.
 `source_hash` is an extra lock key in 0.2.x. A 0.2.13 lock without it is
 SKIPPED, not PASS. Re-take the lock.
+`ArtifactRef.source_hash` is additive (default empty). Empty still loads;
+a filled value is compared before import.

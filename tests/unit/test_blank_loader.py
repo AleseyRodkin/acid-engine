@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -132,15 +133,41 @@ def test_unknown_canon_rejected_not_opaque():
 
 def test_body_hash_mismatch_before_run():
     with tempfile.TemporaryDirectory() as tmp:
-        _py, js = _write_pair(tmp)
+        py, js = _write_pair(tmp)
         data = json.loads(Path(js).read_text())
         data["implementation"]["body_hash"] = "0" * 64
         Path(js).write_text(json.dumps(data))
+        marker = Path(tmp) / "pwned"
+        py.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('pwn')\n" + PY_BODY,
+            encoding="utf-8",
+        )
         try:
             load_script_blank(js)
             assert False
         except ValueError as e:
             assert "body_hash" in str(e)
+        assert not marker.exists()
+
+
+def test_source_hash_mismatch_does_not_import():
+    with tempfile.TemporaryDirectory() as tmp:
+        py, js = _write_pair(tmp)
+        honest = PY_BODY.encode("utf-8")
+        data = json.loads(Path(js).read_text())
+        data["implementation"]["source_hash"] = hashlib.sha256(honest).hexdigest()
+        Path(js).write_text(json.dumps(data))
+        marker = Path(tmp) / "pwned"
+        py.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('pwn')\n" + PY_BODY,
+            encoding="utf-8",
+        )
+        try:
+            load_script_blank(js)
+            assert False
+        except ValueError as e:
+            assert "source_hash" in str(e)
+        assert not marker.exists()
 
 
 def test_cli_run_json_script():
@@ -171,4 +198,3 @@ def test_cli_run_json_script():
         assert result.returncode == 0, result.stderr + result.stdout
         assert "PASS" in result.stdout
         assert "output: 4" in result.stdout
-

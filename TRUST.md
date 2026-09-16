@@ -35,6 +35,8 @@ is the process that can be swapped. Use the supervisor when that matters.
 
 - Bytes of the tool file before import (`source_hash`).
 - Bytes of the locked callable (AST canon, else bytecode).
+- `ArtifactRef` locator hashes (`source_hash` of the file, `body_hash` of the
+  entry) compared before import when set.
 - Static local `.py` imports (`dep:`).
 - Judge contour in `runtime_hashes` (7 files).
 - `python_version` / `canon_kind` next to identity.

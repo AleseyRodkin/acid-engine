@@ -107,6 +107,26 @@ threads. A shared `sys.modules["helper"]` slot would PASS the other's body.
 
 Guard: `tests/integration/test_concurrent_helpers.py`.
 
+## 6. ArtifactRef: same entry, extra payload
+
+`body_hash` is the AST canon of the named callable, not the file. A swapped
+file that keeps the same `plus_one` and prepends a write still matches
+`body_hash`. `source_hash` on `ArtifactRef` is SHA-256 of the file bytes
+and is compared **before** import.
+
+```text
+approved artifact
+→ replace the file (same function + module-level write)
+→ ArtifactRef.source_hash stays the old file digest
+→ side effect does not run
+→ FAIL source_hash
+```
+
+Guard: `tests/unit/test_resolve.py::test_artifact_source_hash_mismatch_does_not_import`,
+`tests/unit/test_blank_loader.py::test_source_hash_mismatch_does_not_import`.
+A changed function against the old `body_hash` is the sibling test
+`test_artifact_body_hash_mismatch_does_not_import`.
+
 ## What this is not
 
 - Not MCP tool-description scanning.

@@ -62,6 +62,78 @@ def canonical_implementation(
     }
 
 
+def canonical_implementation_from_source(
+    src: bytes,
+    entry: str,
+) -> dict[str, Any] | None:
+    """AST canon of `entry` from file bytes. No exec. None if it cannot be read as a def."""
+    try:
+        tree = ast.parse(src.decode("utf-8"))
+    except (UnicodeDecodeError, SyntaxError):
+        return None
+    parts = [p for p in entry.split(".") if p]
+    if not parts:
+        return None
+    current: ast.AST = tree
+    for part in parts:
+        body = getattr(current, "body", None)
+        if not isinstance(body, list):
+            return None
+        found: ast.AST | None = None
+        for stmt in body:
+            if isinstance(
+                stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ) and stmt.name == part:
+                found = stmt
+                break
+        if found is None:
+            return None
+        current = found
+    if not isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return None
+    defaults = _ast_defaults(current)
+    kwdefaults = _ast_kwdefaults(current)
+    if defaults is None or kwdefaults is None:
+        return None
+    try:
+        parsed = ast.parse(ast.unparse(current))
+        node = parsed.body[0]
+    except (SyntaxError, IndexError, TypeError, ValueError):
+        return None
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return None
+    node.name = "_"
+    return {
+        "kind": "ast",
+        "body": ast.unparse(node),
+        "closure": [],
+        "defaults": _jsonable(tuple(defaults), set()),
+        "kwdefaults": _jsonable(kwdefaults, set()),
+    }
+
+
+def _ast_defaults(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[Any] | None:
+    out: list[Any] = []
+    for item in node.args.defaults:
+        try:
+            out.append(ast.literal_eval(item))
+        except (ValueError, TypeError, SyntaxError):
+            return None
+    return out
+
+
+def _ast_kwdefaults(node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, Any] | None:
+    out: dict[str, Any] = {}
+    for arg, item in zip(node.args.kwonlyargs, node.args.kw_defaults):
+        if item is None:
+            continue
+        try:
+            out[arg.arg] = ast.literal_eval(item)
+        except (ValueError, TypeError, SyntaxError):
+            return None
+    return out
+
+
 def _callable_body(fn: Callable[..., Any]) -> dict[str, Any]:
     dump = _ast_dump(fn)
     if dump is not None:

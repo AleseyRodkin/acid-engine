@@ -42,7 +42,11 @@ file: the caller already imported it.
 `lock` warns that local deps cannot be fully pinned. Renaming a local variable
 changes the AST canon.
 Body canon is one: the callable. `ArtifactRef` is a locator, not identity.
-No callable → `implementation` in identity = `{kind: missing}`.
+When `ArtifactRef` carries `body_hash` or `source_hash`, those are compared
+to a snapshot of the file **before** exec. Mismatch → do not import.
+`body_hash` is the AST canon of the named entry. `source_hash` is SHA-256
+of the file bytes. Empty hashes still load. No callable → `implementation`
+in identity = `{kind: missing}`.
 After resolve (`materialize_script`) identity is the canon of the fn body.
 Take the lock after materialize. A reference dict is not in the hash.
 

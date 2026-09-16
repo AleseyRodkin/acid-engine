@@ -24,6 +24,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Symlink retarget | ✓ | ✓ | ✗ | ✓ | `test_symlink` |
 | Lazy import TOCTOU | ✓ | ✓ | ✗ | ✓ | `test_toctou` (locked hash, one read) |
 | Concurrent same-named helpers | ✓ | ✓ | ✗ | ✓ | `test_concurrent_helpers` |
+| ArtifactRef file swap before import | ✓ | ✓ | ✗ | ✓ | `test_artifact_source_hash_mismatch_does_not_import` |
+| ArtifactRef entry swap before import | ✓ | ✓ | ✗ | ✓ | `test_artifact_body_hash_mismatch_does_not_import` |
 | Undeclared helper after lock | ✓ | ✓ | ✗ | ✓ | `test_toctou` |
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |

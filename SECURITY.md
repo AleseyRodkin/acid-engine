@@ -15,6 +15,10 @@ and not an MCP gateway.
   CLI `judge`/`locks`/`diff`, the supervisor worker, and the Claude Code
   hook all apply this gate. `lock` loads the file you present (approval).
   Library `judge_script` on an already-imported object does not.
+  Library `resolve_script` / JSON blank with a filled `ArtifactRef.source_hash`
+  or `body_hash` compare those to a snapshot of the file **before** exec.
+  Empty hashes still load (phase 2b). `body_hash` is the entry callable, not
+  the whole file — extra module-level payload is `source_hash`.
 - Bytes of the locked tool's implementation (AST canon, else bytecode).
   The live check is `module_hashes`. `interface_contract_hash` is derived
   from the same JSON for diffs; editing only `iface` in the lock file is
