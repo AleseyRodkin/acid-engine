@@ -1,7 +1,9 @@
 # AcidEngine 0.1 — bones plan
 
-Brief for the builder. Law is only [METHOD.md](METHOD.md).
-ARCHITECTURE.md is not a plan (the “OS” tail before the 21.08 narrowing). Archive: [docs/archive/ARCHITECTURE.md](docs/archive/ARCHITECTURE.md).
+> **Archive.** The 0.1 builder queue, not the live product. Law is [METHOD.md](../../METHOD.md). Face: [README.md](../../README.md). Product queue: [COMMERCIAL.md](../../COMMERCIAL.md).
+
+Brief for the builder. Law is only [METHOD.md](../../METHOD.md).
+ARCHITECTURE.md is not a plan (the “OS” tail before the 21.08 narrowing). Archive: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Date:** 31.08.2026
 **Repo:** https://github.com/AleseyRodkin/acid-engine-2.0

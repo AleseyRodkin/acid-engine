@@ -1,7 +1,7 @@
 # AcidEngine — state
 
 **Repository:** https://github.com/AleseyRodkin/acid-engine-2.0
-Law: METHOD.md. Bones queue: PLAN.md. Product queue: COMMERCIAL.md.
+Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMMERCIAL.md.
 
 ## Snapshot 12.09.2026
 

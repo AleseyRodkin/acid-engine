@@ -6,12 +6,14 @@ Not an MCP gateway. Gateways watch tool *descriptions* on the network. This gate
 
 Does not catch a shell. Does not sandbox the body after PASS.
 
+Install once (`pip install acid-judge` or `pip install -e ".[dev]"` from this repository). `PYTHONPATH=.` is not needed.
+
 ## 1. Swap the tool body
 
 Honest run, cents × qty = 3998:
 
 ```bash
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script examples/tools/compute_amount.py \
   --plan examples/tools/compute_amount.plan.json \
   --input '{"cents": 1999, "qty": 2}'
@@ -31,7 +33,7 @@ Path("/tmp/acid-attack/examples/tools/compute_amount.py").write_text(
 )
 PY
 
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script /tmp/acid-attack/examples/tools/compute_amount.py \
   --plan examples/tools/compute_amount.plan.json \
   --input '{"cents": 1999, "qty": 2}'
@@ -42,7 +44,7 @@ Code ≠ 0. `source_hash`. No `PASS`. File is not imported. Guard: `tests/integr
 Same drift as a table, still no execution:
 
 ```bash
-PYTHONPATH=. python -m acid_engine diff \
+acid-judge diff \
   --script /tmp/acid-attack/examples/tools/compute_amount.py \
   --plan examples/tools/compute_amount.plan.json
 ```
@@ -67,7 +69,7 @@ raw["toolchain"]["runtime_hashes"][
 Path("/tmp/bad-canon.plan.json").write_text(json.dumps(raw))
 PY
 
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script examples/bones/n_plus_one.json \
   --plan /tmp/bad-canon.plan.json \
   --input '{"n": 3}'

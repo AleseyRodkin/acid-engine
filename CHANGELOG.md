@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Showcase commands use `acid-judge` after install, not `PYTHONPATH=.`. Hidden `run` is not in COMMERCIAL start.
+- 0.1 bones plan moved to `docs/archive/PLAN.md`.
+
 ## 0.2.15 — 2026-09-16
 
 - PyPI distribution name is `acid-judge`. Import stays `acid_engine`. CLI stays `acid-judge`.

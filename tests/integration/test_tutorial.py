@@ -3,12 +3,24 @@ from pathlib import Path
 
 TUTORIAL = Path(__file__).resolve().parents[2] / "TUTORIAL.md"
 README = Path(__file__).resolve().parents[2] / "README.md"
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_tutorial_does_not_teach_run_without_plan():
     text = TUTORIAL.read_text(encoding="utf-8")
     assert "run --script my_script.py --input 5" not in text
     assert "will show PASS" not in text
+
+
+def test_showcase_docs_do_not_teach_pythonpath_dot() -> None:
+    for name in ("TUTORIAL.md", "ATTACK.md", "COMMERCIAL.md"):
+        for line in (ROOT / name).read_text(encoding="utf-8").splitlines():
+            assert not line.strip().startswith("PYTHONPATH=."), f"{name}: {line}"
+
+
+def test_bones_plan_is_archived() -> None:
+    assert not (ROOT / "PLAN.md").exists()
+    assert (ROOT / "docs/archive/PLAN.md").is_file()
 
 
 def test_readme_does_not_point_at_tutorial():

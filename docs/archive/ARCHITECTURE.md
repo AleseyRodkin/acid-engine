@@ -1,7 +1,7 @@
 # AcidEngine architecture
 
 > **Archive.** Not a plan and not the law. The “development OS” tail before the 21.08.2026 narrowing.
-> Law: [METHOD.md](../../METHOD.md). Queue: [PLAN.md](../../PLAN.md).
+> Law: [METHOD.md](../../METHOD.md). Queue: [PLAN.md](PLAN.md).
 > The live face of the repository is [README.md](../../README.md): lock → bind → observe.
 
 AcidEngine was described as a contract-oriented development operating system.

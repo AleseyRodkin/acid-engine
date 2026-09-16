@@ -4,12 +4,14 @@ This is not the law. The live contour is [README.md](README.md). Do not rewrite 
 
 Demo: lock a body, run `judge`, swap the formula, see FAIL and a receipt.
 
+Install once (`pip install acid-judge` or, from this repository, `pip install -e ".[dev]"`). Then `acid-judge` is on `PATH`. `PYTHONPATH=.` is not needed.
+
 ## 1. Bones with `--plan`
 
 From the repository root:
 
 ```bash
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script examples/bones/n_plus_one.json \
   --plan examples/bones/n_plus_one.plan.json \
   --input '{"n": 3}' \
@@ -21,7 +23,7 @@ Exit 0, PASS, `{n: 4}`. Receipt has no `proven_pure`.
 Without `--plan` this is not a verdict:
 
 ```bash
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script examples/bones/n_plus_one.json \
   --input '{"n": 3}'
 ```
@@ -33,7 +35,7 @@ Exit ≠ 0, SKIPPED. Self-lock is not PASS.
 Formula: `cents * qty`. Input `{"cents": 1999, "qty": 2}` → `{"cents": 3998}`.
 
 ```bash
-PYTHONPATH=. python -m acid_engine lock \
+acid-judge lock \
   --script examples/tools/compute_amount.py \
   --out examples/tools/compute_amount.plan.json
 ```
@@ -43,7 +45,7 @@ PYTHONPATH=. python -m acid_engine lock \
 Honest run:
 
 ```bash
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script examples/tools/compute_amount.py \
   --plan examples/tools/compute_amount.plan.json \
   --input '{"cents": 1999, "qty": 2}' \
@@ -57,7 +59,7 @@ PASS, `{"cents": 3998}`.
 In `examples/tools/compute_amount.py` replace `cents * qty` with `cents * qty + 1`. Do not touch the JSON or `plan.json`.
 
 ```bash
-PYTHONPATH=. python -m acid_engine judge \
+acid-judge judge \
   --script examples/tools/compute_amount.py \
   --plan examples/tools/compute_amount.plan.json \
   --input '{"cents": 1999, "qty": 2}' \

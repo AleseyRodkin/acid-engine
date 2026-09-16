@@ -1,7 +1,7 @@
 # Acid Judge — commercial plan
 
 **Date:** 12.09.2026
-Law is only [METHOD.md](METHOD.md). Do not reopen [PLAN.md](PLAN.md) (0.1 bones).
+Law is only [METHOD.md](METHOD.md). Do not reopen [docs/archive/PLAN.md](docs/archive/PLAN.md) (0.1 bones).
 Base snapshot: `c72ea42`. If `worker.py` / `lock` / `--plan` are missing — get a current zip first.
 
 The personal experiment is done. Next: a fail-closed gate of a tool body. STOL is not a stand.
@@ -68,7 +68,8 @@ Start at C0. Not with the Action, not with the hook, not with the signature. Do 
 ## 4. Start
 
 ```bash
-PYTHONPATH=. python -m pytest tests -q
-PYTHONPATH=. python -m acid_engine lock --help
-PYTHONPATH=. python -m acid_engine run --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
+pip install -e ".[dev]"
+python -m pytest tests -q
+acid-judge lock --help
+acid-judge judge --script examples/bones/n_plus_one.json --plan examples/bones/n_plus_one.plan.json --input '{"n": 3}'
 ```
