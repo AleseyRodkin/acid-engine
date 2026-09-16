@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.19**. MIT core. Supervisor binaries: GitHub Releases (`linux` / `windows` / `macos`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.20**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -81,10 +81,10 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 `python -m acid_engine` is the same CLI. `PYTHONPATH=.` is not needed after `pip install`.
 From git: `pip install "acid-judge @ git+https://github.com/AleseyRodkin/acid-engine-2.0.git"`.
 
-GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.19`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.20`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.19
+- uses: AleseyRodkin/acid-engine-2.0@v0.2.20
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.
@@ -104,6 +104,7 @@ Without `judge: true` — bind only, the body does not run. With the flag — `l
 - Two tools that both have `helper.py` judged concurrently (per-context seal, not a shared `sys.modules` name)
 - Top-level code in the tool file: CLI, supervisor, hook, `locks`, and `diff` compare `source_hash` **before import**. Mismatch → the file is not imported.
 - `ArtifactRef` / JSON blank: `source_hash` (file bytes) and `body_hash` (entry AST) are compared to a snapshot **before** exec. Empty hashes still load. Same function plus extra top-level code is `source_hash`.
+- PreToolUse hook: a tool that reached the hook and is not in the index is **deny**. Lookup is exact id or resolved script path, not basename. The settings matcher is how Bash never hits the hook.
 
 Renaming a local variable changes the AST canon — FAIL. Comments and blank lines are not in the canon.
 The lock is an imprint of a specific toolchain. `python_version` and `canon_kind` are checked; a mismatch is FAIL with "re-take the lock", not "the body was swapped".
@@ -184,7 +185,7 @@ mypy acid_engine
 
 Five tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — in [locks/index.json](locks/index.json) with bones.
 
-One hook: [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py) — Claude Code PreToolUse, bind only. Foreign hash → deny. Pre ≠ PASS. No MCP.
+One hook: [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py) — Claude Code PreToolUse, bind only. Foreign hash → deny. Unknown tool that reached the hook → deny. Pre ≠ PASS. No MCP.
 
 ## Not in 0.2
 

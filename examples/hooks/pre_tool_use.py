@@ -1,4 +1,12 @@
-"""Claude Code PreToolUse: bind plan.lock. Deny on hash mismatch. Not PASS."""
+"""Claude Code PreToolUse: bind plan.lock. Deny on hash mismatch. Not PASS.
+
+If this hook runs, the tool must be in the index. Unknown → deny
+(not enough facts is not allow). The settings matcher is how Bash / Read
+never reach this script — this is not a policy gate for the whole agent.
+
+Lookup is exact entry id or a resolved script path. Basename is not identity.
+A tool_input path that exists must be the locked file, not a namesake.
+"""
 from __future__ import annotations
 
 import json
@@ -24,18 +32,43 @@ def load_entries() -> list[dict[str, Any]]:
     return [e for e in entries if isinstance(e, dict)]
 
 
+def _existing_file(p: str) -> Path | None:
+    if not p:
+        return None
+    loc = Path(p)
+    if not loc.is_absolute():
+        loc = ROOT / loc
+    try:
+        if loc.is_file():
+            return loc.resolve()
+    except OSError:
+        return None
+    return None
+
+
 def lookup(event: dict[str, Any]) -> dict[str, Any] | None:
+    """Exact id or resolved script path. Stem / suffix is not a match."""
     name = str(event.get("tool_name") or "")
     raw_input = event.get("tool_input")
     payload: dict[str, Any] = raw_input if isinstance(raw_input, dict) else {}
     ident = str(payload.get("id") or payload.get("script") or name)
+    event_script = str(payload.get("script") or payload.get("file") or "")
+    named_path = bool(event_script)
+    event_path = _existing_file(event_script) if named_path else None
+
     for entry in load_entries():
-        if entry.get("id") == ident:
-            return entry
+        eid = str(entry.get("id") or "")
         script = str(entry.get("script") or "")
-        if script and ident.endswith(script):
+        locked = _existing_file(script)
+        if named_path:
+            if event_path is None or locked is None:
+                continue
+            if event_path == locked:
+                return entry
+            continue
+        if eid and (ident == eid or name == eid):
             return entry
-        if Path(ident).name and Path(script).stem == Path(ident).stem:
+        if script and ident == script:
             return entry
     return None
 
@@ -78,7 +111,7 @@ def decision_payload(permission: str, reason: str) -> dict[str, Any]:
 def handle(event: dict[str, Any]) -> dict[str, Any]:
     entry = lookup(event)
     if entry is None:
-        return decision_payload("allow", "not a locked tool")
+        return decision_payload("deny", "not a locked tool")
     text = bind_entry(entry)
     permission, _, reason = text.partition(": ")
     return decision_payload(permission, reason)

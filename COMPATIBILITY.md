@@ -22,3 +22,5 @@ User `cwd` is the project, not the front of `PYTHONPATH`.
 SKIPPED, not PASS. Re-take the lock.
 `ArtifactRef.source_hash` is additive (default empty). Empty still loads;
 a filled value is compared before import.
+PreToolUse 0.2.20+: a tool that reached the hook and is not in the index is
+deny. 0.2.19 allowed unknown. The settings matcher is unchanged.

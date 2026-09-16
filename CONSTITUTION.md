@@ -55,6 +55,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 62. 0.2.17: committed example locks are CPython 3.11 (AST neighbor ±1). Do not lock on 3.10.
 63. 0.2.18: sealed local imports are per-judge context, not a shared `sys.modules` name.
 64. 0.2.19: ArtifactRef does not import until source/body hash matches. Same function + extra module-level payload is `source_hash`, not `body_hash`.
+65. 0.2.20: PreToolUse deny on unknown; lookup is exact id or resolved path, not stem. demo.sh without PYTHONPATH. Action pins by SHA. macOS artifact is arm64.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.

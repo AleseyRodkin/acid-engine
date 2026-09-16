@@ -15,6 +15,9 @@ and not an MCP gateway.
   CLI `judge`/`locks`/`diff`, the supervisor worker, and the Claude Code
   hook all apply this gate. `lock` loads the file you present (approval).
   Library `judge_script` on an already-imported object does not.
+  The PreToolUse hook **deny**-s a tool that reached it and is not in
+  `locks/index.json`. Lookup is exact entry id or a resolved script path,
+  not basename. The settings matcher is how Bash never hits the hook.
   Library `resolve_script` / JSON blank with a filled `ArtifactRef.source_hash`
   or `body_hash` compare those to a snapshot of the file **before** exec.
   Empty hashes still load (phase 2b). `body_hash` is the entry callable, not
@@ -60,3 +63,4 @@ Helper-module swap: `tests/integration/test_local_deps.py`.
 Import-time side effect: `tests/integration/test_import_time.py`.
 Dependency TOCTOU / undeclared helper: `tests/integration/test_toctou.py`.
 Concurrent same-named helpers: `tests/integration/test_concurrent_helpers.py`.
+PreToolUse unknown / homonym: `tests/integration/test_hook.py`.

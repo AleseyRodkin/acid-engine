@@ -11,6 +11,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Import-time side effect | ✓ | ✓ | ✗ | ✓ | `test_import_time` |
 | Import-time via JSON blank | ✓ | ✓ | ✗ | ✓ | `test_json_blank_side_effect_blocked_before_load` |
 | Import-time via PreToolUse hook | ✓ | ✓ | ✗ | ✓ | `test_hook_import_side_effect_does_not_run` |
+| PreToolUse unknown tool | ✓ | ✓ | ✗ | — | `test_hook_unknown_tool_is_deny` |
+| PreToolUse same-stem / stolen id | ✓ | ✓ | ✗ | — | `test_hook_same_stem_foreign_file_is_deny` |
 | Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
 | Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |

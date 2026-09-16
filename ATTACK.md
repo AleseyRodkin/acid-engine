@@ -127,6 +127,18 @@ Guard: `tests/unit/test_resolve.py::test_artifact_source_hash_mismatch_does_not_
 A changed function against the old `body_hash` is the sibling test
 `test_artifact_body_hash_mismatch_does_not_import`.
 
+## 7. Hook: unknown, homonym, stolen id
+
+The PreToolUse hook is bind of locked tools, not an agent firewall. The
+settings matcher is how Bash never reaches the script. **If the hook runs**,
+the tool must be in the index — unknown is deny, not allow.
+
+Lookup is exact entry id or a resolved script path. `foo.py` is not
+`examples/tools/foo.json` because they share a stem. `tool_name=clean_text`
+plus `script=/tmp/clean_text.py` is not the locked `clean_text`.
+
+Guard: `tests/integration/test_hook.py`.
+
 ## What this is not
 
 - Not MCP tool-description scanning.

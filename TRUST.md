@@ -60,6 +60,8 @@ is the process that can be swapped. Use the supervisor when that matters.
 
 Hook / `locks --index` bind: the file about to run matches the lock. Not PASS.
 The hook hashes `source_hash` before import. A swapped file is deny; top-level code does not run.
+Unknown at the hook is deny (not enough facts is not allow). Lookup is exact id or resolved path, not basename.
+A patch of any contour file, including `cli.py`, requires re-taking every lock. That is the pin.
 `judge` with a worker: bind, seal local deps from those bytes, run, observe,
 verdict. PASS exists only on this path.
 

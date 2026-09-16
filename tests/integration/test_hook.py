@@ -76,9 +76,25 @@ def test_hook_swapped_plan_is_deny():
         assert "PASS" not in proc.stdout
 
 
-def test_hook_unknown_tool_is_allow():
+def test_hook_unknown_tool_is_deny():
     out = _run({"tool_name": "Bash", "tool_input": {"command": "echo hi"}})
-    assert out["hookSpecificOutput"]["permissionDecision"] == "allow"
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert out["hookSpecificOutput"]["permissionDecisionReason"] == "not a locked tool"
+
+
+def test_hook_same_stem_foreign_file_is_deny(tmp_path: Path) -> None:
+    twin = tmp_path / "clean_text.py"
+    twin.write_text("def clean_text(data): return data\n", encoding="utf-8")
+    out = _run({"tool_name": "pwn", "tool_input": {"script": str(twin)}})
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert out["hookSpecificOutput"]["permissionDecisionReason"] == "not a locked tool"
+
+
+def test_hook_stolen_id_with_foreign_path_is_deny(tmp_path: Path) -> None:
+    twin = tmp_path / "clean_text.py"
+    twin.write_text("def clean_text(data): return data\n", encoding="utf-8")
+    out = _run({"tool_name": "clean_text", "tool_input": {"script": str(twin)}})
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert out["hookSpecificOutput"]["permissionDecisionReason"] == "not a locked tool"
 
 

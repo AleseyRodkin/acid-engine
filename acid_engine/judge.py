@@ -25,7 +25,12 @@ def judge_script(
     iface: InterfaceContract | None = None,
     toolchain: Mapping[str, Any] | None = None,
 ) -> PipelineResult:
-    """Verdict only from a plan+iface pair and a contour pin. Self-lock is not a verdict."""
+    """Verdict only from a plan+iface pair and a contour pin. Self-lock is not a verdict.
+
+    Does not re-read the tool file. An already-imported callable is trusted as
+    presented. CLI / supervisor / hook hash the file before import. Embed via
+    `judge_script_from_lock`.
+    """
     from acid_engine.level2.implementation_canon import live_canon_kind
     from acid_engine.level3.script.resolve import materialize_script
     from acid_engine.worker import verify_runtime_pin

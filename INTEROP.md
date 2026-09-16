@@ -29,7 +29,7 @@ layer from them.
 | --- | --- |
 | CLI | `lock` / `judge` / `locks` / `diff` / `receipt` — [COMPATIBILITY.md](COMPATIBILITY.md) |
 | Library | `judge_script_from_lock`, `judge_script`, `lock_for_script`, `build_receipt` |
-| Hook | Claude Code PreToolUse bind only. Pre ≠ PASS. One harness. |
+| Hook | Claude Code PreToolUse bind only. Pre ≠ PASS. Unknown that reached the hook → deny. Exact id or resolved path. One harness. |
 | Receipt | `acid.receipt.v1`. Extra keys ignored. Optional `context`. |
 
 No APort / AGT / Copilot / MCP adapter in 0.2. Those wait on a caller.
@@ -50,6 +50,9 @@ receipt = build_receipt(
 
 `context` is attribution for a future evidence store. It is not identity.
 Missing context does not change PASS / FAIL / SKIPPED.
+
+`judge_script` on an already-imported callable does not re-hash the file.
+Embed via `judge_script_from_lock`.
 
 ## Not in this contract
 

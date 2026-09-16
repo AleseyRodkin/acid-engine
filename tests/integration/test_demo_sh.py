@@ -1,4 +1,4 @@
-"""demo.sh: honest PASS then tamper blocked."""
+"""demo.sh: honest PASS then tamper blocked. Does not set PYTHONPATH."""
 from __future__ import annotations
 
 import os
@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_demo_sh_blocks_tamper() -> None:
+    text = (ROOT / "demo.sh").read_text(encoding="utf-8")
+    assert "export PYTHONPATH" not in text
     proc = subprocess.run(
         ["bash", str(ROOT / "demo.sh")],
         capture_output=True,

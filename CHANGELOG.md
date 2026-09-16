@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.2.20 — 2026-09-16
+
+- PreToolUse: a tool that reached the hook and is not in the index is **deny** (not enough facts is not allow). The settings matcher is how Bash / Read never reach the hook.
+- Hook lookup is exact entry id or a resolved script path. Basename is not identity. Same stem plus a different file, or a stolen id with a foreign path, is deny.
+- `demo.sh` does not set `PYTHONPATH`. Installs the package if it is not importable.
+- CI composite Action pins `actions/checkout`, `actions/setup-python`, `actions/upload-artifact` to commit SHAs. `pypa/gh-action-pypi-publish` stays on the `v1.13.0` tag (GHCR image is published for the tag, not a SHA).
+- macOS supervisor artifact is `acid-judge-macos-arm64` (`macos-latest` is Apple Silicon).
+- Library `judge_script` still does not re-hash an already-imported callable. Embed via `judge_script_from_lock`. Contour still includes `cli.py` (a CLI patch reshoots locks). Signed lock / sandbox / MCP / branch protection: not this release.
+
 ## 0.2.19 — 2026-09-16
 
 - `ArtifactRef` does not import until `source_hash` / `body_hash` match a snapshot of the file. Same flow as the root tool: snapshot → hash → compare → pin → exec pinned bytes.

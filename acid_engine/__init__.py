@@ -1,4 +1,4 @@
-__version__ = "0.2.19"
+__version__ = "0.2.20"
 
 from acid_engine.judge import judge_script, judge_script_from_lock
 from acid_engine.level3.script.runner import dump_script_lock, lock_for_script

@@ -95,7 +95,7 @@ The contour is sought in `ACID_ENGINE_ROOT`, else the installed package (`python
 No `worker_hash` or no full `runtime_hashes` → SKIPPED. Mismatch → FAIL. The runtime hash is not in body identity.
 `locks --index` without `worker_hash` / `runtime_hashes` → FAIL, not fail-open.
 CLI `judge --plan` checks `source_hash` against the exec target **before import**, then the same runtime pins. `source_hash` mismatch → FAIL, the file is not imported. Missing `source_hash` → SKIPPED.
-The PreToolUse hook does the same gate before bind. The worker refuses to load without `source_hash`.
+The PreToolUse hook does the same gate before bind. If the hook runs, the tool must be in the index: unknown → deny. Lookup is exact id or resolved script path, not basename. The settings matcher is how Bash never reaches the hook. The worker refuses to load without `source_hash`.
 Supervisor `PYTHONPATH` is the trusted package first, not the user `cwd`. The worker is spawned as an absolute path, not `python -m`.
 `judge_script` without `toolchain` → SKIPPED (`runtime not pinned`). With `toolchain` but without full `runtime_hashes` → FAIL.
 `judge_script_from_lock` reads plan+iface+toolchain from the lock JSON.
