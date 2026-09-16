@@ -70,7 +70,7 @@ def test_public_exports_are_the_gate():
         "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.15"
+    assert acid_engine.__version__ == "0.2.16"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.16 — 2026-09-16
+
+- PreToolUse hook compares `source_hash` before import. A swapped tool file is deny; top-level side effects do not run.
+- Worker without `source_hash` refuses to load (not a quiet exec).
+- `origin_source_hash` and local-dep AST reads use the pinned snapshot, not a second disk read.
 - Showcase commands use `acid-judge` after install, not `PYTHONPATH=.`. Hidden `run` is not in COMMERCIAL start.
 - 0.1 bones plan moved to `docs/archive/PLAN.md`.
 

@@ -57,6 +57,7 @@ is the process that can be swapped. Use the supervisor when that matters.
 ## Pre-execution vs post-execution
 
 Hook / `locks --index` bind: the file about to run matches the lock. Not PASS.
+The hook hashes `source_hash` before import. A swapped file is deny; top-level code does not run.
 `judge` with a worker: bind, seal local deps from those bytes, run, observe,
 verdict. PASS exists only on this path.
 

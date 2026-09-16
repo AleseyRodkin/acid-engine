@@ -1,6 +1,7 @@
 """Top-level tool code must not run before source_hash matches the lock."""
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -141,3 +142,52 @@ def test_load_execs_pinned_bytes_not_later_disk(tmp_path: Path) -> None:
     )
     script = load_script_from_file(tool)
     assert script.implementation(1) == 2
+
+
+def test_json_blank_side_effect_blocked_before_load(tmp_path: Path) -> None:
+    """Judge the .json; side effect in implementation.file must not run on mismatch."""
+    py = tmp_path / "inc.py"
+    py.write_text(HONEST, encoding="utf-8")
+    blank = tmp_path / "inc.json"
+    blank.write_text(
+        json.dumps(
+            {
+                "schema": "acid.blank.script.v1",
+                "kind": "script",
+                "contract_id": "t/inc",
+                "version": "0.1.0",
+                "name": "inc",
+                "input_type": "int",
+                "output_type": "int",
+                "specification": {"policy": {}},
+                "implementation": {
+                    "language": "python",
+                    "file": "inc.py",
+                    "entry": "body",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    plan = tmp_path / "inc.plan.json"
+    lock = _cli("lock", "--script", str(blank), "--out", str(plan), cwd=tmp_path)
+    assert lock.returncode == 0, lock.stderr + lock.stdout
+    marker = tmp_path / "pwned"
+    py.write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('pwn')\n" + HONEST,
+        encoding="utf-8",
+    )
+    judged = _cli(
+        "judge",
+        "--script",
+        str(blank),
+        "--plan",
+        str(plan),
+        "--input",
+        "1",
+        cwd=tmp_path,
+    )
+    assert judged.returncode != 0
+    assert "source_hash" in judged.stdout
+    assert not marker.exists()
+

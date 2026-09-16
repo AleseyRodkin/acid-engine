@@ -51,6 +51,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 58. 0.2.13: comments, docstrings, CLI help in English.
 59. 0.2.14: source_hash before import; seal against locked dep hashes, one read; supervisor PYTHONPATH is the trusted package, not cwd.
 60. 0.2.15: PyPI name is `acid-judge`. Import remains `acid_engine`. Do not upload over `pypi.org/project/acid-engine`.
+61. 0.2.16: hook and worker do not import until `source_hash` matches. Missing pin on the worker is an error, not a load.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.

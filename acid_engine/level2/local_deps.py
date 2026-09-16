@@ -57,7 +57,7 @@ def origin_source_hash(fn: Callable[..., Any] | None) -> str | None:
     start = _origin_file(fn)
     if start is None:
         return None
-    return hashlib.sha256(start.read_bytes()).hexdigest()
+    return hashlib.sha256(read_source_bytes(start)).hexdigest()
 
 
 def _exec_target(path: Path) -> Path:
@@ -99,8 +99,8 @@ def detect_dynamic_imports(fn: Callable[..., Any] | None) -> tuple[str, ...]:
     if start is None:
         return ()
     try:
-        tree = ast.parse(start.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
+        tree = ast.parse(read_source_bytes(start).decode("utf-8"))
+    except (OSError, SyntaxError, UnicodeDecodeError):
         return ()
     found: set[str] = set()
     for node in ast.walk(tree):
@@ -143,8 +143,8 @@ def _walk(file: Path, root: Path, out: dict[str, str], seen: set[Path]) -> None:
         return
     seen.add(file)
     try:
-        src = file.read_text(encoding="utf-8")
-    except OSError:
+        src = read_source_bytes(file).decode("utf-8")
+    except (OSError, UnicodeDecodeError):
         return
     try:
         tree = ast.parse(src)
@@ -162,7 +162,7 @@ def _walk(file: Path, root: Path, out: dict[str, str], seen: set[Path]) -> None:
                 continue
             rel = _relkey(resolved, root)
             if rel not in out:
-                out[rel] = hashlib.sha256(resolved.read_bytes()).hexdigest()
+                out[rel] = hashlib.sha256(read_source_bytes(resolved)).hexdigest()
             _walk(resolved, root, out, seen)
 
 

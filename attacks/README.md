@@ -9,6 +9,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | --- | ---: | ---: | ---: | ---: | --- |
 | Body swap | ✓ | ✓ | ✗ | ✓ | `test_compute_amount_tamper` (`source_hash`) |
 | Import-time side effect | ✓ | ✓ | ✗ | ✓ | `test_import_time` |
+| Import-time via JSON blank | ✓ | ✓ | ✗ | ✓ | `test_json_blank_side_effect_blocked_before_load` |
+| Import-time via PreToolUse hook | ✓ | ✓ | ✗ | ✓ | `test_hook_import_side_effect_does_not_run` |
 | Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
 | Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |

@@ -85,6 +85,21 @@ Same class of miss as replacing `implementation_canon.py` on disk after the lock
 
 Code ≠ 0. `dependency_hash`. No `PASS`. Body does not run. Guard: `tests/integration/test_local_deps.py`.
 
+## 4. Import-time side effect
+
+Top-level code in the tool file is not `implementation`. CLI `judge`, the hook, and the worker hash `source_hash` **before** that file is imported.
+
+```bash
+# Honest lock, then prepend a write to the tool file, then judge with the old lock.
+acid-judge judge \
+  --script examples/tools/compute_amount.py \
+  --plan examples/tools/compute_amount.plan.json \
+  --input '{"cents": 1999, "qty": 2}'
+```
+
+Mismatch → `source_hash`, the file is not imported, no sentinel is created.
+Guard: `tests/integration/test_import_time.py`, `tests/integration/test_hook.py`.
+
 ## What this is not
 
 - Not MCP tool-description scanning.

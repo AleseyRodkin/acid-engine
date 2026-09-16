@@ -243,11 +243,12 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
     expected = req.get("source_hash")
     from acid_engine.level2.local_deps import pin_source_bytes, snapshot_exec_target
 
+    if not expected:
+        raise ValueError("source not pinned")
     target, src, actual = snapshot_exec_target(Path(str(script_path)))
-    if expected:
-        if actual != str(expected):
-            raise ValueError("source_hash mismatch")
-        pin_source_bytes(target, src)
+    if actual != str(expected):
+        raise ValueError("source_hash mismatch")
+    pin_source_bytes(target, src)
     script = materialize_script(load_script_from_file(str(script_path)))
     if op == "identify":
         return identify_script(script)

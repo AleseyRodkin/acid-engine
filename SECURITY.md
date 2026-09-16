@@ -12,6 +12,9 @@ and not an MCP gateway.
 
 - Bytes of the locked tool file **before import** (`source_hash`). A
   top-level side effect in the file cannot run until this matches.
+  CLI `judge`/`locks`/`diff`, the supervisor worker, and the Claude Code
+  hook all apply this gate. `lock` loads the file you present (approval).
+  Library `judge_script` on an already-imported object does not.
 - Bytes of the locked tool's implementation (AST canon, else bytecode).
   The live check is `module_hashes`. `interface_contract_hash` is derived
   from the same JSON for diffs; editing only `iface` in the lock file is
