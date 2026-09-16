@@ -38,7 +38,8 @@ and not an MCP gateway.
 - Local deps are sealed from **one read** of each file compared to the
   locked hash, then those bytes are executed. A swap between check and
   use is FAIL. Concurrent `judge_script` of two tools that both import
-  `helper.py` does not share a `sys.modules` slot.
+  `helper.py` does not share a `sys.modules` slot. `replay_run` uses
+  this same gate as `execute_plan` (runtime pin, bind, seal).
 - `python_version` (major.minor) and `canon_kind` in the lock's `toolchain`.
   AST: neighboring CPython minor (±1) is accepted. Bytecode: exact match.
   Distant versions FAIL with "re-take the lock", not module_hash.

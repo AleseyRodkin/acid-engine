@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Policy, Specification
@@ -5,7 +7,13 @@ from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.interface.contract import InterfaceContract
 from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.runner import bind_script_to_plan, execute_plan, replay_run
+from acid_engine.level3.script.runner import (
+    bind_script_to_plan,
+    dump_script_lock,
+    execute_plan,
+    lock_for_script,
+    replay_run,
+)
 from acid_engine.worker import live_toolchain
 
 
@@ -144,45 +152,154 @@ def test_bind_wrong_key_is_skipped_not_fallback():
 
 def test_replay_requires_lock_hash():
     script = _script(lambda x: x * 2)
-    plan = PlanLock.create(
-        plan_id="replay-test",
-        interface_contract_hash="hash",
-        resolved_policies={},
-        module_hashes={script.name: script.content_hash},
-        execution_mode=ExecutionMode.LIGHT,
-    )
-    assert replay_run(plan, script, 5, expected_output=10).ok
+    iface, plan = lock_for_script(script)
+    tc = live_toolchain()
+    assert replay_run(
+        plan, script, 5, expected_output=10, iface=iface, toolchain=tc
+    ).ok
 
     bad = _script(lambda x: x * 100)
-    mismatch = replay_run(plan, bad, 5, expected_output=10)
+    mismatch = replay_run(
+        plan, bad, 5, expected_output=10, iface=iface, toolchain=tc
+    )
     assert not mismatch.ok
     assert mismatch.status == ConformanceStatus.FAIL
 
 
 def test_replay_without_expected_is_skipped():
-    script = _script(lambda x: x * 2)
-    plan = PlanLock.create(
-        plan_id="replay-test",
-        interface_contract_hash="hash",
-        resolved_policies={},
-        module_hashes={script.name: script.content_hash},
-        execution_mode=ExecutionMode.LIGHT,
+    called = []
+
+    def body(x):
+        called.append(x)
+        return x * 2
+
+    script = _script(body)
+    iface, plan = lock_for_script(script)
+    result = replay_run(
+        plan, script, 5, iface=iface, toolchain=live_toolchain()
     )
-    result = replay_run(plan, script, 5)
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok
+    assert called == []
+
+
+def test_replay_without_iface_is_skipped_and_does_not_run():
+    called = []
+
+    def body(x):
+        called.append(x)
+        return x * 2
+
+    script = _script(body)
+    _iface, plan = lock_for_script(script)
+    result = replay_run(
+        plan, script, 5, expected_output=10, toolchain=live_toolchain()
+    )
+    assert result.status == ConformanceStatus.SKIPPED
+    assert "iface" in result.message
+    assert called == []
+
+
+def test_replay_without_toolchain_is_skipped_and_does_not_run():
+    called = []
+
+    def body(x):
+        called.append(x)
+        return x * 2
+
+    script = _script(body)
+    iface, plan = lock_for_script(script)
+    result = replay_run(plan, script, 5, expected_output=10, iface=iface)
+    assert result.status == ConformanceStatus.SKIPPED
+    assert "runtime not pinned" in result.message
+    assert called == []
 
 
 def test_replay_output_mismatch_is_fail():
     script = _script(lambda x: x * 2)
-    plan = PlanLock.create(
-        plan_id="replay-test",
-        interface_contract_hash="hash",
-        resolved_policies={},
-        module_hashes={script.name: script.content_hash},
-        execution_mode=ExecutionMode.LIGHT,
+    iface, plan = lock_for_script(script)
+    result = replay_run(
+        plan,
+        script,
+        5,
+        expected_output=999,
+        iface=iface,
+        toolchain=live_toolchain(),
     )
-    result = replay_run(plan, script, 5, expected_output=999)
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "output"
+
+
+def test_replay_poisoned_runtime_does_not_execute():
+    called = []
+
+    def body(x):
+        called.append(x)
+        return x * 2
+
+    script = _script(body)
+    iface, plan = lock_for_script(script)
+    payload = dump_script_lock(script)
+    tool = dict(payload["toolchain"])
+    hashes = dict(tool["runtime_hashes"])
+    hashes["acid_engine/level3/script/runner.py"] = "0" * 64
+    tool["runtime_hashes"] = hashes
+    poisoned = dict(payload)
+    poisoned["toolchain"] = tool
+    result = replay_run(
+        plan, script, 5, expected_output=10, iface=iface, toolchain=poisoned
+    )
+    assert not result.ok
+    assert result.status == ConformanceStatus.FAIL
+    assert result.failure is not None
+    assert result.failure.property_name == "runtime_hash"
+    assert called == []
+
+
+def test_replay_modified_dependency_does_not_execute(tmp_path: Path) -> None:
+    from acid_engine.cli import load_script_from_file
+
+    helper = tmp_path / "helper.py"
+    helper.write_text("def process(x):\n    return x * 2\n", encoding="utf-8")
+    entry = tmp_path / "entry.py"
+    entry.write_text(
+        """
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    from helper import process
+    return process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="int",
+    output_type="int",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    script = load_script_from_file(entry)
+    iface, plan = lock_for_script(script)
+    payload = dump_script_lock(script)
+    honest = replay_run(
+        plan, script, 5, expected_output=10, iface=iface, toolchain=payload
+    )
+    assert honest.ok, honest.message
+    helper.write_text("def process(x):\n    return 4995\n", encoding="utf-8")
+    result = replay_run(
+        plan, script, 5, expected_output=10, iface=iface, toolchain=payload
+    )
+    assert not result.ok
+    assert result.status == ConformanceStatus.FAIL
+    assert result.failure is not None
+    assert result.failure.property_name == "dependency_hash"
+    assert result.failure.actual != "4995"

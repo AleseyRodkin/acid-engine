@@ -7,10 +7,9 @@ from acid_engine.level2.conformance import (
 from acid_engine.level2.failure import FailureReason
 from acid_engine.level2.identity import ContractId, Version
 from acid_engine.level2.specification import Specification
-from acid_engine.level3.bootstrap.plan_lock import PlanLock
-from acid_engine.level3.script.modes import ExecutionMode
 from acid_engine.level3.script.module import ScriptModule
-from acid_engine.level3.script.runner import replay_run
+from acid_engine.level3.script.runner import lock_for_script, replay_run
+from acid_engine.worker import live_toolchain
 
 
 def test_explain_pass():
@@ -51,12 +50,13 @@ def test_replay_ok():
         implementation=lambda x: x * 2,
         name="double",
     )
-    plan = PlanLock.create(
-        plan_id="replay-test",
-        interface_contract_hash="hash",
-        resolved_policies={},
-        module_hashes={script.name: script.content_hash},
-        execution_mode=ExecutionMode.LIGHT,
+    iface, plan = lock_for_script(script)
+    result = replay_run(
+        plan,
+        script,
+        5,
+        expected_output=10,
+        iface=iface,
+        toolchain=live_toolchain(),
     )
-    result = replay_run(plan, script, 5, expected_output=10)
     assert result.ok

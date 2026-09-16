@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.22 — 2026-09-16
+
+- `replay_run` uses the same verified execution as `execute_plan`: runtime pin, interface bind, body/dep hashes, `seal_local_deps`, then run. Poisoned contour or a swapped helper does not execute.
+- `replay_run` / `replay_from_record` take `iface` and `toolchain`. Missing either is SKIPPED, not a silent bind-only run.
+- Library `judge_script` still does not re-hash an already-imported callable. Embed via `judge_script_from_lock`. Signed lock / empty-hash SKIPPED / `_PINNED_SOURCE` snapshots: not this release.
+
 ## 0.2.21 — 2026-09-16
 
 - GitHub repository is [`acid-engine`](https://github.com/AleseyRodkin/acid-engine) (was `acid-engine-2.0`). Old URLs redirect.

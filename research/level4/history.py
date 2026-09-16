@@ -4,6 +4,7 @@ No state rollback — lookup by run_id only.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -52,10 +53,14 @@ def replay_from_record(
     script: Any,
     expected_output: Any | None = None,
     plan: Any = None,
+    *,
+    iface: Any = None,
+    toolchain: Mapping[str, Any] | None = None,
 ) -> ConformanceResult:
     """
     Re-run the script on the recorded input and check the output against the fact.
-    Without plan.lock — SKIPPED. Does not bypass bind.
+    Without plan.lock — SKIPPED. Does not bypass bind, runtime pin, or seal.
+    iface+toolchain required the same way as execute_plan.
     """
     if plan is None:
         return ConformanceResult.skipped(
@@ -65,4 +70,11 @@ def replay_from_record(
     from acid_engine.level3.script.runner import replay_run
 
     target = expected_output if expected_output is not None else record.output_data
-    return replay_run(plan, script, record.input_data, expected_output=target)
+    return replay_run(
+        plan,
+        script,
+        record.input_data,
+        expected_output=target,
+        iface=iface,
+        toolchain=toolchain,
+    )

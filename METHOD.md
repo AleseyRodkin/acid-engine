@@ -143,13 +143,15 @@ The output fact is `expected_output` or `record.output_data`. Mismatch → FAIL.
 
 ## Plan.lock
 
-`execute_plan` / `replay_run` check `script.content_hash` against `plan.module_hashes`
-**before** execution. Mismatch → FAIL, the body is not run.
+`execute_plan` / `replay_run` share one gate: runtime pin, interface hash,
+`script.content_hash` against `plan.module_hashes`, sealed local deps, then run.
+Mismatch → FAIL, the body is not run.
 CLI / supervisor also check `source_hash` **before import**.
 No hashes in the lock → SKIPPED.
 `interface_contract_hash` is checked too.
 Local deps are sealed from **one read** compared to locked `dep:` hashes, then those bytes are exec'd. Undeclared local import → FAIL. Sealed imports are per-judge context, not a shared `sys.modules` name.
-`replay_run` without `expected_output` → SKIPPED.
+`replay_run` without `iface` or `toolchain` → SKIPPED.
+`replay_run` without `expected_output` → SKIPPED after the gate (body not run).
 `execute_plan` returns `PipelineResult` (data + observation + conformance).
 
 ## Effects / DataPlane
@@ -177,4 +179,4 @@ A new canon version (`python.ast.v2`) does not silently replace old semantics: t
 
 ## History
 
-`replay_from_record` without `plan` → SKIPPED. With `plan` → `replay_run`.
+`replay_from_record` without `plan` → SKIPPED. With `plan` → `replay_run` (same `iface`+`toolchain` requirement).

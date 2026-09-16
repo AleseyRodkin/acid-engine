@@ -10,6 +10,7 @@ from acid_engine.level4.history import (
     find_record,
     replay_from_record,
 )
+from acid_engine.worker import live_toolchain
 
 
 def _script(impl, name="double"):
@@ -21,6 +22,17 @@ def _script(impl, name="double"):
         output_type="int",
         implementation=impl,
         name=name,
+    )
+
+
+def _replay(record, script, plan, iface, **kwargs):
+    return replay_from_record(
+        record,
+        script,
+        plan=plan,
+        iface=iface,
+        toolchain=live_toolchain(),
+        **kwargs,
     )
 
 
@@ -44,28 +56,28 @@ def test_history_store_and_find():
 
 def test_replay_from_record_ok():
     script = _script(lambda x: x * 2)
-    _iface, plan = lock_for_script(script)
+    iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    result = replay_from_record(record, script, plan=plan)
+    result = _replay(record, script, plan, iface)
     assert result.ok
     assert result.status == ConformanceStatus.PASS
 
 
 def test_replay_from_record_uses_record_output_as_fact():
     script = _script(lambda x: x * 2)
-    _iface, plan = lock_for_script(script)
+    iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    assert replay_from_record(record, script, plan=plan).ok
+    assert _replay(record, script, plan, iface).ok
 
 
 def test_replay_from_record_mismatch_is_fail():
     script = _script(lambda x: x * 2)
-    _iface, plan = lock_for_script(script)
+    iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 999, obs, True)
-    result = replay_from_record(record, script, plan=plan)
+    result = _replay(record, script, plan, iface)
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert result.failure.property_name == "output"
@@ -73,11 +85,11 @@ def test_replay_from_record_mismatch_is_fail():
 
 def test_replay_from_record_explicit_expected():
     script = _script(lambda x: x * 2)
-    _iface, plan = lock_for_script(script)
+    iface, plan = lock_for_script(script)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    assert replay_from_record(record, script, expected_output=10, plan=plan).ok
-    bad = replay_from_record(record, script, expected_output=999, plan=plan)
+    assert _replay(record, script, plan, iface, expected_output=10).ok
+    bad = _replay(record, script, plan, iface, expected_output=999)
     assert not bad.ok
     assert bad.status == ConformanceStatus.FAIL
 
@@ -91,6 +103,18 @@ def test_replay_from_record_without_plan_is_skipped():
     assert not result.ok
 
 
+def test_replay_from_record_without_iface_is_skipped():
+    script = _script(lambda x: x * 2)
+    _iface, plan = lock_for_script(script)
+    obs = ExecutionObservation.create(0, 0.001, "completed")
+    record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
+    result = replay_from_record(
+        record, script, plan=plan, toolchain=live_toolchain()
+    )
+    assert result.status == ConformanceStatus.SKIPPED
+    assert not result.ok
+
+
 def test_replay_swapped_body_fails_against_record():
     good = _script(lambda x: x * 2)
     called = []
@@ -100,11 +124,11 @@ def test_replay_swapped_body_fails_against_record():
         return x * 100
 
     bad = _script(swapped)
-    _iface, plan = lock_for_script(good)
+    iface, plan = lock_for_script(good)
     obs = ExecutionObservation.create(0, 0.001, "completed")
     record = RunRecord("r1", "hash", 0.0, 5, 10, obs, True)
-    assert replay_from_record(record, good, plan=plan).ok
-    result = replay_from_record(record, bad, plan=plan)
+    assert _replay(record, good, plan, iface).ok
+    result = _replay(record, bad, plan, iface)
     assert not result.ok
     assert result.status == ConformanceStatus.FAIL
     assert called == []

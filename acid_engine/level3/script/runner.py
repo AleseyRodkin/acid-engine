@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from acid_engine.level2.conformance import (
@@ -207,48 +208,55 @@ def load_script_lock(data: Mapping[str, Any]) -> tuple[InterfaceContract, PlanLo
     return iface, plan
 
 
-def execute_plan(
+@dataclass(frozen=True, slots=True)
+class _VerifiedExecution:
+    """Internal: only _prepare_execution constructs this. Not a public trust token."""
+
+    script: ScriptModule
+    fn: Callable[..., Any]
+
+
+def _prepare_execution(
     iface: InterfaceContract,
     plan: PlanLock,
     script: ScriptModule,
-    input_data: Any,
     *,
     toolchain: Mapping[str, Any] | None = None,
-) -> PipelineResult:
-    """Run the script only if it matches plan.lock and the contour is pinned."""
-    from acid_engine.level3.script.resolve import materialize_script
+) -> tuple[_VerifiedExecution | None, ConformanceResult | None]:
+    """Same gate for execute_plan and replay_run. Second value set → do not run."""
+    from acid_engine.level3.script.resolve import (
+        materialize_script,
+        resolve_script,
+        unresolved_conformance,
+    )
     from acid_engine.worker import verify_runtime_pin
 
     if toolchain is None:
-        return PipelineResult(
-            conformance=ConformanceResult.skipped("runtime not pinned")
-        )
+        return None, ConformanceResult.skipped("runtime not pinned")
     pin = verify_runtime_pin(
         toolchain, live_canon_kind=live_canon_kind(script.implementation)
     )
     if pin is not None:
-        return PipelineResult(conformance=pin)
+        return None, pin
 
     script = materialize_script(script)
     if plan.interface_contract_hash != iface.content_hash:
-        return PipelineResult(
-            conformance=ConformanceResult(
-                status=ConformanceStatus.FAIL,
-                level=ConformanceLevel.STRUCTURAL,
-                message="plan.lock interface hash mismatch",
-                failure=FailureReason(
-                    node_id=script.name,
-                    contract_id=str(iface.contract_id),
-                    property_name="interface_contract_hash",
-                    expected=plan.interface_contract_hash,
-                    actual=iface.content_hash,
-                ),
-            )
+        return None, ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="plan.lock interface hash mismatch",
+            failure=FailureReason(
+                node_id=script.name,
+                contract_id=str(iface.contract_id),
+                property_name="interface_contract_hash",
+                expected=plan.interface_contract_hash,
+                actual=iface.content_hash,
+            ),
         )
 
     bound = bind_script_to_plan(plan, script)
     if bound is not None:
-        return PipelineResult(conformance=bound)
+        return None, bound
 
     leaked = seal_local_deps(
         script.implementation,
@@ -259,29 +267,36 @@ def execute_plan(
         },
     )
     if leaked is not None:
-        return PipelineResult(
-            conformance=ConformanceResult(
-                status=ConformanceStatus.FAIL,
-                level=ConformanceLevel.STRUCTURAL,
-                message="plan.lock dependency hash mismatch",
-                failure=FailureReason(
-                    node_id=script.name,
-                    contract_id=str(iface.contract_id),
-                    property_name="dependency_hash",
-                    expected="sealed",
-                    actual="drift",
-                    detail=leaked,
-                ),
-            )
+        return None, ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="plan.lock dependency hash mismatch",
+            failure=FailureReason(
+                node_id=script.name,
+                contract_id=str(iface.contract_id),
+                property_name="dependency_hash",
+                expected="sealed",
+                actual="drift",
+                detail=leaked,
+            ),
         )
-
-    from acid_engine.level3.script.python_runtime import run_script
-    from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance
 
     fn, unresolved = resolve_script(script)
     if unresolved is not None:
-        return PipelineResult(conformance=unresolved_conformance(script, unresolved))
+        return None, unresolved_conformance(script, unresolved)
+    if fn is None:
+        return None, unresolved_conformance(script, "missing_implementation")
+    return _VerifiedExecution(script=script, fn=fn), None
 
+
+def _execute_verified(
+    verified: _VerifiedExecution,
+    input_data: Any,
+    plan: PlanLock,
+) -> PipelineResult:
+    from acid_engine.level3.script.python_runtime import run_script
+
+    script = verified.script
     in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
     input_snap = ContainerSnapshot.create(
         port_ref=in_port,
@@ -290,7 +305,7 @@ def execute_plan(
         data=input_data,
     )
     output_snap, obs, _delta, _state = run_script(
-        script, input_snap, mode=plan.execution_mode, fn=fn,
+        script, input_snap, mode=plan.execution_mode, fn=verified.fn,
     )
     conf = check_conformance(
         required_output_type=script.output_type,
@@ -307,65 +322,66 @@ def execute_plan(
     )
 
 
+def execute_plan(
+    iface: InterfaceContract,
+    plan: PlanLock,
+    script: ScriptModule,
+    input_data: Any,
+    *,
+    toolchain: Mapping[str, Any] | None = None,
+) -> PipelineResult:
+    """Run the script only if it matches plan.lock and the contour is pinned."""
+    verified, blocked = _prepare_execution(
+        iface, plan, script, toolchain=toolchain
+    )
+    if blocked is not None:
+        return PipelineResult(conformance=blocked)
+    assert verified is not None
+    return _execute_verified(verified, input_data, plan)
+
+
 def replay_run(
     plan: PlanLock,
     script: ScriptModule,
     input_data: Any,
     expected_output: Any | None = None,
+    *,
+    iface: InterfaceContract | None = None,
+    toolchain: Mapping[str, Any] | None = None,
 ) -> ConformanceResult:
     """
-    Replay against plan.lock.
-    Without expected_output — SKIPPED ("did not crash" ≠ replay).
-    Hash mismatch — FAIL, the body is not run.
+    Replay against plan.lock through the same gate as execute_plan.
+    Without iface or toolchain — SKIPPED (runtime not pinned / pair required).
+    Without expected_output — SKIPPED after the gate ("did not crash" ≠ replay).
+    Hash / pin / seal mismatch — FAIL, the body is not run.
     Output ≠ expected — FAIL.
     """
-    from acid_engine.level3.script.resolve import materialize_script
-
-    script = materialize_script(script)
-    bound = bind_script_to_plan(plan, script)
-    if bound is not None:
-        return bound
-
+    if iface is None:
+        return ConformanceResult.skipped(
+            "plan and iface must be provided together"
+        )
+    verified, blocked = _prepare_execution(
+        iface, plan, script, toolchain=toolchain
+    )
+    if blocked is not None:
+        return blocked
     if expected_output is None:
         return ConformanceResult.skipped(
             "replay without expected_output is not a fact"
         )
-
-    from acid_engine.level3.script.python_runtime import run_script
-    from acid_engine.level3.script.resolve import resolve_script, unresolved_conformance
-
-    fn, unresolved = resolve_script(script)
-    if unresolved is not None:
-        return unresolved_conformance(script, unresolved)
-
-    in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
-    input_snap = ContainerSnapshot.create(
-        port_ref=in_port,
-        contract_id=script.contract_id,
-        contract_hash=script.content_hash,
-        data=input_data,
-    )
-    output_snap, obs, _delta, _state = run_script(
-        script, input_snap, mode=plan.execution_mode, fn=fn,
-    )
-    if output_snap.data != expected_output:
+    assert verified is not None
+    result = _execute_verified(verified, input_data, plan)
+    if result.data != expected_output:
         return ConformanceResult(
             status=ConformanceStatus.FAIL,
             level=ConformanceLevel.OPERATIONAL,
             message="replay output mismatch",
             failure=FailureReason(
-                node_id=script.name,
-                contract_id=str(script.contract_id),
+                node_id=verified.script.name,
+                contract_id=str(verified.script.contract_id),
                 property_name="output",
                 expected=expected_output,
-                actual=output_snap.data,
+                actual=result.data,
             ),
         )
-    return check_conformance(
-        required_output_type=script.output_type,
-        provided_data=output_snap.data,
-        obs=obs,
-        policy=script.specification.policy,
-        node_id=script.name,
-        contract_id=str(script.contract_id),
-    )
+    return result.conformance

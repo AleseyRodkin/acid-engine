@@ -28,6 +28,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Concurrent same-named helpers | ✓ | ✓ | ✗ | ✓ | `test_concurrent_helpers` |
 | ArtifactRef file swap before import | ✓ | ✓ | ✗ | ✓ | `test_artifact_source_hash_mismatch_does_not_import` |
 | ArtifactRef entry swap before import | ✓ | ✓ | ✗ | ✓ | `test_artifact_body_hash_mismatch_does_not_import` |
+| Replay poisoned runtime contour | ✓ | ✓ | ✗ | ✓ | `test_replay_poisoned_runtime_does_not_execute` |
+| Replay swapped helper | ✓ | ✓ | ✗ | ✓ | `test_replay_modified_dependency_does_not_execute` |
 | Undeclared helper after lock | ✓ | ✓ | ✗ | ✓ | `test_toctou` |
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |

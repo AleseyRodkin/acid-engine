@@ -76,6 +76,7 @@ acid-judge judge \
 ```
 
 Code ≠ 0. `runtime_hash`. No `PASS`. Guard: `tests/integration/test_cli.py::test_cli_judge_runtime_mismatch_fails_before_pass`.
+`replay_run` is the same gate. Guard: `tests/unit/test_plan_lock_bind.py::test_replay_poisoned_runtime_does_not_execute`.
 
 Same class of miss as replacing `implementation_canon.py` on disk after the lock was taken.
 
@@ -84,6 +85,7 @@ Same class of miss as replacing `implementation_canon.py` on disk after the lock
 `entry.py` imports `helper.py`. Lock pins `dep:helper.py`. Replace only helper.
 
 Code ≠ 0. `dependency_hash`. No `PASS`. Body does not run. Guard: `tests/integration/test_local_deps.py`.
+Same through `replay_run`: `tests/unit/test_plan_lock_bind.py::test_replay_modified_dependency_does_not_execute`.
 
 ## 4. Import-time side effect
 
