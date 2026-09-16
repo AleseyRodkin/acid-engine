@@ -1,7 +1,7 @@
 # Security
 
 Report a vulnerability privately: open a GitHub Security Advisory on
-[AleseyRodkin/acid-engine-2.0](https://github.com/AleseyRodkin/acid-engine-2.0)
+[AleseyRodkin/acid-engine](https://github.com/AleseyRodkin/acid-engine)
 or email the account that owns that repository. Target response: 7 days.
 
 This is a fail-closed **file lock** on a locally approved Python-tool body

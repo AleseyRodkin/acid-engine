@@ -23,12 +23,21 @@ def test_action_yml_runs_locks_index():
 def test_readme_install_has_no_pythonpath():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "acid-judge lock --script FILE" in readme
-    assert "uses: AleseyRodkin/acid-engine-2.0@" in readme
+    assert "uses: AleseyRodkin/acid-engine@" in readme
+    assert "uses: AleseyRodkin/acid-engine-2.0@" not in readme
     assert "judge: true" in readme
     assert "acid-judge-smoke" in readme
     assert "pip install" in readme
     assert "pip install acid-judge" in readme
+    assert "pip install acid-engine" in readme
     assert "Not published to PyPI" not in readme
     for line in readme.splitlines():
         if line.startswith("acid-judge ") or line.startswith("pip install"):
             assert "PYTHONPATH" not in line
+
+
+def test_pypi_workflow_publishes_both_names():
+    text = (ROOT / ".github" / "workflows" / "pypi.yml").read_text(encoding="utf-8")
+    assert "dist_name: acid-judge" in text
+    assert "dist_name: acid-engine" in text
+    assert "fail-fast: false" in text

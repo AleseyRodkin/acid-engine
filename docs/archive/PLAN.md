@@ -6,7 +6,7 @@ Brief for the builder. Law is only [METHOD.md](../../METHOD.md).
 ARCHITECTURE.md is not a plan (the “OS” tail before the 21.08 narrowing). Archive: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Date:** 31.08.2026
-**Repo:** https://github.com/AleseyRodkin/acid-engine-2.0
+**Repo:** https://github.com/AleseyRodkin/acid-engine
 **Start HEAD:** `8e1b2a7`
 **Python ≥ 3.11, 0 runtime dependencies**
 **Tests at start:** 165 passed

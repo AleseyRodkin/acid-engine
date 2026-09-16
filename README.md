@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.20**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.21**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -71,6 +71,8 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 
 ```bash
 pip install acid-judge
+# same release from 0.2.21:
+pip install acid-engine
 acid-judge lock --script FILE --out LOCK.json
 acid-judge judge --script FILE --plan LOCK.json --input '...'
 acid-judge locks --index locks/index.json
@@ -79,12 +81,12 @@ acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
 ```
 
 `python -m acid_engine` is the same CLI. `PYTHONPATH=.` is not needed after `pip install`.
-From git: `pip install "acid-judge @ git+https://github.com/AleseyRodkin/acid-engine-2.0.git"`.
+From git: `pip install "acid-judge @ git+https://github.com/AleseyRodkin/acid-engine.git"`.
 
-GitHub Action: `uses: AleseyRodkin/acid-engine-2.0@v0.2.20`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+GitHub Action: `uses: AleseyRodkin/acid-engine@v0.2.21`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ```yaml
-- uses: AleseyRodkin/acid-engine-2.0@v0.2.20
+- uses: AleseyRodkin/acid-engine@v0.2.21
   with:
     index: locks/index.json
     judge: true   # optional: execute + receipt. Default is bind only.
@@ -133,8 +135,8 @@ Threat model: [SECURITY.md](SECURITY.md). Coverage: [attacks/](attacks/README.md
 `diff --script --plan` — approved vs live table. Does not execute, not PASS.
 `receipt --sign` / `receipt --verify` — Ed25519 on the receipt canon, local openssl. Not Sigstore.
 
-The product is Acid Judge. PyPI package: `acid-judge`. Import: `acid_engine`. CLI: `acid-judge`. Repository: `acid-engine-2.0`.
-`pip install acid-engine` is a different product (data contracts, Apache 2.0). This release does not overwrite it.
+The product is Acid Judge. Repository: [`acid-engine`](https://github.com/AleseyRodkin/acid-engine). Import: `acid_engine`. CLI: `acid-judge`.
+PyPI: `acid-judge` (0.2.15+) and `acid-engine` (0.2.21+), same release. `acid-engine==0.2.0` was the archived data-contracts tree ([`acid_engine_archive`](https://github.com/AleseyRodkin/acid_engine_archive)).
 
 Showcase:
 
@@ -153,7 +155,7 @@ License: [LICENSE](LICENSE).
 The `acid-judge` binary is a supervisor: identify → bind → run worker → verdict.
 Only the Python canon hashes the body. Without a worker — SKIPPED, not PASS. Observation without a worker is not a verdict.
 Contour: `cwd/acid_engine/` (this repository), else `ACID_ENGINE_ROOT`, else the installed package. Not a foreign project's `cwd`.
-Linux/Windows/macOS: [Releases](https://github.com/AleseyRodkin/acid-engine-2.0/releases).
+Linux/Windows/macOS: [Releases](https://github.com/AleseyRodkin/acid-engine/releases).
 
 0.2.x compatibility: [COMPATIBILITY.md](COMPATIBILITY.md).
 

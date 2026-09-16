@@ -12,8 +12,9 @@ Public contract for an adopter who pins a 0.2 lock and CLI in their own CI.
 - **Patch (0.2.n)** may add keys and warnings. It does not rename or remove keys
   that existed in 0.2.4.
 - **Breaking** lock format or CLI → 0.3.0.
-- **PyPI (0.2.15+):** `pip install acid-judge`. Import `acid_engine`. The
-  distribution `acid-engine` on PyPI is a different product and stays that way.
+- **PyPI (0.2.15+):** `pip install acid-judge`. Import `acid_engine`. CLI `acid-judge`.
+  **0.2.21+:** `pip install acid-engine` is the same release. `acid-engine==0.2.0`
+  was the archived data-contracts product.
 
 Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
 (`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "acid-judge"
-version = "0.2.20"
+version = "0.2.21"
 description = "Fail-closed gate for a locked Python-tool body"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -22,9 +22,9 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/AleseyRodkin/acid-engine-2.0"
-Issues = "https://github.com/AleseyRodkin/acid-engine-2.0/issues"
-Changelog = "https://github.com/AleseyRodkin/acid-engine-2.0/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/AleseyRodkin/acid-engine"
+Issues = "https://github.com/AleseyRodkin/acid-engine/issues"
+Changelog = "https://github.com/AleseyRodkin/acid-engine/blob/main/CHANGELOG.md"
 
 [project.scripts]
 acid-judge = "acid_engine.cli:main"

@@ -1,6 +1,6 @@
 # AcidEngine — state
 
-**Repository:** https://github.com/AleseyRodkin/acid-engine-2.0
+**Repository:** https://github.com/AleseyRodkin/acid-engine
 Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMMERCIAL.md.
 
 ## Snapshot 12.09.2026
@@ -56,6 +56,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 63. 0.2.18: sealed local imports are per-judge context, not a shared `sys.modules` name.
 64. 0.2.19: ArtifactRef does not import until source/body hash matches. Same function + extra module-level payload is `source_hash`, not `body_hash`.
 65. 0.2.20: PreToolUse deny on unknown; lookup is exact id or resolved path, not stem. demo.sh without PYTHONPATH. Action pins by SHA. macOS artifact is arm64.
+66. 0.2.21: GitHub repo is `acid-engine`. PyPI `acid-engine` 0.2.21+ is this product (same as `acid-judge`). Old data-contracts tree is `acid_engine_archive`.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.

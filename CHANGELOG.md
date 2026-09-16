@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.21 — 2026-09-16
+
+- GitHub repository is [`acid-engine`](https://github.com/AleseyRodkin/acid-engine) (was `acid-engine-2.0`). Old URLs redirect.
+- The 2026 data-contracts tree is [`acid_engine_archive`](https://github.com/AleseyRodkin/acid_engine_archive) (was `acid_engine`).
+- PyPI: `acid-judge` stays. `acid-engine` 0.2.21+ is this product (same files). `acid-engine==0.2.0` was the archive.
+- Import remains `acid_engine`. CLI remains `acid-judge`. Contour unchanged.
+
 ## 0.2.20 — 2026-09-16
 
 - PreToolUse: a tool that reached the hook and is not in the index is **deny** (not enough facts is not allow). The settings matcher is how Bash / Read never reach the hook.
