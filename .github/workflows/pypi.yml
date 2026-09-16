@@ -31,4 +31,5 @@ jobs:
           assert names[0].name.startswith("acid_judge-"), names[0].name
           PY
       - name: Publish
-        uses: pypa/gh-action-pypi-publish@106e0b0b7c337fa67ed433972f777c6357f78598
+        # Docker image is published for the v1.13.0 tag, not for a commit SHA.
+        uses: pypa/gh-action-pypi-publish@v1.13.0
