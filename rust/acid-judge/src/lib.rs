@@ -722,7 +722,7 @@ mod tests {
 
     #[test]
     fn worker_hash_without_runtime_hashes_is_skipped() {
-        let _guard = RootGuard;
+        let _guard = RootGuard::acquire();
         let tmp = std::env::temp_dir().join(format!("acid-worker-only-{}", std::process::id()));
         let pkg = tmp.join("acid_engine");
         std::fs::create_dir_all(&pkg).unwrap();
@@ -746,7 +746,7 @@ mod tests {
 
     #[test]
     fn missing_source_hash_is_skipped_after_runtime_pin() {
-        let _guard = RootGuard;
+        let _guard = RootGuard::acquire();
         let tmp = std::env::temp_dir().join(format!("acid-source-skip-{}", std::process::id()));
         let files = [
             "acid_engine/worker.py",
@@ -827,7 +827,18 @@ mod tests {
         assert_eq!(r.property.as_deref(), Some("runtime_hash"));
     }
 
-    struct RootGuard;
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    struct RootGuard {
+        _lock: std::sync::MutexGuard<'static, ()>,
+    }
+    impl RootGuard {
+        fn acquire() -> Self {
+            Self {
+                _lock: ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner()),
+            }
+        }
+    }
     impl Drop for RootGuard {
         fn drop(&mut self) {
             std::env::remove_var("ACID_ENGINE_ROOT");
@@ -836,7 +847,7 @@ mod tests {
 
     #[test]
     fn pin_uses_acid_engine_root_not_cwd() {
-        let _guard = RootGuard;
+        let _guard = RootGuard::acquire();
         let pid = std::process::id();
         let pkg_root = std::env::temp_dir().join(format!("acid-root-pkg-{pid}"));
         let empty_cwd = std::env::temp_dir().join(format!("acid-root-cwd-{pid}"));
@@ -884,7 +895,7 @@ mod tests {
 
     #[test]
     fn missing_cwd_package_is_not_worker_source_missing_in_cwd() {
-        let _guard = RootGuard;
+        let _guard = RootGuard::acquire();
         std::env::remove_var("ACID_ENGINE_ROOT");
         let empty_cwd = std::env::temp_dir().join(format!(
             "acid-empty-cwd-{}",

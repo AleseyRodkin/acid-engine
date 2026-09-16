@@ -64,6 +64,9 @@ verdict. PASS exists only on this path.
 Local deps are sealed against the **locked** `dep:` hash from one read of each
 file immediately before run. A write to `helper.py` after that read does not
 change what `import helper` sees. An undeclared local import is FAIL.
+Sealed modules are keyed per judge context (`acid_dep_<id>_…`), not under a
+shared `sys.modules["helper"]` slot — two tools with the same helper name do
+not cross.
 
 Symlinks are followed. Identity is the target's bytes. Retarget after lock
 is `source_hash` FAIL (the followed path's bytes changed before import).

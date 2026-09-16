@@ -100,6 +100,13 @@ acid-judge judge \
 Mismatch → `source_hash`, the file is not imported, no sentinel is created.
 Guard: `tests/integration/test_import_time.py`, `tests/integration/test_hook.py`.
 
+## 5. Concurrent same-named helpers
+
+Two approved tools, each with its own `helper.py`. Embed `judge_script` on
+threads. A shared `sys.modules["helper"]` slot would PASS the other's body.
+
+Guard: `tests/integration/test_concurrent_helpers.py`.
+
 ## What this is not
 
 - Not MCP tool-description scanning.

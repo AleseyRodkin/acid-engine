@@ -144,7 +144,7 @@ The output fact is `expected_output` or `record.output_data`. Mismatch → FAIL.
 CLI / supervisor also check `source_hash` **before import**.
 No hashes in the lock → SKIPPED.
 `interface_contract_hash` is checked too.
-Local deps are sealed from **one read** compared to locked `dep:` hashes, then those bytes are exec'd. Undeclared local import → FAIL.
+Local deps are sealed from **one read** compared to locked `dep:` hashes, then those bytes are exec'd. Undeclared local import → FAIL. Sealed imports are per-judge context, not a shared `sys.modules` name.
 `replay_run` without `expected_output` → SKIPPED.
 `execute_plan` returns `PipelineResult` (data + observation + conformance).
 

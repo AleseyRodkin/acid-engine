@@ -2,18 +2,27 @@
 from __future__ import annotations
 
 import ast
+import builtins
+import contextvars
 import hashlib
 import importlib.util
 import inspect
 import sys
+import threading
 import types
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 _STDLIB = frozenset(getattr(sys, "stdlib_module_names", ()))
 # Bytes hashed at the source_hash gate. Import/exec must use these, not a second read.
 _PINNED_SOURCE: dict[str, bytes] = {}
+# Per-judge sealed imports. Not a shared sys.modules["helper"] slot.
+_SEALED: contextvars.ContextVar[dict[str, types.ModuleType] | None] = contextvars.ContextVar(
+    "acid_sealed_imports", default=None
+)
+_ORIG_IMPORT: Any = None
+_HOOK_LOCK = threading.Lock()
 
 
 def pin_source_bytes(path: Path, src: bytes) -> None:
@@ -220,6 +229,83 @@ def _py_file(candidate: Path, root: Path) -> Path | None:
     return None
 
 
+def _import_name(rel: str) -> str:
+    if rel.endswith(".py"):
+        rel = rel[:-3]
+    return rel.replace("/", ".").replace("\\", ".")
+
+
+def _ensure_import_hook() -> None:
+    """Install once. Consults the per-context sealed map; does not own sys.modules['helper']."""
+    global _ORIG_IMPORT
+    with _HOOK_LOCK:
+        if _ORIG_IMPORT is not None:
+            return
+        _ORIG_IMPORT = builtins.__import__
+        builtins.__import__ = cast(Any, _sealed_import)
+
+
+def _calling_package(globals: dict[str, Any] | None) -> str | None:
+    if not globals:
+        return None
+    package = globals.get("__package__")
+    if isinstance(package, str) and package:
+        return package
+    spec = globals.get("__spec__")
+    parent = getattr(spec, "parent", None) if spec is not None else None
+    if isinstance(parent, str) and parent:
+        return parent
+    name = globals.get("__name__")
+    if isinstance(name, str) and name and not name.startswith("acid_dep_"):
+        return name.rpartition(".")[0] if "." in name else name
+    return None
+
+
+def _absolute_import_name(
+    name: str,
+    globals: dict[str, Any] | None,
+    level: int,
+) -> str | None:
+    if level == 0:
+        return name
+    package = _calling_package(globals)
+    if not package:
+        return None
+    rel = "." * level + (name or "")
+    try:
+        return importlib.util.resolve_name(rel, package)
+    except (ImportError, ValueError):
+        return None
+
+
+def _sealed_import(
+    name: str,
+    globals: dict[str, Any] | None = None,
+    locals: Any = None,
+    fromlist: Any = (),
+    level: int = 0,
+) -> Any:
+    orig = _ORIG_IMPORT
+    sealed = _SEALED.get()
+    if orig is None or not sealed:
+        if orig is None:
+            raise RuntimeError("import hook not installed")
+        return orig(name, globals, locals, fromlist, level)
+    abs_name = name
+    if level:
+        resolved = _absolute_import_name(name, globals, level)
+        if resolved is None:
+            return orig(name, globals, locals, fromlist, level)
+        abs_name = resolved
+    hit = sealed.get(abs_name)
+    if hit is not None:
+        if fromlist:
+            return hit
+        head = abs_name.split(".", 1)[0]
+        return sealed.get(head, hit)
+    return orig(name, globals, locals, fromlist, level)
+
+
 def seal_local_deps(
     fn: Callable[..., Any] | None,
     locked: dict[str, str] | None = None,
@@ -240,12 +326,19 @@ def seal_local_deps(
         hashes = collect_local_dep_hashes(fn)
         if not hashes:
             return None
+    _ensure_import_hook()
+    mapping: dict[str, types.ModuleType] = {}
+    token = _SEALED.set(mapping)
     sealed: set[str] = set()
-    err = _seal_walk(start, start.parent, hashes, set(), sealed, is_root=True)
+    err = _seal_walk(start, start.parent, hashes, set(), sealed, mapping, is_root=True)
     if err is not None:
+        _SEALED.reset(token)
         return err
     missing = sorted(set(hashes) - sealed)
-    return missing[0] if missing else None
+    if missing:
+        _SEALED.reset(token)
+        return missing[0]
+    return None
 
 
 def _seal_walk(
@@ -254,6 +347,7 @@ def _seal_walk(
     hashes: dict[str, str],
     seen: set[Path],
     sealed: set[str],
+    mapping: dict[str, types.ModuleType],
     *,
     is_root: bool,
 ) -> str | None:
@@ -276,7 +370,9 @@ def _seal_walk(
             resolved = _resolve(mod, level, file, root)
             if resolved is None:
                 continue
-            err = _seal_walk(resolved, root, hashes, seen, sealed, is_root=False)
+            err = _seal_walk(
+                resolved, root, hashes, seen, sealed, mapping, is_root=False
+            )
             if err is not None:
                 return err
     if is_root:
@@ -288,10 +384,12 @@ def _seal_walk(
     if hashlib.sha256(src).hexdigest() != digest:
         return rel
     sealed.add(rel)
-    name = rel[:-3].replace("/", ".") if rel.endswith(".py") else rel.replace("/", ".")
+    name = _import_name(rel)
     module = types.ModuleType(name)
     module.__file__ = str(file)
     module.__package__ = name.rpartition(".")[0]
-    sys.modules[name] = module
+    # Unique sys.modules key (same idea as cli.py id(source)). Bare 'helper' is not bound.
+    sys.modules[f"acid_dep_{id(mapping)}_{name}"] = module
+    mapping[name] = module
     exec(compile(src, str(file), "exec"), module.__dict__)  # noqa: S102
     return None

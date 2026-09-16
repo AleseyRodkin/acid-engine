@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.18 — 2026-09-16
+
+- Sealed local imports are bound per judge context, not under a shared `sys.modules` name. Two tools that both have `helper.py` cannot PASS each other's body under concurrent `judge_script`.
+- Same uniqueness idea as CLI `id(source)` for the tool file.
+- Rust tests serialize `ACID_ENGINE_ROOT` so parallel cargo test does not race.
+
 ## 0.2.17 — 2026-09-16
 
 - Example locks retaken on CPython 3.11. A 3.10 lock fails 3.12 (AST neighbor is ±1). Contour is the same as 0.2.16.

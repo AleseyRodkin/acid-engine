@@ -30,7 +30,8 @@ and not an MCP gateway.
   `PYTHONPATH` first, not the user `cwd`.
 - Local deps are sealed from **one read** of each file compared to the
   locked hash, then those bytes are executed. A swap between check and
-  use is FAIL.
+  use is FAIL. Concurrent `judge_script` of two tools that both import
+  `helper.py` does not share a `sys.modules` slot.
 - `python_version` (major.minor) and `canon_kind` in the lock's `toolchain`.
   AST: neighboring CPython minor (±1) is accepted. Bytecode: exact match.
   Distant versions FAIL with "re-take the lock", not module_hash.
@@ -54,3 +55,4 @@ and not an MCP gateway.
 Helper-module swap: `tests/integration/test_local_deps.py`.
 Import-time side effect: `tests/integration/test_import_time.py`.
 Dependency TOCTOU / undeclared helper: `tests/integration/test_toctou.py`.
+Concurrent same-named helpers: `tests/integration/test_concurrent_helpers.py`.
