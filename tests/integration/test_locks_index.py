@@ -30,6 +30,7 @@ def test_index_entries_have_plan_and_live_hash():
         locked = plan_raw["module_hashes"][script.name]
         assert locked == script.content_hash, entry["id"]
         assert plan_raw.get("source_hash")
+        assert plan_raw["toolchain"]["python_version"] in {"3.11", "3.12"}
         assert plan_raw["toolchain"]["worker_hash"] == source_hash()
         assert plan_raw["toolchain"]["runtime_hashes"] == runtime_hashes()
 

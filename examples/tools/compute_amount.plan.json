@@ -15,7 +15,7 @@
   "dependency_hashes": {},
   "execution_mode": "normal",
   "toolchain": {
-    "python_version": "3.10",
+    "python_version": "3.11",
     "canon_kind": "ast",
     "canon": "python.ast.v1",
     "worker_hash": "c079028ad05f0710b25dcdfa73fed1fa3001b1ff6a8849d571a1326c1d58964c",

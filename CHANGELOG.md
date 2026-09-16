@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.17 — 2026-09-16
+
+- Example locks retaken on CPython 3.11. A 3.10 lock fails 3.12 (AST neighbor is ±1). Contour is the same as 0.2.16.
+
 ## 0.2.16 — 2026-09-16
 
 - PreToolUse hook compares `source_hash` before import. A swapped tool file is deny; top-level side effects do not run.
