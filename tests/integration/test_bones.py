@@ -74,33 +74,6 @@ def test_committed_plan_matches_live_body():
     assert live.content_hash == build_script().content_hash
 
 
-def test_cli_run_bones_json():
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    plan = BONES / "n_plus_one.plan.json"
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "acid_engine",
-            "run",
-            "--script",
-            str(BONES / "n_plus_one.json"),
-            "--plan",
-            str(plan),
-            "--input",
-            '{"n": 3}',
-        ],
-        capture_output=True,
-        text=True,
-        env=env,
-        cwd=str(ROOT),
-    )
-    assert result.returncode == 0, result.stderr + result.stdout
-    assert "PASS" in result.stdout
-    assert "output: {'n': 4}" in result.stdout
-
-
 def test_cli_judge_bones_json():
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)

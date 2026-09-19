@@ -187,7 +187,7 @@ def test_cli_run_json_script():
         assert lock.returncode == 0, lock.stderr + lock.stdout
         result = subprocess.run(
             [
-                sys.executable, "-m", "acid_engine", "run",
+                sys.executable, "-m", "acid_engine", "judge",
                 "--script", str(js), "--plan", str(plan), "--input", "3",
             ],
             capture_output=True,

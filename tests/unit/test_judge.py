@@ -136,7 +136,7 @@ def test_judge_missing_is_skipped():
 
 
 def test_judge_script_imported_callable_is_not_file_gate(tmp_path: Path) -> None:
-    """Library path trusts the callable. Disk swap after import is not this gate."""
+    """Library path trusts the callable. File payload after import is not source_hash."""
     src = tmp_path / "inc.py"
     src.write_text("def inc(x):\n    return x + 1\n", encoding="utf-8")
     ns: dict[str, object] = {}
@@ -145,8 +145,12 @@ def test_judge_script_imported_callable_is_not_file_gate(tmp_path: Path) -> None
     assert callable(inc)
     script = _script(inc, name="inc")
     iface, plan = lock_for_script(script)
-    src.write_text("def inc(x):\n    return x + 99\nraise RuntimeError('payload')\n", encoding="utf-8")
+    src.write_text(
+        "raise RuntimeError('payload')\ndef inc(x):\n    return x + 1\n",
+        encoding="utf-8",
+    )
     result = judge_script(script, 1, plan=plan, iface=iface, toolchain=_tc())
     assert result.ok
     assert result.data == 2
+    assert "source_hash" not in (result.message or "")
     assert "co_code" not in (result.message or "")
