@@ -1,30 +1,69 @@
-"""PreToolUse: deny on swapped hash. Pre is not PASS. No MCP."""
+"""PreToolUse: deny on swapped hash. Pre is not PASS. No MCP.
+
+Foreign repo uses ACID_REPO_ROOT / ACID_LOCKS_INDEX. Package comes from pip
+(PYTHONPATH in tests). Hook is not in the pin.
+"""
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+from acid_engine.worker import RUNTIME_PIN_PATHS
+
 ROOT = Path(__file__).resolve().parents[2]
 HOOK = ROOT / "examples" / "hooks" / "pre_tool_use.py"
+PRODUCT_IDS = (
+    "n_plus_one",
+    "clean_text",
+    "normalize_id",
+    "compute_amount",
+    "route_ticket",
+    "emit_forecast_card",
+)
 
 
-def _run(event: dict) -> dict:
+def _run(event: dict, *, cwd: Path | None = None, extra_env: dict[str, str] | None = None) -> dict:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)
+    if extra_env:
+        env.update(extra_env)
     proc = subprocess.run(
         [sys.executable, str(HOOK)],
         input=json.dumps(event),
         capture_output=True,
         text=True,
-        cwd=str(ROOT),
+        cwd=str(cwd or ROOT),
         env=env,
     )
     assert proc.returncode == 0, proc.stderr + proc.stdout
     assert "PASS" not in proc.stdout
     return json.loads(proc.stdout)
+
+
+def _foreign_tree(tmp_path: Path) -> Path:
+    tools = tmp_path / "tools"
+    locks = tmp_path / "locks"
+    tools.mkdir()
+    locks.mkdir()
+    for name in ("clean_text.json", "clean_text.plan.json"):
+        shutil.copy(ROOT / "examples" / "tools" / name, tools / name)
+    index = {
+        "schema": "acid.locks.v1",
+        "entries": [
+            {
+                "id": "clean_text",
+                "script": "tools/clean_text.json",
+                "plan": "tools/clean_text.plan.json",
+                "input": {"text": "x"},
+            }
+        ],
+    }
+    (locks / "index.json").write_text(json.dumps(index), encoding="utf-8")
+    return tmp_path
 
 
 def test_hook_bound_is_allow_not_pass():
@@ -58,22 +97,13 @@ def test_hook_swapped_plan_is_deny():
         }
         index_path = Path(tmp) / "index.json"
         index_path.write_text(json.dumps(index), encoding="utf-8")
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(ROOT)
-        env["ACID_LOCKS_INDEX"] = str(index_path)
-        proc = subprocess.run(
-            [sys.executable, str(HOOK)],
-            input=json.dumps({"tool_name": "clean_text", "tool_input": {}}),
-            capture_output=True,
-            text=True,
-            cwd=str(ROOT),
-            env=env,
+        out = _run(
+            {"tool_name": "clean_text", "tool_input": {}},
+            extra_env={"ACID_LOCKS_INDEX": str(index_path)},
         )
-        assert proc.returncode == 0, proc.stderr
-        out = json.loads(proc.stdout)
         assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
         assert "mismatch" in out["hookSpecificOutput"]["permissionDecisionReason"]
-        assert "PASS" not in proc.stdout
+        assert "PASS" not in json.dumps(out)
 
 
 def test_hook_unknown_tool_is_deny():
@@ -122,30 +152,74 @@ def test_hook_import_side_effect_does_not_run(tmp_path: Path) -> None:
     }
     index_path = tmp_path / "index.json"
     index_path.write_text(json.dumps(index), encoding="utf-8")
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    env["ACID_LOCKS_INDEX"] = str(index_path)
-    proc = subprocess.run(
-        [sys.executable, str(HOOK)],
-        input=json.dumps({"tool_name": "clean_text", "tool_input": {}}),
-        capture_output=True,
-        text=True,
-        cwd=str(ROOT),
-        env=env,
+    out = _run(
+        {"tool_name": "clean_text", "tool_input": {}},
+        extra_env={"ACID_LOCKS_INDEX": str(index_path)},
     )
-    assert proc.returncode == 0, proc.stderr
-    out = json.loads(proc.stdout)
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert "source" in out["hookSpecificOutput"]["permissionDecisionReason"]
     assert not marker.exists()
-    assert "PASS" not in proc.stdout
+    assert "PASS" not in json.dumps(out)
+
+
+def test_hook_foreign_repo_unknown_is_deny(tmp_path: Path) -> None:
+    tree = _foreign_tree(tmp_path)
+    out = _run(
+        {"tool_name": "Bash", "tool_input": {"command": "echo hi"}},
+        cwd=tree,
+        extra_env={
+            "ACID_REPO_ROOT": str(tree),
+            "ACID_LOCKS_INDEX": str(tree / "locks" / "index.json"),
+        },
+    )
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert out["hookSpecificOutput"]["permissionDecisionReason"] == "not a locked tool"
+    assert "PASS" not in json.dumps(out)
+
+
+def test_hook_foreign_repo_tamper_is_deny(tmp_path: Path) -> None:
+    tree = _foreign_tree(tmp_path)
+    body = tree / "tools" / "clean_text.json"
+    body.write_text(body.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    out = _run(
+        {"tool_name": "clean_text", "tool_input": {}},
+        cwd=tree,
+        extra_env={
+            "ACID_REPO_ROOT": str(tree),
+            "ACID_LOCKS_INDEX": str(tree / "locks" / "index.json"),
+        },
+    )
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "PASS" not in json.dumps(out)
 
 
 def test_hook_is_not_mcp_and_not_judge():
     text = HOOK.read_text(encoding="utf-8")
     assert "judge_script" not in text
     assert "mcp" not in text.lower()
-    assert "PASS" not in text or "not PASS" in text or "must not emit PASS" in text
-    assert (ROOT / "examples" / "hooks" / "claude_settings.fragment.json").is_file()
+    assert "sys.path.insert" not in text
+    assert "parents[2]" not in text
+    assert "PASS" not in text or "not PASS" in text or "must not emit PASS" in text or "Pre ≠ PASS" in text
+    fragment = ROOT / "examples" / "hooks" / "claude_settings.fragment.json"
+    assert fragment.is_file()
     mcp = list((ROOT / "examples" / "hooks").glob("*mcp*"))
     assert mcp == []
+
+
+def test_fragment_matcher_is_placeholder_not_product_ids():
+    fragment = (ROOT / "examples" / "hooks" / "claude_settings.fragment.json").read_text(
+        encoding="utf-8"
+    )
+    assert "YOUR_TOOL_ID" in fragment
+    for ident in PRODUCT_IDS:
+        assert ident not in fragment
+    product = (
+        ROOT / "examples" / "hooks" / "claude_settings.product.fragment.json"
+    ).read_text(encoding="utf-8")
+    for ident in PRODUCT_IDS:
+        assert ident in product
+
+
+def test_hook_not_in_runtime_pin():
+    assert "examples/hooks/pre_tool_use.py" not in RUNTIME_PIN_PATHS
+    assert len(RUNTIME_PIN_PATHS) == 7

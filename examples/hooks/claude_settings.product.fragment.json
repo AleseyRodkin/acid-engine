@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "YOUR_TOOL_ID",
+        "matcher": "n_plus_one|clean_text|normalize_id|compute_amount|route_ticket|emit_forecast_card",
         "hooks": [
           {
             "type": "command",

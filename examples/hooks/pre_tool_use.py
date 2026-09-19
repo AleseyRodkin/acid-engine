@@ -6,6 +6,9 @@ never reach this script — this is not a policy gate for the whole agent.
 
 Lookup is exact entry id or a resolved script path. Basename is not identity.
 A tool_input path that exists must be the locked file, not a namesake.
+
+Install the package (`pip install acid-judge`). Point the hook at the
+consumer repo with ACID_REPO_ROOT / ACID_LOCKS_INDEX. Pre ≠ PASS.
 """
 from __future__ import annotations
 
@@ -15,19 +18,28 @@ import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
 from acid_engine.cli_judge import load_script_from_file, source_hash_gate
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level3.script.resolve import materialize_script
 from acid_engine.level3.script.runner import bind_script_to_plan, load_script_lock
 
-ROOT = Path(__file__).resolve().parents[2]
-INDEX = Path(os.environ.get("ACID_LOCKS_INDEX") or ROOT / "locks" / "index.json")
+
+def repo_root() -> Path:
+    raw = os.environ.get("ACID_REPO_ROOT", "").strip()
+    if raw:
+        return Path(raw)
+    return Path.cwd()
+
+
+def index_path() -> Path:
+    raw = os.environ.get("ACID_LOCKS_INDEX", "").strip()
+    if raw:
+        return Path(raw)
+    return repo_root() / "locks" / "index.json"
 
 
 def load_entries() -> list[dict[str, Any]]:
-    raw = json.loads(INDEX.read_text(encoding="utf-8"))
+    raw = json.loads(index_path().read_text(encoding="utf-8"))
     entries = raw.get("entries") or []
     return [e for e in entries if isinstance(e, dict)]
 
@@ -37,7 +49,7 @@ def _existing_file(p: str) -> Path | None:
         return None
     loc = Path(p)
     if not loc.is_absolute():
-        loc = ROOT / loc
+        loc = repo_root() / loc
     try:
         if loc.is_file():
             return loc.resolve()
@@ -79,8 +91,13 @@ def bind_entry(entry: dict[str, Any]) -> str:
     script_path = entry.get("script")
     if not plan_path or not script_path:
         return "deny: lock not passed"
-    script_file = ROOT / str(script_path)
-    plan_file = ROOT / str(plan_path)
+    root = repo_root()
+    script_file = Path(str(script_path))
+    if not script_file.is_absolute():
+        script_file = root / script_file
+    plan_file = Path(str(plan_path))
+    if not plan_file.is_absolute():
+        plan_file = root / plan_file
     try:
         raw = json.loads(plan_file.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as e:
