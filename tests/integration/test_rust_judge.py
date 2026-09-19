@@ -43,8 +43,16 @@ def rust_judge(payload: dict) -> dict:
         text=True,
         cwd=str(ROOT),
     )
-    assert proc.returncode == 0, proc.stderr + proc.stdout
-    return json.loads(proc.stdout)
+    assert proc.stdout.strip(), proc.stderr
+    out = json.loads(proc.stdout)
+    status = str(out.get("status") or "")
+    expect = {"PASS": 0, "FAIL": 1}.get(status, 2)
+    assert proc.returncode == expect, (
+        f"exit {proc.returncode} want {expect} for {status}: "
+        + proc.stderr
+        + proc.stdout
+    )
+    return out
 
 
 def test_rust_without_worker_is_skipped_not_pass():
