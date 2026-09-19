@@ -13,12 +13,12 @@ INDEX = ROOT / "locks" / "index.json"
 RECEIPTS = ROOT / "receipts"
 
 
-def load_index(path: Path) -> list[dict]:
+def load_index(path: Path) -> list[dict[str, Any]]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     entries = raw.get("entries")
     if not isinstance(entries, list) or not entries:
         raise SystemExit("locks/index.json has no entries")
-    out: list[dict] = []
+    out: list[dict[str, Any]] = []
     for i, item in enumerate(entries):
         if not isinstance(item, dict):
             raise SystemExit(f"entry {i} is not an object")
@@ -30,7 +30,7 @@ def load_index(path: Path) -> list[dict]:
     return out
 
 
-def judge_entry(entry: dict, receipts: Path) -> None:
+def judge_entry(entry: dict[str, Any], receipts: Path) -> None:
     ident = str(entry.get("id") or Path(str(entry["script"])).stem)
     script = ROOT / str(entry["script"])
     plan = ROOT / str(entry["plan"])

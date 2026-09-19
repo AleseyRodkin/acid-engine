@@ -30,7 +30,7 @@ jobs:
       - name: Ruff
         run: python -m ruff check acid_engine tests examples research
       - name: Mypy
-        run: python -m mypy --strict acid_engine
+        run: python -m mypy --strict acid_engine locks/ci_judge.py
       - name: Pytest
         run: python -m pytest tests -q
 

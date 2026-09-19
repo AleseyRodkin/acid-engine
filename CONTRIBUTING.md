@@ -5,7 +5,7 @@ Runtime law: [METHOD.md](METHOD.md). If the runtime does not enforce it, do not 
 ```bash
 pip install -e ".[dev]"
 python -m ruff check acid_engine tests examples research
-python -m mypy --strict acid_engine
+python -m mypy --strict acid_engine locks/ci_judge.py
 python -m pytest tests -q
 cargo test --locked --manifest-path rust/acid-judge/Cargo.toml
 ```
