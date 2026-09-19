@@ -44,6 +44,11 @@ class ConformanceResult:
         )
 
 
+_KNOWN_OUTPUT_TYPES = frozenset(
+    {"int", "bool", "float", "str", "list", "dict", "record", "None"}
+)
+
+
 def _type_matches(required: str, value: Any) -> bool:
     """Structural type check. bool is not int (unlike isinstance)."""
     if required == "int":
@@ -60,7 +65,7 @@ def _type_matches(required: str, value: Any) -> bool:
         return type(value) is dict
     if required == "None":
         return value is None
-    return True
+    return False
 
 
 def check_conformance(
@@ -91,8 +96,12 @@ def check_conformance(
             ),
         )
 
+    kind = (required_output_type or "").strip()
+    if kind not in _KNOWN_OUTPUT_TYPES:
+        return ConformanceResult.skipped("output_type not in the type dictionary")
+
     # Structural check — bool ≠ int
-    if not _type_matches(required_output_type, provided_data):
+    if not _type_matches(kind, provided_data):
         return ConformanceResult(
             status=ConformanceStatus.FAIL,
             level=ConformanceLevel.STRUCTURAL,
@@ -101,13 +110,13 @@ def check_conformance(
                 node_id=node_id,
                 contract_id=contract_id,
                 property_name="output_type",
-                expected=required_output_type,
+                expected=kind,
                 actual=type(provided_data).__name__,
             ),
         )
 
     # Record schema
-    if required_output_type == "record" and schema is not None:
+    if kind == "record" and schema is not None:
         from acid_engine.level3.container.types import RecordSchema
         if isinstance(schema, RecordSchema):
             ok, _ = schema.validate(provided_data, apply_defaults=True)

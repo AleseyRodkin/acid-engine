@@ -473,7 +473,10 @@ fn verdict(req: &Request, obs: &Observation) -> Response {
     if obs.status != "completed" {
         return Response::fail("execution did not complete", "status");
     }
-    let required = req.output_type.as_deref().unwrap_or("");
+    let required = req.output_type.as_deref().unwrap_or("").trim();
+    if !type_known(required) {
+        return Response::skipped("output_type not in the type dictionary");
+    }
     let data = req.data.as_ref().unwrap_or(&Value::Null);
     if !type_matches(required, data) {
         return Response::fail("Output type mismatch", "output_type");
@@ -493,6 +496,13 @@ fn verdict(req: &Request, obs: &Observation) -> Response {
     Response::pass("Provided satisfies Required (structural+operational)")
 }
 
+fn type_known(required: &str) -> bool {
+    matches!(
+        required,
+        "int" | "bool" | "float" | "str" | "list" | "dict" | "record" | "None"
+    )
+}
+
 fn type_matches(required: &str, value: &Value) -> bool {
     match required {
         "int" => matches!(value, Value::Number(n) if n.as_i64().is_some() || n.as_u64().is_some()),
@@ -502,8 +512,7 @@ fn type_matches(required: &str, value: &Value) -> bool {
         "list" => value.is_array(),
         "dict" | "record" => value.is_object(),
         "None" => value.is_null(),
-        "" => true,
-        _ => true,
+        _ => false,
     }
 }
 
@@ -589,6 +598,26 @@ mod tests {
         );
         assert_eq!(r.status, "FAIL");
         assert_eq!(r.property.as_deref(), Some("output_type"));
+    }
+
+    #[test]
+    fn unknown_output_type_is_skipped() {
+        for required in ["", "widget", "any"] {
+            let r = verdict(
+                &Request {
+                    output_type: Some(required.into()),
+                    data: Some(json!(1)),
+                    ..Default::default()
+                },
+                &Observation {
+                    status: "completed".into(),
+                    ..Default::default()
+                },
+            );
+            assert_eq!(r.status, "SKIPPED", "{required}");
+            assert_ne!(r.status, "PASS");
+            assert!(r.message.contains("type dictionary"));
+        }
     }
 
     #[test]

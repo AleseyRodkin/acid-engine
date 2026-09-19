@@ -42,6 +42,16 @@ def test_bool_ok_for_bool():
     assert result.ok
 
 
+def test_unknown_output_type_is_skipped():
+    obs = ExecutionObservation.create(0, 0.001, "completed")
+    policy = Policy()
+    for required in ("", "widget", "any"):
+        result = check_conformance(required, 1, obs, policy)
+        assert result.status == ConformanceStatus.SKIPPED, required
+        assert not result.ok
+        assert "type dictionary" in result.message
+
+
 def test_latency_violation():
     obs = ExecutionObservation.create(0, 0.1, "completed", input_hash="a", output_hash="b")
     policy = Policy(max_latency_ms=50)
