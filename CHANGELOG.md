@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.27 — 2026-09-19
+
+- Self-CI `rust` job builds `target/release/acid-judge` (MSRV 1.75, `--locked`) and runs `python -m acid_engine.action_driver` on `locks/index.json`. No GitHub Fetch. Receipts on disk. `uses: ./` stays python-cli.
+- `cargo audit` is a separate job on rustc 1.88, not mixed with MSRV. No `cargo update`.
+- TRUST: driver is not contour; tagged root is GitHub Release + sha256. attacks: tagged Action does not go through `cmd_judge`.
+
 ## 0.2.26 — 2026-09-19
 
 - Supervisor binary exits 0 on PASS, 1 on FAIL, 2 on input error or SKIPPED. JSON body is unchanged.

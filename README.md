@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.26**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.27**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -70,7 +70,7 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 ## Install
 
 ```bash
-pip install acid-judge==0.2.26
+pip install acid-judge==0.2.27
 acid-judge lock --script FILE --out LOCK.json
 # commit LOCK.json and locks/index.json
 acid-judge locks --index locks/index.json
@@ -78,7 +78,7 @@ acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
 
 ```yaml
-- uses: AleseyRodkin/acid-engine@v0.2.26
+- uses: AleseyRodkin/acid-engine@v0.2.27
   with:
     index: locks/index.json
     judge: true
@@ -159,7 +159,8 @@ python locks/ci_judge.py
 cargo test --locked --manifest-path rust/acid-judge/Cargo.toml
 ```
 
-CI: [.github/workflows/acid-judge.yml](.github/workflows/acid-judge.yml) — pytest (3.11/3.12), `locks/index.json`, cargo. The job fails if a tool is not PASS. Receipt is an artifact. No `plan` in the index → does not judge.
+CI: [.github/workflows/acid-judge.yml](.github/workflows/acid-judge.yml) — pytest (3.11/3.12), `uses: ./` (python-cli), rust MSRV 1.75 local supervisor on `locks/index.json`, cargo audit on 1.88. The job fails if a tool is not PASS. Receipt is an artifact. No `plan` in the index → does not judge.
+
 
 Dev: `pip install -e ".[dev]"` — pytest, ruff, mypy.
 

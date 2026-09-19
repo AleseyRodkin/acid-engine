@@ -25,9 +25,12 @@ SKIPPED, not PASS. Re-take the lock.
 that key FAILs the live pin (`runtime_hashes mismatch`). Re-take the lock on
 CPython 3.11. `cli.py` is still not a pin key.
 The Rust crate `acid-judge` (`rust/acid-judge`) is `publish = false` on
-crates.io. Version in Cargo.toml tracks the Python release (0.2.26). GitHub
+crates.io. Version in Cargo.toml tracks the Python release (0.2.27). GitHub
 Release assets are the three supervisor binaries plus `<artifact>.sha256`,
-not a crates.io crate. The supervisor binary exits 0/1/2 for PASS/FAIL/SKIPPED.
+not a crates.io crate. The supervisor binary exits 0 PASS / 1 FAIL / 2 input
+error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb
+and is not in `runtime_hashes`.
+
 `ArtifactRef.source_hash` is additive (default empty). Empty still loads;
 a filled value is compared before import.
 PreToolUse 0.2.20+: a tool that reached the hook and is not in the index is

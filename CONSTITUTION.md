@@ -63,6 +63,8 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 70. 0.2.24: RecordSchema uses the conformance type dictionary (unknown tag invalid; bool is not int). `cli_judge.py` is in the pin. Worker does not import `cli.py`. Argparse stays out of `runtime_hashes`.
 71. 0.2.25: tagged Action fetches `acid-judge-linux-x86_64` from the same `v0.2.n` release. `uses: ./` is python-cli. Contour unchanged. No second hook.
 72. 0.2.26: supervisor exit 0/1/2. Tagged Action checks asset sha256. Driver is `action_driver.py`, not in the pin. Contour unchanged.
+73. 0.2.27: self-CI rust job is a local supervisor (`cargo build --release --locked` + `action_driver`). `cargo audit` is not the MSRV job. Contour unchanged. No second hook.
+
 
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.

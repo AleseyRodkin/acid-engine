@@ -34,6 +34,9 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Action without a release tag | — | python-cli | — | — | `uses: ./` logs `path=python-cli`; no `@main` fetch |
 | Action asset checksum mismatch | ✓ | python-cli | — | — | `sha256sum -c`; log `checksum mismatch`; do not fail open on the binary |
+| `cli.py` / `cmd_judge` patch | ✗ tagged Action | supervisor | ✗ | ✓ | tagged path does not call `cmd_judge` |
+| `cli.py` / `cmd_judge` patch | ✓ pip CLI | — | ✓ | ✓ | argparse CLI is not in the pin; PASS is `cli_judge.py` |
+
 
 
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |

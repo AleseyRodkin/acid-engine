@@ -32,8 +32,12 @@ contour in-process. That is a smaller TCB story: the process that judges
 is the process that can be swapped. Use the supervisor when that matters.
 The tagged GitHub Action (`uses: AleseyRodkin/acid-engine@v0.2.n` on Linux)
 downloads `acid-judge-linux-x86_64` from that same release tag, checks
-`<artifact>.sha256`, and runs it. Mismatch logs `checksum mismatch` and
+`<artifact>.sha256`, and runs it. That pair (Release ELF + sha256) is the
+root for the tagged path. Mismatch logs `checksum mismatch` and
 falls back to python-cli. `uses: ./` does not fetch `@main`; it stays python-cli.
+`action_driver.py` is not in the contour: it walks the index and writes receipts.
+Self-CI `rust` job builds `target/release/acid-judge` from this tree and does
+not Fetch from GitHub.
 
 
 ## In the TCB
@@ -46,6 +50,8 @@ falls back to python-cli. `uses: ./` does not fetch `@main`; it stays python-cli
 - Judge contour in `runtime_hashes` (7 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge).
 - `python_version` / `canon_kind` next to identity.
 - Ed25519 of a receipt, local keys.
+- Not `action_driver.py`, not `cli.py`.
+
 
 ## Not in the TCB
 
