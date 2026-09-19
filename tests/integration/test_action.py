@@ -105,6 +105,8 @@ def test_cargo_audit_is_not_on_msrv_job():
     audit = text.split("  rust-audit:", 1)[1]
     assert "1.75.0" in rust
     assert "audit-check" not in rust
+    assert "audit-check" not in audit
     assert "1.88.0" in audit
-    assert "audit-check" in audit
-    assert "69366f33c96575abad1ee0dba8212993eecbe998" in audit
+    assert "cargo install cargo-audit --locked" in audit
+    assert "cargo audit --file rust/acid-judge/Cargo.lock" in audit
+    assert "1.75.0" not in audit
