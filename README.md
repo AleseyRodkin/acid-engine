@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.24**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.25**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -70,29 +70,22 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 ## Install
 
 ```bash
-pip install acid-judge
+pip install acid-judge==0.2.25
 acid-judge lock --script FILE --out LOCK.json
-acid-judge judge --script FILE --plan LOCK.json --input '...'
+# commit LOCK.json and locks/index.json
 acid-judge locks --index locks/index.json
-acid-judge diff --script FILE --plan LOCK.json
-acid-judge receipt --verify FILE --sig FILE.sig.json --pubkey ed25519.public.pem
+acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
-
-`python -m acid_engine` is the same CLI. `PYTHONPATH=.` is not needed after `pip install`.
-From git: `pip install "acid-judge @ git+https://github.com/AleseyRodkin/acid-engine.git"`.
-
-GitHub Action: `uses: AleseyRodkin/acid-engine@v0.2.24`. Foreign CI: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ```yaml
-- uses: AleseyRodkin/acid-engine@v0.2.24
+- uses: AleseyRodkin/acid-engine@v0.2.25
   with:
     index: locks/index.json
-    judge: true   # optional: execute + receipt. Default is bind only.
+    judge: true
 ```
 
-Without `judge: true` — bind only, the body does not run. With the flag — `lock → judge → receipt`. Not a sandbox. The smoke repo's `tamper` job must FAIL.
+Swapped body is not PASS. Proof: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
-`judge` without `--plan` → SKIPPED, not PASS.
 
 ## What it protects
 
