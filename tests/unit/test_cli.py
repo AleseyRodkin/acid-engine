@@ -56,7 +56,7 @@ script = ScriptModule(
         assert lock.returncode == 0, lock.stderr + lock.stdout
         result = subprocess.run(
             [
-                sys.executable, "-m", "acid_engine", "run",
+                sys.executable, "-m", "acid_engine", "judge",
                 "--script", path, "--plan", plan, "--input", "[10, 20, 12]",
             ],
             capture_output=True,

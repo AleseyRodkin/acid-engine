@@ -92,7 +92,7 @@ GitHub Action: `uses: AleseyRodkin/acid-engine@v0.2.23`. Foreign CI: [acid-judge
 
 Without `judge: true` — bind only, the body does not run. With the flag — `lock → judge → receipt`. Not a sandbox. The smoke repo's `tamper` job must FAIL.
 
-`judge` without `--plan` → SKIPPED, not PASS. Hidden `run` still works; it is not in `--help`.
+`judge` without `--plan` → SKIPPED, not PASS.
 
 ## What it protects
 

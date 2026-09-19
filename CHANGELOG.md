@@ -6,6 +6,7 @@
 - Composite Action Verify step passes `index` / `judge` / `receipts` through env, not `${{ inputs.* }}` inside `run:`.
 - `cli.py` is out of `runtime_hashes`. A CLI help-text patch does not reshoot locks. Canon / body / helper swap still FAIL before run.
 - Empty or unknown `output_type` is SKIPPED, not PASS. `bool ≠ int` is still FAIL. Same in Python and Rust.
+- Hidden `init` / `validate` / `run` are gone. `--help` is the whole CLI.
 
 ## 0.2.22 — 2026-09-16
 
