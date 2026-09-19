@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.24 — 2026-09-19
+
+- RecordSchema uses the same type dictionary as conformance. Unknown `type_tag` is invalid. `True` is not `int`.
+- `cli_judge.py` is in `runtime_hashes`. `cli.py` is not. Worker imports `cli_judge`, not `cli`. A help-text patch does not reshoot locks; a patch of `cli_judge.py` or `worker.py` is `runtime_hash` FAIL before run.
+
 ## 0.2.23 — 2026-09-19
 
 - PyPI canon is `acid-judge`. This tree is not published as `acid-engine`. Yank 0.2.21–0.2.22 on that name; `acid-engine==0.2.0` stays the data-contracts archive.

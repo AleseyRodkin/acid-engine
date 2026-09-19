@@ -21,6 +21,9 @@ Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
 User `cwd` is the project, not the front of `PYTHONPATH`.
 `source_hash` is an extra lock key in 0.2.x. A 0.2.13 lock without it is
 SKIPPED, not PASS. Re-take the lock.
+`runtime_hashes` in 0.2.24 includes `acid_engine/cli_judge.py`. A lock without
+that key FAILs the live pin (`runtime_hashes mismatch`). Re-take the lock on
+CPython 3.11. `cli.py` is still not a pin key.
 `ArtifactRef.source_hash` is additive (default empty). Empty still loads;
 a filled value is compared before import.
 PreToolUse 0.2.20+: a tool that reached the hook and is not in the index is

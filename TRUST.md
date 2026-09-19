@@ -38,7 +38,7 @@ is the process that can be swapped. Use the supervisor when that matters.
 - `ArtifactRef` locator hashes (`source_hash` of the file, `body_hash` of the
   entry) compared before import when set.
 - Static local `.py` imports (`dep:`).
-- Judge contour in `runtime_hashes` (7 files).
+- Judge contour in `runtime_hashes` (7 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge).
 - `python_version` / `canon_kind` next to identity.
 - Ed25519 of a receipt, local keys.
 
@@ -62,7 +62,8 @@ Hook / `locks --index` bind: the file about to run matches the lock. Not PASS.
 The hook hashes `source_hash` before import. A swapped file is deny; top-level code does not run.
 Unknown at the hook is deny (not enough facts is not allow). Lookup is exact id or resolved path, not basename.
 A patch of any contour file requires re-taking every lock. That is the pin.
-`cli.py` is not in the contour: a CLI help-text patch does not reshoot locks.
+`cli.py` is not in the contour: argparse and help-text patches do not reshoot locks.
+PASS is decided in `cli_judge.py` (in the pin). Worker does not import `cli.py`.
 `judge` with a worker: bind, seal local deps from those bytes, run, observe,
 verdict. PASS exists only on this path.
 

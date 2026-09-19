@@ -14,7 +14,7 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | PreToolUse unknown tool | ✓ | ✓ | ✗ | — | `test_hook_unknown_tool_is_deny` |
 | PreToolUse same-stem / stolen id | ✓ | ✓ | ✗ | — | `test_hook_same_stem_foreign_file_is_deny` |
 | Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
-| Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` |
+| Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` / `cli_judge.py` pin |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |
 | `importlib.import_module` | ⚠ warn | ✗ | ✓ | ✓ | `test_dynamic_import_lock_warns` |
 | `exec` / `eval` in AST | ⚠ warn | ✗ | ✓ | ✓ | same detector |
@@ -33,14 +33,14 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Undeclared helper after lock | ✓ | ✓ | ✗ | ✓ | `test_toctou` |
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |
-| site-packages swap | ✗ | ✗ | ✓ | ✓ | supply chain, not this gate |
+| site-packages swap | ✗ | ✗ | ✓ | ✓ | supply chain, not this gate. argparse `cli.py` is not pin; `cli_judge.py` / worker are |
 | Malicious *approved* body | — | — | ✓ | ✓ | identity, not correctness |
 
 How to run the claimed rows:
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest tests/integration/test_compute_amount_tamper.py tests/integration/test_local_deps.py tests/integration/test_cli.py -q
+python -m pytest tests/integration/test_compute_amount_tamper.py tests/integration/test_local_deps.py tests/integration/test_cli.py tests/integration/test_cli_judge_pin.py -q
 ```
 
 Manual copies: [ATTACK.md](../ATTACK.md). Trust model: [TRUST.md](../TRUST.md).

@@ -60,6 +60,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 67. 0.2.22: `replay_run` is the same verified pipeline as `execute_plan` (runtime pin, bind, seal). No second execution path. Library callable still trusted as presented.
 68. PyPI canon is `acid-judge`. Do not publish this tree as `acid-engine`. Yank 0.2.21–0.2.22 on that name. `acid-engine==0.2.0` stays the archive.
 69. 0.2.23: `cli.py` is not in `runtime_hashes`. Contour is worker, python_runtime, runner, resolve, implementation_canon, local_deps.
+70. 0.2.24: RecordSchema uses the conformance type dictionary (unknown tag invalid; bool is not int). `cli_judge.py` is in the pin. Worker does not import `cli.py`. Argparse stays out of `runtime_hashes`.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.
