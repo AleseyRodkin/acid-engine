@@ -52,6 +52,24 @@ def test_unknown_output_type_is_skipped():
         assert "type dictionary" in result.message
 
 
+def test_record_unknown_type_tag_is_invalid():
+    from acid_engine.level3.container.types import RecordField, RecordSchema
+
+    schema = RecordSchema(fields=(RecordField("n", "widget"),))
+    ok, filled = schema.validate({"n": 1})
+    assert ok is False
+    assert filled is None
+
+
+def test_record_true_is_not_int():
+    from acid_engine.level3.container.types import RecordField, RecordSchema
+
+    schema = RecordSchema(fields=(RecordField("n", "int"),))
+    ok, filled = schema.validate({"n": True})
+    assert ok is False
+    assert filled is None
+
+
 def test_latency_violation():
     obs = ExecutionObservation.create(0, 0.1, "completed", input_hash="a", output_hash="b")
     policy = Policy(max_latency_ms=50)

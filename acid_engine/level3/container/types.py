@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from acid_engine.level2.conformance import _KNOWN_OUTPUT_TYPES, _type_matches
+
 
 @dataclass(frozen=True, slots=True)
 class RecordField:
@@ -51,20 +53,10 @@ class RecordSchema:
         return True, filled if apply_defaults else data
 
     def _check_type(self, value: Any, field: RecordField) -> bool:
-        t = field.type_tag
-        if t == "int" and not isinstance(value, int):
+        tag = field.type_tag
+        if tag not in _KNOWN_OUTPUT_TYPES:
             return False
-        if t == "float" and not isinstance(value, (int, float)):
-            return False
-        if t == "str" and not isinstance(value, str):
-            return False
-        if t == "bool" and not isinstance(value, bool):
-            return False
-        if t == "list" and not isinstance(value, list):
-            return False
-        if t == "record" and not isinstance(value, dict):
-            return False
-        return True
+        return _type_matches(tag, value)
 
     def to_canonical_dict(self) -> dict[str, Any]:
         return {
