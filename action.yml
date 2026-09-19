@@ -33,12 +33,16 @@ runs:
       run: pip install "${{ github.action_path }}"
     - name: Verify lock index
       shell: bash
+      env:
+        ACID_INDEX: ${{ inputs.index }}
+        ACID_JUDGE: ${{ inputs.judge }}
+        ACID_RECEIPTS: ${{ inputs.receipts }}
       run: |
         extra=()
-        if [ "${{ inputs.judge }}" = "true" ]; then
-          extra=(--judge --receipts "${{ inputs.receipts }}")
+        if [ "$ACID_JUDGE" = "true" ]; then
+          extra=(--judge --receipts "$ACID_RECEIPTS")
         fi
-        acid-judge locks --index "${{ inputs.index }}" "${extra[@]}"
+        acid-judge locks --index "$ACID_INDEX" "${extra[@]}"
     - name: Upload receipts
       if: ${{ inputs.judge == 'true' && always() }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

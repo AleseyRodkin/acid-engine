@@ -20,6 +20,17 @@ def test_action_yml_runs_locks_index():
     assert "MCP" not in text
 
 
+def test_action_verify_run_has_no_input_interpolation():
+    text = (ROOT / "action.yml").read_text(encoding="utf-8")
+    start = text.index("name: Verify lock index")
+    end = text.index("name: Upload receipts")
+    run = text[start:end].split("run:", 1)[1]
+    assert "${{ inputs." not in run
+    assert "ACID_INDEX: ${{ inputs.index }}" in text
+    assert "ACID_JUDGE: ${{ inputs.judge }}" in text
+    assert "ACID_RECEIPTS: ${{ inputs.receipts }}" in text
+
+
 def test_readme_install_has_no_pythonpath():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "acid-judge lock --script FILE" in readme
