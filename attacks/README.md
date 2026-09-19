@@ -33,6 +33,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Undeclared helper after lock | ✓ | ✓ | ✗ | ✓ | `test_toctou` |
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Action without a release tag | — | python-cli | — | — | `uses: ./` logs `path=python-cli`; no `@main` fetch |
+| Action asset checksum mismatch | ✓ | python-cli | — | — | `sha256sum -c`; log `checksum mismatch`; do not fail open on the binary |
+
 
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |
 | site-packages swap | ✗ | ✗ | ✓ | ✓ | supply chain, not this gate. argparse `cli.py` is not pin; `cli_judge.py` / worker are |

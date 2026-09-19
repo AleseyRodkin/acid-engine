@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.26 — 2026-09-19
+
+- Supervisor binary exits 0 on PASS, 1 on FAIL, 2 on input error or SKIPPED. JSON body is unchanged.
+- Release assets include `<artifact>.sha256`. Tagged Action verifies sha256sum -c; mismatch logs `checksum mismatch` and falls back to python-cli.
+- Action driver is `python -m acid_engine.action_driver` (not in `runtime_hashes`). YAML has no entries loop. Supervisor path writes `receipts/<id>.json`.
+
 ## 0.2.25 — 2026-09-19
 
 - Tagged Action (`uses: …@v0.2.n` on Linux) fetches `acid-judge-linux-x86_64` from the same GitHub release and verifies through the supervisor (`path=supervisor`). `uses: ./` and a missing asset stay `path=python-cli`. URL is not an input. Contour unchanged.

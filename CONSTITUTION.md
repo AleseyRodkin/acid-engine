@@ -62,6 +62,8 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 69. 0.2.23: `cli.py` is not in `runtime_hashes`. Contour is worker, python_runtime, runner, resolve, implementation_canon, local_deps.
 70. 0.2.24: RecordSchema uses the conformance type dictionary (unknown tag invalid; bool is not int). `cli_judge.py` is in the pin. Worker does not import `cli.py`. Argparse stays out of `runtime_hashes`.
 71. 0.2.25: tagged Action fetches `acid-judge-linux-x86_64` from the same `v0.2.n` release. `uses: ./` is python-cli. Contour unchanged. No second hook.
+72. 0.2.26: supervisor exit 0/1/2. Tagged Action checks asset sha256. Driver is `action_driver.py`, not in the pin. Contour unchanged.
+
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.

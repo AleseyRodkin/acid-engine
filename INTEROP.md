@@ -33,7 +33,9 @@ layer from them.
 | Receipt | `acid.receipt.v1`. Extra keys ignored. Optional `context`. |
 
 Replay is library-only (`replay_run` / `replay_from_record`). There is no
-CLI `replay` in 0.2.
+CLI `replay` in 0.2. The GitHub Action driver is `python -m acid_engine.action_driver`;
+it is not a CLI verb and not in `runtime_hashes`.
+
 
 No APort / AGT / Copilot / MCP adapter in 0.2. Those wait on a caller.
 
