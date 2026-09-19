@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.25 — 2026-09-19
+
+- Tagged Action (`uses: …@v0.2.n` on Linux) fetches `acid-judge-linux-x86_64` from the same GitHub release and verifies through the supervisor (`path=supervisor`). `uses: ./` and a missing asset stay `path=python-cli`. URL is not an input. Contour unchanged.
+- Install block: pin, lock, index in git, Action, `locks --index`, `judge --plan`. Swapped body is not PASS. Proof is smoke.
+- Cargo.toml version tracks 0.2.25; crates.io `publish = false`. Replay stays library-only.
+
 ## 0.2.24 — 2026-09-19
 
 - RecordSchema uses the same type dictionary as conformance. Unknown `type_tag` is invalid. `True` is not `int`.

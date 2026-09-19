@@ -32,6 +32,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Replay swapped helper | ✓ | ✓ | ✗ | ✓ | `test_replay_modified_dependency_does_not_execute` |
 | Undeclared helper after lock | ✓ | ✓ | ✗ | ✓ | `test_toctou` |
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
+| Action without a release tag | — | python-cli | — | — | `uses: ./` logs `path=python-cli`; no `@main` fetch |
+
 | Env mutation | ✗ | ✗ | ✓ | ✓ | not in identity |
 | site-packages swap | ✗ | ✗ | ✓ | ✓ | supply chain, not this gate. argparse `cli.py` is not pin; `cli_judge.py` / worker are |
 | Malicious *approved* body | — | — | ✓ | ✓ | identity, not correctness |

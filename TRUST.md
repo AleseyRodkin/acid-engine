@@ -30,6 +30,9 @@ Rust supervisor  (does not hash the tool body)
 CLI-only path (`acid-judge` without the binary) trusts the same Python
 contour in-process. That is a smaller TCB story: the process that judges
 is the process that can be swapped. Use the supervisor when that matters.
+The tagged GitHub Action (`uses: AleseyRodkin/acid-engine@v0.2.n` on Linux)
+downloads `acid-judge-linux-x86_64` from that same release tag and runs it.
+`uses: ./` does not fetch `@main`; it stays python-cli.
 
 ## In the TCB
 
