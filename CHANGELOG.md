@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.28 — 2026-09-20
+
+- PreToolUse reads `ACID_REPO_ROOT` / `ACID_LOCKS_INDEX` (else cwd / `locks/index.json`). No `sys.path.insert` into the product tree. Package comes from pip. Matcher fragment is `YOUR_TOOL_ID`; product ids live in `claude_settings.product.fragment.json`.
+- Signature of Release assets is not in this tag (`MINISIGN_SECRET_KEY` not on the publisher). Tagged Action still checks sha256.
+
 ## 0.2.27 — 2026-09-19
 
 - Self-CI `rust` job builds `target/release/acid-judge` (MSRV 1.75, `--locked`) and runs `python -m acid_engine.action_driver` on `locks/index.json`. No GitHub Fetch. Receipts on disk. `uses: ./` stays python-cli.

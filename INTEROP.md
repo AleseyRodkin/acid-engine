@@ -29,7 +29,8 @@ layer from them.
 | --- | --- |
 | CLI | `lock` / `judge` / `locks` / `diff` / `receipt` — [COMPATIBILITY.md](COMPATIBILITY.md) |
 | Library | `judge_script_from_lock`, `judge_script`, `lock_for_script`, `build_receipt` |
-| Hook | Claude Code PreToolUse bind only. Pre ≠ PASS. Unknown that reached the hook → deny. Exact id or resolved path. One harness. |
+| Hook | Claude Code PreToolUse bind only. Pre ≠ PASS. Unknown that reached the hook → deny. Exact id or resolved path. `ACID_REPO_ROOT` / `ACID_LOCKS_INDEX`. Package from pip. Matcher `YOUR_TOOL_ID`. One harness. |
+
 | Receipt | `acid.receipt.v1`. Extra keys ignored. Optional `context`. |
 
 Replay is library-only (`replay_run` / `replay_from_record`). There is no

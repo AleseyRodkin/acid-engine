@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.27**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.28**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -70,7 +70,7 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 ## Install
 
 ```bash
-pip install acid-judge==0.2.27
+pip install acid-judge==0.2.28
 acid-judge lock --script FILE --out LOCK.json
 # commit LOCK.json and locks/index.json
 acid-judge locks --index locks/index.json
@@ -78,7 +78,7 @@ acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
 
 ```yaml
-- uses: AleseyRodkin/acid-engine@v0.2.27
+- uses: AleseyRodkin/acid-engine@v0.2.28
   with:
     index: locks/index.json
     judge: true
@@ -86,6 +86,16 @@ acid-judge judge --script FILE --plan LOCK.json --input '...'
 
 Swapped body is not PASS. Proof: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
 
+## Hook
+
+```bash
+pip install acid-judge
+export ACID_REPO_ROOT=$PWD
+export ACID_LOCKS_INDEX=$PWD/locks/index.json
+# copy examples/hooks/pre_tool_use.py; matcher = your ids (YOUR_TOOL_ID)
+```
+
+Pre ≠ PASS. Unknown that reached the hook is deny.
 
 ## What it protects
 
@@ -179,7 +189,8 @@ mypy --strict acid_engine locks/ci_judge.py
 
 Five tools: [examples/tools/](examples/tools/) (`clean_text`, `normalize_id`, `compute_amount`, `route_ticket`, `emit_forecast_card`) — in [locks/index.json](locks/index.json) with bones.
 
-One hook: [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py) — Claude Code PreToolUse, bind only. Foreign hash → deny. Unknown tool that reached the hook → deny. Pre ≠ PASS. No MCP.
+One hook: [examples/hooks/pre_tool_use.py](examples/hooks/pre_tool_use.py) — Claude Code PreToolUse, bind only. `ACID_REPO_ROOT` / `ACID_LOCKS_INDEX`. Matcher: [fragment](examples/hooks/claude_settings.fragment.json) (`YOUR_TOOL_ID`). Product ids: [product fragment](examples/hooks/claude_settings.product.fragment.json). Pre ≠ PASS. No MCP.
+
 
 ## Not in 0.2
 

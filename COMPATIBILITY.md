@@ -25,7 +25,7 @@ SKIPPED, not PASS. Re-take the lock.
 that key FAILs the live pin (`runtime_hashes mismatch`). Re-take the lock on
 CPython 3.11. `cli.py` is still not a pin key.
 The Rust crate `acid-judge` (`rust/acid-judge`) is `publish = false` on
-crates.io. Version in Cargo.toml tracks the Python release (0.2.27). GitHub
+crates.io. Version in Cargo.toml tracks the Python release (0.2.28). GitHub
 Release assets are the three supervisor binaries plus `<artifact>.sha256`,
 not a crates.io crate. The supervisor binary exits 0 PASS / 1 FAIL / 2 input
 error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb
@@ -35,3 +35,9 @@ and is not in `runtime_hashes`.
 a filled value is compared before import.
 PreToolUse 0.2.20+: a tool that reached the hook and is not in the index is
 deny. 0.2.19 allowed unknown. The settings matcher is unchanged.
+PreToolUse 0.2.28+: `ACID_REPO_ROOT` (else cwd) and `ACID_LOCKS_INDEX`
+(else `$ACID_REPO_ROOT/locks/index.json`). The hook does not insert the
+product tree on `sys.path`. Copy the script; install `acid-judge`.
+The reusable fragment matcher is `YOUR_TOOL_ID`. Product ids are in
+`examples/hooks/claude_settings.product.fragment.json`.
+

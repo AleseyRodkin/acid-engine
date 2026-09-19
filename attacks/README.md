@@ -13,6 +13,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Import-time via PreToolUse hook | ✓ | ✓ | ✗ | ✓ | `test_hook_import_side_effect_does_not_run` |
 | PreToolUse unknown tool | ✓ | ✓ | ✗ | — | `test_hook_unknown_tool_is_deny` |
 | PreToolUse same-stem / stolen id | ✓ | ✓ | ✗ | — | `test_hook_same_stem_foreign_file_is_deny` |
+| PreToolUse foreign repo / tamper | ✓ | ✓ | ✗ | — | `test_hook_foreign_repo_tamper_is_deny` (`ACID_REPO_ROOT`) |
+
 | Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
 | Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` / `cli_judge.py` pin |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |

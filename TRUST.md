@@ -50,7 +50,8 @@ not Fetch from GitHub.
 - Judge contour in `runtime_hashes` (7 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge).
 - `python_version` / `canon_kind` next to identity.
 - Ed25519 of a receipt, local keys.
-- Not `action_driver.py`, not `cli.py`.
+- Not `action_driver.py`, not `cli.py`, not `examples/hooks/pre_tool_use.py`.
+
 
 
 ## Not in the TCB
