@@ -38,8 +38,11 @@ def test_dump_includes_toolchain_outside_identity():
     live_rt = runtime_hashes()
     assert tool["runtime_hashes"] == live_rt
     assert set(tool["runtime_hashes"]) == set(RUNTIME_PIN_PATHS)
+    assert len(RUNTIME_PIN_PATHS) == 7
+    assert "acid_engine/cli_judge.py" in RUNTIME_PIN_PATHS
     assert "acid_engine/cli.py" not in RUNTIME_PIN_PATHS
     assert "acid_engine/cli.py" not in tool["runtime_hashes"]
+    assert "acid_engine/cli_judge.py" in tool["runtime_hashes"]
     assert payload.get("source_hash")
     iface, plan = lock_for_script(script)
     assert payload["module_hashes"] == dict(plan.module_hashes)
@@ -72,7 +75,7 @@ def test_public_exports_are_the_gate():
         "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.23"
+    assert acid_engine.__version__ == "0.2.24"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():
@@ -141,5 +144,46 @@ def test_research_shims_keep_import_path():
     assert LiveCodeView is not None
     assert ContractRegistry is not None
     assert ExecutionLogger is not None
+
+
+def test_worker_source_does_not_import_cli():
+    from pathlib import Path
+
+    import acid_engine.worker as worker
+
+    src = Path(worker.__file__).read_text(encoding="utf-8")
+    assert "from acid_engine.cli import" not in src
+    assert "import acid_engine.cli\n" not in src
+    assert "from acid_engine.cli_judge import" in src
+
+
+def test_cli_judge_has_no_argparse():
+    from pathlib import Path
+
+    import acid_engine.cli_judge as cli_judge
+
+    src = Path(cli_judge.__file__).read_text(encoding="utf-8")
+    assert "import argparse" not in src
+    assert "add_parser" not in src
+    assert "ArgumentParser" not in src
+
+
+def test_cli_judge_hash_mismatch_is_runtime_hash():
+    from acid_engine.level2.conformance import ConformanceStatus
+    from acid_engine.worker import verify_runtime_pin
+
+    payload = dump_script_lock(_script())
+    tool = dict(payload["toolchain"])
+    hashes = dict(tool["runtime_hashes"])
+    hashes["acid_engine/cli_judge.py"] = "0" * 64
+    tool["runtime_hashes"] = hashes
+    bad = dict(payload)
+    bad["toolchain"] = tool
+    pin = verify_runtime_pin(bad)
+    assert pin is not None
+    assert pin.status == ConformanceStatus.FAIL
+    assert pin.failure is not None
+    assert pin.failure.property_name == "runtime_hash"
+    assert pin.failure.detail == "acid_engine/cli_judge.py"
 
 

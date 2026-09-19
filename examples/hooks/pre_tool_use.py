@@ -17,7 +17,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from acid_engine.cli import load_script_from_file, source_hash_gate
+from acid_engine.cli_judge import load_script_from_file, source_hash_gate
 from acid_engine.level2.conformance import ConformanceStatus
 from acid_engine.level3.script.resolve import materialize_script
 from acid_engine.level3.script.runner import bind_script_to_plan, load_script_lock

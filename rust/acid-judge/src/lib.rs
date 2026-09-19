@@ -274,6 +274,7 @@ const RUNTIME_PIN_PATHS: &[&str] = &[
     "acid_engine/level3/script/resolve.py",
     "acid_engine/level2/implementation_canon.py",
     "acid_engine/level2/local_deps.py",
+    "acid_engine/cli_judge.py",
 ];
 
 fn pin_rel_ok(rel: &str) -> bool {
@@ -783,6 +784,7 @@ mod tests {
             "acid_engine/level3/script/resolve.py",
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
+            "acid_engine/cli_judge.py",
         ];
         for rel in files {
             let path = tmp.join(rel);
@@ -822,6 +824,7 @@ mod tests {
             "acid_engine/level3/script/resolve.py",
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
+            "acid_engine/cli_judge.py",
         ];
         for rel in files {
             let path = tmp.join(rel);
@@ -851,6 +854,49 @@ mod tests {
         let _ = std::fs::remove_dir_all(&tmp);
         assert_eq!(r.status, "FAIL");
         assert_eq!(r.property.as_deref(), Some("runtime_hash"));
+    }
+
+    #[test]
+    fn missing_cli_judge_key_is_not_pinned() {
+        let _guard = RootGuard::acquire();
+        let tmp = std::env::temp_dir().join(format!("acid-missing-cli-judge-{}", std::process::id()));
+        let files = [
+            "acid_engine/worker.py",
+            "acid_engine/level3/script/python_runtime.py",
+            "acid_engine/level3/script/runner.py",
+            "acid_engine/level3/script/resolve.py",
+            "acid_engine/level2/implementation_canon.py",
+            "acid_engine/level2/local_deps.py",
+            "acid_engine/cli_judge.py",
+        ];
+        for rel in files {
+            let path = tmp.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"print('ok')\n").unwrap();
+        }
+        let worker_hex = sha256_file(&tmp.join("acid_engine/worker.py")).unwrap();
+        let mut runtime = BTreeMap::new();
+        for rel in files {
+            if rel == "acid_engine/cli_judge.py" {
+                continue;
+            }
+            runtime.insert(rel.to_string(), sha256_file(&tmp.join(rel)).unwrap());
+        }
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some(worker_hex),
+            runtime_hashes: runtime,
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(tmp.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&tmp);
+        assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "PASS");
     }
 
     static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -884,6 +930,7 @@ mod tests {
             "acid_engine/level3/script/resolve.py",
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
+            "acid_engine/cli_judge.py",
         ];
         for rel in files {
             let path = pkg_root.join(rel);

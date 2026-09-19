@@ -14,7 +14,8 @@ from examples.bones.n_plus_one import build_script
 
 ROOT = Path(__file__).resolve().parents[2]
 CRATE = ROOT / "rust" / "acid-judge"
-BIN = CRATE / "target" / "debug" / "acid-judge"
+TARGET = Path(os.environ.get("CARGO_TARGET_DIR", str(CRATE / "target")))
+BIN = TARGET / "debug" / "acid-judge"
 BONES_JSON = ROOT / "examples" / "bones" / "n_plus_one.json"
 BONES_PLAN = ROOT / "examples" / "bones" / "n_plus_one.plan.json"
 

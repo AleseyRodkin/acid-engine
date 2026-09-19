@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from acid_engine.cli import load_script_from_file
+from acid_engine.cli_judge import load_script_from_file
 from acid_engine.level3.container.port import PortRef
 from acid_engine.level3.container.snapshot import ContainerSnapshot
 from acid_engine.level3.script.module import ScriptModule
@@ -22,6 +22,7 @@ RUNTIME_PIN_PATHS = (
     "acid_engine/level3/script/resolve.py",
     "acid_engine/level2/implementation_canon.py",
     "acid_engine/level2/local_deps.py",
+    "acid_engine/cli_judge.py",
 )
 
 

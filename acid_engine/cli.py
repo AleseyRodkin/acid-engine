@@ -1,95 +1,24 @@
-"""CLI Acid Judge: lock, judge, receipt."""
+"""CLI Acid Judge: lock, judge, receipt. Argparse and print only. No PASS here."""
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from acid_engine.cli_judge import (
+    admit_bound,
+    admit_judge,
+    dummy_script,
+    load_script_from_file,
+    source_hash_gate,
+)
 from acid_engine.level2.conformance import (
-    ConformanceLevel,
     ConformanceResult,
-    ConformanceStatus,
     explain_block,
     explain_result,
 )
-from acid_engine.level2.failure import FailureReason
-from acid_engine.level3.script.module import ScriptModule
-
-
-def load_script_from_file(path: str | Path) -> ScriptModule:
-    """Load ScriptModule from .py (`script`) or .json blank. Markdown is not parsed.
-
-    After source_hash_gate, this execs the pinned bytes, not a second disk read.
-    """
-    source = Path(path)
-    if not source.exists():
-        raise FileNotFoundError(f"Script file not found: {source}")
-    suffix = source.suffix.lower()
-    if suffix == ".md":
-        raise ValueError("markdown specs are not parsed")
-    if suffix == ".json":
-        from acid_engine.level2.blank_loader import load_script_blank
-        return load_script_blank(source)
-    if suffix != ".py":
-        raise ValueError(f"Script must be a .py or .json file, got: {source}")
-    from acid_engine.level2.local_deps import exec_source_module, read_source_bytes
-
-    src = read_source_bytes(source)
-    # unique name so repeated loads do not collide in sys.modules
-    mod_name = f"acid_user_script_{source.resolve().stem}_{id(source)}"
-    module = exec_source_module(source, src, mod_name)
-    if not hasattr(module, "script"):
-        raise ValueError(f"{source} does not define 'script'")
-    script = module.script
-    if not isinstance(script, ScriptModule):
-        raise TypeError(f"{source}: 'script' is {type(script)!r}, expected ScriptModule")
-    return script
-
-
-def source_hash_gate(script_path: str | Path, raw: Mapping[str, Any]) -> ConformanceResult | None:
-    """Compare file bytes to the lock before exec. Missing pin is SKIPPED.
-
-    On match, pins those bytes so the following load cannot see a later disk write.
-    """
-    from acid_engine.level2.local_deps import pin_source_bytes, snapshot_exec_target
-
-    expected = raw.get("source_hash")
-    if not expected:
-        return ConformanceResult.skipped("source not pinned")
-    path = Path(script_path)
-    try:
-        target, src, actual = snapshot_exec_target(path)
-    except OSError as e:
-        return ConformanceResult(
-            status=ConformanceStatus.FAIL,
-            level=ConformanceLevel.STRUCTURAL,
-            message="source file unreadable",
-            failure=FailureReason(
-                node_id=path.name,
-                contract_id=path.name,
-                property_name="source_hash",
-                expected=str(expected),
-                actual=str(e),
-            ),
-        )
-    if actual != str(expected):
-        return ConformanceResult(
-            status=ConformanceStatus.FAIL,
-            level=ConformanceLevel.STRUCTURAL,
-            message="source_hash mismatch",
-            failure=FailureReason(
-                node_id=path.name,
-                contract_id=path.name,
-                property_name="source_hash",
-                expected=str(expected),
-                actual=actual,
-            ),
-        )
-    pin_source_bytes(target, src)
-    return None
 
 
 def parse_cli_input(raw: str | None, default: Any = 3) -> Any:
@@ -142,29 +71,13 @@ def cmd_lock(args: argparse.Namespace) -> None:
         )
 
 
-def _dummy_script(path: str | Path) -> ScriptModule:
-    from acid_engine.level2.identity import ContractId, Version
-    from acid_engine.level2.specification import Specification
-
-    name = Path(path).stem
-    return ScriptModule(
-        contract_id=ContractId("source", name),
-        version=Version(0, 0, 0),
-        specification=Specification(),
-        input_type="any",
-        output_type="any",
-        implementation=lambda x: x,
-        name=name,
-    )
-
-
 def cmd_judge(args: argparse.Namespace) -> None:
-    """Public entry: bind before run + verdict."""
+    """Public entry: print admit_judge + exit. PASS is not decided here."""
     if not args.script:
         print("ERROR: lock not passed — judge requires --script")
         sys.exit(1)
     input_val = parse_cli_input(args.input, default=3)
-    from acid_engine.judge import SELF_LOCK_SKIP, judge_script
+    from acid_engine.judge import SELF_LOCK_SKIP
     from acid_engine.level3.pipeline import PipelineResult
     from acid_engine.level3.script.runner import load_script_lock
 
@@ -172,7 +85,7 @@ def cmd_judge(args: argparse.Namespace) -> None:
         if not Path(args.script).exists():
             print(f"ERROR: Failed to load script: Script file not found: {args.script}")
             sys.exit(1)
-        dummy = _dummy_script(args.script)
+        dummy = dummy_script(args.script)
         skipped = ConformanceResult.skipped(SELF_LOCK_SKIP)
         result = PipelineResult(conformance=skipped)
         print(explain_result(result.conformance))
@@ -184,38 +97,18 @@ def cmd_judge(args: argparse.Namespace) -> None:
     except Exception as e:
         print(f"ERROR: Failed to load plan: {e}")
         sys.exit(1)
-    gate = source_hash_gate(args.script, raw)
-    if gate is not None:
-        dummy = _dummy_script(args.script)
-        result = PipelineResult(conformance=gate)
-        print(explain_block(result.conformance))
-        _maybe_write_receipt(args, dummy, input_val, result, plan=plan, toolchain=raw)
-        sys.exit(1)
-    try:
-        script = load_script_from_file(args.script)
-    except Exception as e:
-        print(f"ERROR: Failed to load script: {e}")
-        sys.exit(1)
-    from acid_engine.level2.implementation_canon import live_canon_kind
-    from acid_engine.worker import verify_runtime_pin
-
-    pin = verify_runtime_pin(
-        raw, live_canon_kind=live_canon_kind(script.implementation)
-    )
-    if pin is not None:
-        result = PipelineResult(conformance=pin)
-        print(explain_block(result.conformance))
-        _maybe_write_receipt(args, script, input_val, result, plan=plan, toolchain=raw)
-        sys.exit(1)
-    print("runtime: pinned")
-    result = judge_script(
-        script, input_val, plan=plan, iface=iface, toolchain=raw
-    )
+    admit = admit_judge(args.script, raw, input_val, iface=iface, plan=plan)
+    result = admit.result
+    if admit.runtime_pinned:
+        print("runtime: pinned")
     print(explain_block(result.conformance))
-    print(f"output: {result.data}")
-    print(f"interface_contract_hash: {plan.interface_contract_hash}")
-    print(f"plan_content_hash: {plan.content_hash}")
-    _maybe_write_receipt(args, script, input_val, result, plan=plan, toolchain=raw)
+    if admit.runtime_pinned:
+        print(f"output: {result.data}")
+        print(f"interface_contract_hash: {plan.interface_contract_hash}")
+        print(f"plan_content_hash: {plan.content_hash}")
+    _maybe_write_receipt(
+        args, admit.script, input_val, result, plan=plan, toolchain=raw
+    )
     if not result.ok:
         sys.exit(1)
 
@@ -337,12 +230,11 @@ def cmd_locks(args: argparse.Namespace) -> None:
         print(f"[BOUND] {ident}")
         if not getattr(args, "judge", False):
             continue
-        from acid_engine.judge import judge_script
         from acid_engine.receipt import build_receipt, write_receipt
 
         raw_plan = json.loads(plan_path.read_text(encoding="utf-8"))
         iface, plan = load_script_lock(raw_plan)
-        result = judge_script(
+        result = admit_bound(
             script, item.get("input"), plan=plan, iface=iface, toolchain=raw_plan
         )
         print(explain_block(result.conformance))
@@ -515,8 +407,8 @@ def main() -> None:
     p_receipt.add_argument("--sign", help="Path to receipt.json")
     p_receipt.add_argument("--verify", help="Path to receipt.json")
     p_receipt.add_argument("--key", help="Secret PEM")
-    p_receipt.add_argument("--pubkey", help="Public PEM")
     p_receipt.add_argument("--sig", help="Signature JSON")
+    p_receipt.add_argument("--pubkey", help="Public PEM")
     p_receipt.add_argument("--out", help="Where to write the signature or keys")
     p_receipt.add_argument("--out-dir", help="Directory for --keygen")
     p_receipt.set_defaults(func=cmd_receipt)
