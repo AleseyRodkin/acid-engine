@@ -90,7 +90,7 @@ Not Sigstore. Tampering the receipt body → verify fails.
 
 The binary does not hash the body. One canon — Python (`implementation_canon`).
 One binary entry: a worker is required.
-Before identify the supervisor checks SHA-256 of the runtime contour (`worker.py`, `cli.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) against `runtime_hashes` and `worker_hash` in the request/lock.
+Before identify the supervisor checks SHA-256 of the runtime contour (`worker.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`) against `runtime_hashes` and `worker_hash` in the request/lock.
 The contour is sought in `ACID_ENGINE_ROOT`, else the installed package (`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last. Not in a foreign project's `cwd` first.
 No `worker_hash` or no full `runtime_hashes` → SKIPPED. Mismatch → FAIL. The runtime hash is not in body identity.
 `locks --index` without `worker_hash` / `runtime_hashes` → FAIL, not fail-open.

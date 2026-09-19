@@ -17,7 +17,6 @@ from acid_engine.level3.script.resolve import materialize_script
 
 RUNTIME_PIN_PATHS = (
     "acid_engine/worker.py",
-    "acid_engine/cli.py",
     "acid_engine/level3/script/python_runtime.py",
     "acid_engine/level3/script/runner.py",
     "acid_engine/level3/script/resolve.py",

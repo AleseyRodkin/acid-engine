@@ -59,6 +59,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 66. 0.2.21: GitHub repo is `acid-engine`. PyPI `acid-engine` 0.2.21+ is this product (same as `acid-judge`). Old data-contracts tree is `acid_engine_archive`.
 67. 0.2.22: `replay_run` is the same verified pipeline as `execute_plan` (runtime pin, bind, seal). No second execution path. Library callable still trusted as presented.
 68. PyPI canon is `acid-judge`. Do not publish this tree as `acid-engine`. Yank 0.2.21–0.2.22 on that name. `acid-engine==0.2.0` stays the archive.
+69. 0.2.23: `cli.py` is not in `runtime_hashes`. Contour is worker, python_runtime, runner, resolve, implementation_canon, local_deps.
 
 Phases 1–6 closed. Phase 7: `rust/acid-judge` supervisor: bind → python worker → verdict.
 Without a worker — SKIPPED. The worker does not write a verdict. Body hash is Python canon only.

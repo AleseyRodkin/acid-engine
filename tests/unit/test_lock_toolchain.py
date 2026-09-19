@@ -38,6 +38,8 @@ def test_dump_includes_toolchain_outside_identity():
     live_rt = runtime_hashes()
     assert tool["runtime_hashes"] == live_rt
     assert set(tool["runtime_hashes"]) == set(RUNTIME_PIN_PATHS)
+    assert "acid_engine/cli.py" not in RUNTIME_PIN_PATHS
+    assert "acid_engine/cli.py" not in tool["runtime_hashes"]
     assert payload.get("source_hash")
     iface, plan = lock_for_script(script)
     assert payload["module_hashes"] == dict(plan.module_hashes)
@@ -70,7 +72,7 @@ def test_public_exports_are_the_gate():
         "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.22"
+    assert acid_engine.__version__ == "0.2.23"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():
@@ -107,6 +109,28 @@ def test_verify_runtime_pin_ok_and_mismatch():
     assert pin_kind is not None
     assert pin_kind.failure is not None
     assert pin_kind.failure.property_name == "canon_kind"
+
+
+def test_cli_py_hash_is_not_a_runtime_pin():
+    from acid_engine.level2.conformance import ConformanceStatus
+    from acid_engine.worker import verify_runtime_pin
+
+    payload = dump_script_lock(_script())
+    tool = dict(payload["toolchain"])
+    hashes = dict(tool["runtime_hashes"])
+    hashes["acid_engine/cli.py"] = "0" * 64
+    tool["runtime_hashes"] = hashes
+    extra = dict(payload)
+    extra["toolchain"] = tool
+    assert verify_runtime_pin(extra) is None
+    hashes["acid_engine/level2/implementation_canon.py"] = "0" * 64
+    tool["runtime_hashes"] = hashes
+    extra["toolchain"] = tool
+    pin = verify_runtime_pin(extra)
+    assert pin is not None
+    assert pin.status == ConformanceStatus.FAIL
+    assert pin.failure is not None
+    assert pin.failure.property_name == "runtime_hash"
 
 
 def test_research_shims_keep_import_path():

@@ -1,9 +1,8 @@
 {
   "schema": "acid.locks.v1",
-  "worker_hash": "c079028ad05f0710b25dcdfa73fed1fa3001b1ff6a8849d571a1326c1d58964c",
+  "worker_hash": "0e700f0bee0f7fe3b42834f64924d1c16f7cd71e7237c63a3547923f05a899db",
   "runtime_hashes": {
-    "acid_engine/worker.py": "c079028ad05f0710b25dcdfa73fed1fa3001b1ff6a8849d571a1326c1d58964c",
-    "acid_engine/cli.py": "0c5b8deb52d202356ab60b72f2b2c47acf2596a21feeb9a4e34eace5f864984d",
+    "acid_engine/worker.py": "0e700f0bee0f7fe3b42834f64924d1c16f7cd71e7237c63a3547923f05a899db",
     "acid_engine/level3/script/python_runtime.py": "8445144c7fabcc971f8bba15070452216264d73a369b0bc72983346ce2b0b84c",
     "acid_engine/level3/script/runner.py": "366ee13b7eb14e22b4b2a58d05cfb1ea8b8bed91d57260e9df829b6c9d824a25",
     "acid_engine/level3/script/resolve.py": "590d22ebb1e5ec24703ec203fe0c347cb2b36abe76b7f965b4388aa0da611efe",

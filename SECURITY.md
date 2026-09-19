@@ -31,10 +31,10 @@ and not an MCP gateway.
   `dep:<path>` in `module_hashes`. `importlib.import_module`, `__import__`,
   `exec`, and `eval` are not followed. `lock` prints a warning when those
   appear in the AST.
-- Judge contour listed in `runtime_hashes` (`worker.py`, `cli.py`,
+- Judge contour listed in `runtime_hashes` (`worker.py`,
   `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`,
-  `local_deps.py`). The supervisor puts the trusted package on
-  `PYTHONPATH` first, not the user `cwd`.
+  `local_deps.py`). `cli.py` is not in the pin. The supervisor puts the
+  trusted package on `PYTHONPATH` first, not the user `cwd`.
 - Local deps are sealed from **one read** of each file compared to the
   locked hash, then those bytes are executed. A swap between check and
   use is FAIL. Concurrent `judge_script` of two tools that both import

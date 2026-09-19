@@ -4,6 +4,7 @@
 
 - PyPI canon is `acid-judge`. This tree is not published as `acid-engine`. Yank 0.2.21–0.2.22 on that name; `acid-engine==0.2.0` stays the data-contracts archive.
 - Composite Action Verify step passes `index` / `judge` / `receipts` through env, not `${{ inputs.* }}` inside `run:`.
+- `cli.py` is out of `runtime_hashes`. A CLI help-text patch does not reshoot locks. Canon / body / helper swap still FAIL before run.
 
 ## 0.2.22 — 2026-09-16
 

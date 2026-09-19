@@ -269,7 +269,6 @@ fn pin_worker(req: &Request, worker: &WorkerSpec) -> Option<Response> {
 
 const RUNTIME_PIN_PATHS: &[&str] = &[
     "acid_engine/worker.py",
-    "acid_engine/cli.py",
     "acid_engine/level3/script/python_runtime.py",
     "acid_engine/level3/script/runner.py",
     "acid_engine/level3/script/resolve.py",
@@ -750,7 +749,6 @@ mod tests {
         let tmp = std::env::temp_dir().join(format!("acid-source-skip-{}", std::process::id()));
         let files = [
             "acid_engine/worker.py",
-            "acid_engine/cli.py",
             "acid_engine/level3/script/python_runtime.py",
             "acid_engine/level3/script/runner.py",
             "acid_engine/level3/script/resolve.py",
@@ -790,7 +788,6 @@ mod tests {
         let tmp = std::env::temp_dir().join(format!("acid-runtime-pin-{}", std::process::id()));
         let files = [
             "acid_engine/worker.py",
-            "acid_engine/cli.py",
             "acid_engine/level3/script/python_runtime.py",
             "acid_engine/level3/script/runner.py",
             "acid_engine/level3/script/resolve.py",
@@ -853,7 +850,6 @@ mod tests {
         let empty_cwd = std::env::temp_dir().join(format!("acid-root-cwd-{pid}"));
         let files = [
             "acid_engine/worker.py",
-            "acid_engine/cli.py",
             "acid_engine/level3/script/python_runtime.py",
             "acid_engine/level3/script/runner.py",
             "acid_engine/level3/script/resolve.py",
