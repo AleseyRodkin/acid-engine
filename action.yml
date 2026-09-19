@@ -10,15 +10,15 @@ inputs:
     required: false
     default: locks/index.json
   python-version:
-    description: CPython for the CLI
+    description: CPython for the CLI / worker
     required: false
     default: "3.11"
   judge:
-    description: After bind, run judge and write receipts. Default false = bind only.
+    description: After bind, run judge and write receipts. Default false = bind only (python-cli). Supervisor path always judges.
     required: false
     default: "false"
   receipts:
-    description: Receipt directory when judge is true
+    description: Receipt directory when judge is true (python-cli)
     required: false
     default: receipts
 runs:
@@ -31,6 +31,35 @@ runs:
     - name: Install Acid Judge
       shell: bash
       run: pip install "${{ github.action_path }}"
+    - name: Fetch supervisor
+      shell: bash
+      env:
+        ACID_ACTION_REF: ${{ github.action_ref }}
+        ACID_ACTION_REPO: ${{ github.action_repository }}
+        ACID_RUNNER_OS: ${{ runner.os }}
+      run: |
+        set -euo pipefail
+        ref="${ACID_ACTION_REF:-}"
+        ref="${ref#refs/tags/}"
+        repo="${ACID_ACTION_REPO:-}"
+        bin="${RUNNER_TEMP}/acid-judge-linux-x86_64"
+        if [ "${ACID_RUNNER_OS}" != "Linux" ] || [ -z "$repo" ] || [[ ! "$ref" =~ ^v0\.2\.[0-9]+$ ]]; then
+          echo "supervisor fetch skipped (need Linux + release tag v0.2.n)"
+          exit 0
+        fi
+        url="https://github.com/${repo}/releases/download/${ref}/acid-judge-linux-x86_64"
+        if ! curl -fsSL --proto '=https' --tlsv1.2 "$url" -o "$bin"; then
+          echo "supervisor asset missing; python-cli fallback"
+          exit 0
+        fi
+        if [ ! -s "$bin" ] || [ "$(head -c 4 "$bin")" != $'\x7fELF' ]; then
+          echo "supervisor asset is not an ELF; python-cli fallback"
+          rm -f "$bin"
+          exit 0
+        fi
+        chmod +x "$bin"
+        echo "ACID_SUPERVISOR=$bin" >> "$GITHUB_ENV"
+        echo "fetched $url"
     - name: Verify lock index
       shell: bash
       env:
@@ -38,11 +67,80 @@ runs:
         ACID_JUDGE: ${{ inputs.judge }}
         ACID_RECEIPTS: ${{ inputs.receipts }}
       run: |
-        extra=()
-        if [ "$ACID_JUDGE" = "true" ]; then
-          extra=(--judge --receipts "$ACID_RECEIPTS")
+        set -euo pipefail
+        if [ -n "${ACID_SUPERVISOR:-}" ] && [ -x "$ACID_SUPERVISOR" ]; then
+          echo "path=supervisor"
+          python3 - "$ACID_SUPERVISOR" "$ACID_INDEX" <<'PY'
+        import json, os, subprocess, sys
+
+        bin, index_path = sys.argv[1], sys.argv[2]
+        raw = json.loads(open(index_path, encoding="utf-8").read())
+        entries = raw.get("entries")
+        if not isinstance(entries, list) or not entries:
+            print("ERROR: index has no entries")
+            sys.exit(1)
+        failed = 0
+        for i, item in enumerate(entries):
+            if not isinstance(item, dict):
+                print(f"ERROR: entry {i} is not an object")
+                sys.exit(1)
+            ident = str(item.get("id") or i)
+            script = item.get("script")
+            plan_rel = item.get("plan")
+            if not script or not plan_rel:
+                print(f"[FAIL] {ident} script/plan required")
+                failed += 1
+                continue
+            plan = json.loads(open(plan_rel, encoding="utf-8").read())
+            tool = plan.get("toolchain") if isinstance(plan.get("toolchain"), dict) else {}
+            req = {
+                "module_hashes": plan.get("module_hashes") or {},
+                "worker_hash": tool.get("worker_hash") or raw.get("worker_hash"),
+                "runtime_hashes": tool.get("runtime_hashes") or raw.get("runtime_hashes") or {},
+                "source_hash": plan.get("source_hash"),
+                "worker": {
+                    "python": sys.executable,
+                    "script": str(script),
+                    "input": item.get("input"),
+                    "cwd": os.getcwd(),
+                },
+            }
+            proc = subprocess.run(
+                [bin],
+                input=json.dumps(req),
+                capture_output=True,
+                text=True,
+            )
+            if proc.returncode != 0:
+                print(f"[FAIL] {ident} supervisor exit {proc.returncode}")
+                sys.stderr.write(proc.stderr)
+                failed += 1
+                continue
+            try:
+                out = json.loads(proc.stdout)
+            except json.JSONDecodeError:
+                print(f"[FAIL] {ident} supervisor json")
+                failed += 1
+                continue
+            status = str(out.get("status") or "")
+            print(f"[{status}] {ident} {out.get('message', '')}")
+            if status != "PASS":
+                failed += 1
+        print("")
+        print("Acid Judge")
+        print(f"Tools checked: {len(entries)}")
+        print(f"Failed: {failed}")
+        print(f"Execution integrity: {'FAIL' if failed else 'PASS'}")
+        sys.exit(1 if failed else 0)
+        PY
+        else
+          echo "path=python-cli"
+          extra=()
+          if [ "$ACID_JUDGE" = "true" ]; then
+            extra=(--judge --receipts "$ACID_RECEIPTS")
+          fi
+          acid-judge locks --index "$ACID_INDEX" "${extra[@]}"
         fi
-        acid-judge locks --index "$ACID_INDEX" "${extra[@]}"
     - name: Upload receipts
       if: ${{ inputs.judge == 'true' && always() }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -31,6 +31,23 @@ def test_action_verify_run_has_no_input_interpolation():
     assert "ACID_RECEIPTS: ${{ inputs.receipts }}" in text
 
 
+def test_action_fetches_supervisor_from_release_tag():
+    text = (ROOT / "action.yml").read_text(encoding="utf-8")
+    assert "name: Fetch supervisor" in text
+    fetch = text.split("name: Fetch supervisor", 1)[1].split("name: Verify lock index", 1)[0]
+    assert "github.action_ref" in fetch or "ACID_ACTION_REF" in fetch
+    assert "acid-judge-linux-x86_64" in fetch
+    assert "releases/download/" in fetch
+    assert "${{ inputs." not in fetch
+    assert "@main" not in fetch
+    assert "v0.2." in fetch
+    verify = text.split("name: Verify lock index", 1)[1].split("name: Upload receipts", 1)[0]
+    assert "path=supervisor" in verify
+    assert "path=python-cli" in verify
+    assert "acid-judge locks --index" in verify
+    assert "${{ inputs." not in verify.split("run:", 1)[1]
+
+
 def test_readme_install_has_no_pythonpath():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "acid-judge lock --script FILE" in readme
