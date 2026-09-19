@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- PyPI canon is `acid-judge`. This tree is not published as `acid-engine`. Yank 0.2.21–0.2.22 on that name; `acid-engine==0.2.0` stays the data-contracts archive.
+
 ## 0.2.22 — 2026-09-16
 
 - `replay_run` uses the same verified execution as `execute_plan`: runtime pin, interface bind, body/dep hashes, `seal_local_deps`, then run. Poisoned contour or a swapped helper does not execute.

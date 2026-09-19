@@ -13,8 +13,8 @@ Public contract for an adopter who pins a 0.2 lock and CLI in their own CI.
   that existed in 0.2.4.
 - **Breaking** lock format or CLI → 0.3.0.
 - **PyPI (0.2.15+):** `pip install acid-judge`. Import `acid_engine`. CLI `acid-judge`.
-  **0.2.21+:** `pip install acid-engine` is the same release. `acid-engine==0.2.0`
-  was the archived data-contracts product.
+  `acid-engine==0.2.0` is the archived data-contracts product. 0.2.21–0.2.22 on
+  that name are yanked. Do not install `acid-engine` for Acid Judge.
 
 Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
 (`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last.

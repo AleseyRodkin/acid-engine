@@ -29,15 +29,16 @@ def test_readme_install_has_no_pythonpath():
     assert "acid-judge-smoke" in readme
     assert "pip install" in readme
     assert "pip install acid-judge" in readme
-    assert "pip install acid-engine" in readme
     assert "Not published to PyPI" not in readme
     for line in readme.splitlines():
-        if line.startswith("acid-judge ") or line.startswith("pip install"):
+        stripped = line.strip()
+        if stripped.startswith("pip install"):
             assert "PYTHONPATH" not in line
+            assert stripped != "pip install acid-engine"
 
 
-def test_pypi_workflow_publishes_both_names():
+def test_pypi_workflow_publishes_acid_judge_only():
     text = (ROOT / ".github" / "workflows" / "pypi.yml").read_text(encoding="utf-8")
-    assert "dist_name: acid-judge" in text
-    assert "dist_name: acid-engine" in text
-    assert "fail-fast: false" in text
+    assert "acid_judge-" in text
+    assert "dist_name: acid-engine" not in text
+    assert 'name = "{name}"' not in text

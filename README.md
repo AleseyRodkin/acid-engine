@@ -71,8 +71,6 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 
 ```bash
 pip install acid-judge
-# same release from 0.2.21:
-pip install acid-engine
 acid-judge lock --script FILE --out LOCK.json
 acid-judge judge --script FILE --plan LOCK.json --input '...'
 acid-judge locks --index locks/index.json
@@ -136,7 +134,7 @@ Threat model: [SECURITY.md](SECURITY.md). Coverage: [attacks/](attacks/README.md
 `receipt --sign` / `receipt --verify` — Ed25519 on the receipt canon, local openssl. Not Sigstore.
 
 The product is Acid Judge. Repository: [`acid-engine`](https://github.com/AleseyRodkin/acid-engine). Import: `acid_engine`. CLI: `acid-judge`.
-PyPI: `acid-judge` (0.2.15+) and `acid-engine` (0.2.21+), same release. `acid-engine==0.2.0` was the archived data-contracts tree ([`acid_engine_archive`](https://github.com/AleseyRodkin/acid_engine_archive)).
+PyPI: `pip install acid-judge`. Do not `pip install acid-engine` for this product — that name is the archived data-contracts tree (`acid-engine==0.2.0`). Releases 0.2.21–0.2.22 on that name are yanked.
 
 Showcase:
 
