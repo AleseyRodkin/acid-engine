@@ -51,8 +51,15 @@ receipt = build_receipt(
 `context` is attribution for a future evidence store. It is not identity.
 Missing context does not change PASS / FAIL / SKIPPED.
 
-`judge_script` on an already-imported callable does not re-hash the file.
-Embed via `judge_script_from_lock`.
+## Library vs file gate
+
+`judge_script` on an already-imported callable is not a file gate. It
+trusts `script.implementation` as presented. It does not re-read the tool
+file and does not hash `co_code`.
+
+The file gate (`source_hash` before import) is CLI `judge`, the supervisor,
+the PreToolUse hook, and `judge_script_from_lock`. Embed via
+`judge_script_from_lock`.
 
 ## Not in this contract
 

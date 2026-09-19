@@ -7,6 +7,7 @@
 - `cli.py` is out of `runtime_hashes`. A CLI help-text patch does not reshoot locks. Canon / body / helper swap still FAIL before run.
 - Empty or unknown `output_type` is SKIPPED, not PASS. `bool ≠ int` is still FAIL. Same in Python and Rust.
 - Hidden `init` / `validate` / `run` are gone. `--help` is the whole CLI.
+- INTEROP: `judge_script` on an already-imported callable is not a file gate and does not hash `co_code`.
 
 ## 0.2.22 — 2026-09-16
 

@@ -133,3 +133,20 @@ def test_judge_missing_is_skipped():
     result = judge_script(script, 1, plan=plan, iface=iface, toolchain=_tc())
     assert result.status == ConformanceStatus.SKIPPED
     assert not result.ok
+
+
+def test_judge_script_imported_callable_is_not_file_gate(tmp_path: Path) -> None:
+    """Library path trusts the callable. Disk swap after import is not this gate."""
+    src = tmp_path / "inc.py"
+    src.write_text("def inc(x):\n    return x + 1\n", encoding="utf-8")
+    ns: dict[str, object] = {}
+    exec(compile(src.read_text(encoding="utf-8"), str(src), "exec"), ns)
+    inc = ns["inc"]
+    assert callable(inc)
+    script = _script(inc, name="inc")
+    iface, plan = lock_for_script(script)
+    src.write_text("def inc(x):\n    return x + 99\nraise RuntimeError('payload')\n", encoding="utf-8")
+    result = judge_script(script, 1, plan=plan, iface=iface, toolchain=_tc())
+    assert result.ok
+    assert result.data == 2
+    assert "co_code" not in (result.message or "")
