@@ -9,6 +9,7 @@
 - Hidden `init` / `validate` / `run` are gone. `--help` is the whole CLI.
 - INTEROP: `judge_script` on an already-imported callable is not a file gate and does not hash `co_code`.
 - `mypy --strict` covers `locks/ci_judge.py`.
+- `COMMERCIAL.md` is positioning and the product queue. No tariff, no ICP list.
 
 ## 0.2.22 — 2026-09-16
 

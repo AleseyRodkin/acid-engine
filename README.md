@@ -172,7 +172,7 @@ Dev: `pip install -e ".[dev]"` — pytest, ruff, mypy.
 
 ```bash
 ruff check acid_engine tests examples
-mypy acid_engine
+mypy --strict acid_engine locks/ci_judge.py
 ```
 
 ## What holds the gate
