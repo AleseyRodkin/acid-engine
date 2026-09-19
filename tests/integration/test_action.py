@@ -82,3 +82,29 @@ def test_pypi_workflow_publishes_acid_judge_only():
     assert "acid_judge-" in text
     assert "dist_name: acid-engine" not in text
     assert 'name = "{name}"' not in text
+
+
+def test_self_ci_rust_job_runs_local_supervisor():
+    text = (ROOT / ".github" / "workflows" / "acid-judge.yml").read_text(encoding="utf-8")
+    rust = text.split("  rust:\n", 1)[1].split("  rust-audit:", 1)[0]
+    assert "cargo build --release --locked" in rust
+    assert "python -m acid_engine.action_driver" in rust
+    assert "rust/acid-judge/target/release/acid-judge" in rust
+    assert "locks/index.json" in rust
+    assert "--receipts receipts" in rust
+    assert "releases/download/" not in rust
+    assert "uses: ./" in text
+    locks = text.split("  locks:\n", 1)[1].split("  tests:", 1)[0]
+    assert "uses: ./" in locks
+    assert "releases/download/" not in locks
+
+
+def test_cargo_audit_is_not_on_msrv_job():
+    text = (ROOT / ".github" / "workflows" / "acid-judge.yml").read_text(encoding="utf-8")
+    rust = text.split("  rust:\n", 1)[1].split("  rust-audit:", 1)[0]
+    audit = text.split("  rust-audit:", 1)[1]
+    assert "1.75.0" in rust
+    assert "audit-check" not in rust
+    assert "1.88.0" in audit
+    assert "audit-check" in audit
+    assert "69366f33c96575abad1ee0dba8212993eecbe998" in audit
