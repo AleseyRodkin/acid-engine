@@ -18,7 +18,7 @@ inputs:
     required: false
     default: "false"
   receipts:
-    description: Receipt directory when judge is true (python-cli)
+    description: Receipt directory when judge is true (python-cli) or on the supervisor path
     required: false
     default: receipts
 runs:
@@ -48,6 +48,7 @@ runs:
           exit 0
         fi
         url="https://github.com/${repo}/releases/download/${ref}/acid-judge-linux-x86_64"
+        sum_url="https://github.com/${repo}/releases/download/${ref}/acid-judge-linux-x86_64.sha256"
         if ! curl -fsSL --proto '=https' --tlsv1.2 "$url" -o "$bin"; then
           echo "supervisor asset missing; python-cli fallback"
           exit 0
@@ -55,6 +56,17 @@ runs:
         if [ ! -s "$bin" ] || [ "$(head -c 4 "$bin")" != $'\x7fELF' ]; then
           echo "supervisor asset is not an ELF; python-cli fallback"
           rm -f "$bin"
+          exit 0
+        fi
+        sum_file="${bin}.sha256"
+        if ! curl -fsSL --proto '=https' --tlsv1.2 "$sum_url" -o "$sum_file"; then
+          echo "supervisor checksum missing; python-cli fallback"
+          rm -f "$bin"
+          exit 0
+        fi
+        if ! (cd "$(dirname "$bin")" && sha256sum -c "$(basename "$sum_file")"); then
+          echo "checksum mismatch"
+          rm -f "$bin" "$sum_file"
           exit 0
         fi
         chmod +x "$bin"
@@ -70,69 +82,7 @@ runs:
         set -euo pipefail
         if [ -n "${ACID_SUPERVISOR:-}" ] && [ -x "$ACID_SUPERVISOR" ]; then
           echo "path=supervisor"
-          python3 - "$ACID_SUPERVISOR" "$ACID_INDEX" <<'PY'
-        import json, os, subprocess, sys
-
-        bin, index_path = sys.argv[1], sys.argv[2]
-        raw = json.loads(open(index_path, encoding="utf-8").read())
-        entries = raw.get("entries")
-        if not isinstance(entries, list) or not entries:
-            print("ERROR: index has no entries")
-            sys.exit(1)
-        failed = 0
-        for i, item in enumerate(entries):
-            if not isinstance(item, dict):
-                print(f"ERROR: entry {i} is not an object")
-                sys.exit(1)
-            ident = str(item.get("id") or i)
-            script = item.get("script")
-            plan_rel = item.get("plan")
-            if not script or not plan_rel:
-                print(f"[FAIL] {ident} script/plan required")
-                failed += 1
-                continue
-            plan = json.loads(open(plan_rel, encoding="utf-8").read())
-            tool = plan.get("toolchain") if isinstance(plan.get("toolchain"), dict) else {}
-            req = {
-                "module_hashes": plan.get("module_hashes") or {},
-                "worker_hash": tool.get("worker_hash") or raw.get("worker_hash"),
-                "runtime_hashes": tool.get("runtime_hashes") or raw.get("runtime_hashes") or {},
-                "source_hash": plan.get("source_hash"),
-                "worker": {
-                    "python": sys.executable,
-                    "script": str(script),
-                    "input": item.get("input"),
-                    "cwd": os.getcwd(),
-                },
-            }
-            proc = subprocess.run(
-                [bin],
-                input=json.dumps(req),
-                capture_output=True,
-                text=True,
-            )
-            if proc.returncode != 0:
-                print(f"[FAIL] {ident} supervisor exit {proc.returncode}")
-                sys.stderr.write(proc.stderr)
-                failed += 1
-                continue
-            try:
-                out = json.loads(proc.stdout)
-            except json.JSONDecodeError:
-                print(f"[FAIL] {ident} supervisor json")
-                failed += 1
-                continue
-            status = str(out.get("status") or "")
-            print(f"[{status}] {ident} {out.get('message', '')}")
-            if status != "PASS":
-                failed += 1
-        print("")
-        print("Acid Judge")
-        print(f"Tools checked: {len(entries)}")
-        print(f"Failed: {failed}")
-        print(f"Execution integrity: {'FAIL' if failed else 'PASS'}")
-        sys.exit(1 if failed else 0)
-        PY
+          python -m acid_engine.action_driver --bin "$ACID_SUPERVISOR" --index "$ACID_INDEX" --receipts "$ACID_RECEIPTS"
         else
           echo "path=python-cli"
           extra=()

@@ -45,7 +45,19 @@ def test_action_fetches_supervisor_from_release_tag():
     assert "path=supervisor" in verify
     assert "path=python-cli" in verify
     assert "acid-judge locks --index" in verify
+    assert "python -m acid_engine.action_driver" in verify
+    assert "for i, item in enumerate(entries)" not in text
     assert "${{ inputs." not in verify.split("run:", 1)[1]
+
+
+def test_action_fetch_checks_release_checksum():
+    text = (ROOT / "action.yml").read_text(encoding="utf-8")
+    fetch = text.split("name: Fetch supervisor", 1)[1].split("name: Verify lock index", 1)[0]
+    assert "acid-judge-linux-x86_64.sha256" in fetch
+    assert "sha256sum -c" in fetch
+    assert "checksum mismatch" in fetch
+    assert "${{ inputs." not in fetch
+    assert "releases/download/" in fetch
 
 
 def test_readme_install_has_no_pythonpath():

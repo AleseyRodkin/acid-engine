@@ -8,7 +8,7 @@ on:
       tag:
         description: Release tag to attach binaries to
         required: true
-        default: v0.2.25
+        default: v0.2.26
 
 permissions:
   contents: write
@@ -45,10 +45,23 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: Copy-Item rust\acid-judge\target\release\acid-judge.exe ${{ matrix.artifact }}
+      - name: Checksum
+        shell: bash
+        env:
+          ART: ${{ matrix.artifact }}
+        run: |
+          python -c "
+          import hashlib, pathlib, os
+          p = pathlib.Path(os.environ['ART'])
+          digest = hashlib.sha256(p.read_bytes()).hexdigest()
+          pathlib.Path(str(p) + '.sha256').write_text(f'{digest}  {p.name}\n', encoding='ascii')
+          "
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}
+          path: |
+            ${{ matrix.artifact }}
+            ${{ matrix.artifact }}.sha256
       - name: Attach to release
         shell: bash
         env:
@@ -58,4 +71,4 @@ jobs:
           if [ -z "$tag" ]; then
             tag="${{ github.event.inputs.tag }}"
           fi
-          gh release upload "$tag" "${{ matrix.artifact }}" --clobber --repo "${{ github.repository }}"
+          gh release upload "$tag" "${{ matrix.artifact }}" "${{ matrix.artifact }}.sha256" --clobber --repo "${{ github.repository }}"
