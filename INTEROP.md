@@ -32,6 +32,9 @@ layer from them.
 | Hook | Claude Code PreToolUse bind only. Pre ≠ PASS. Unknown that reached the hook → deny. Exact id or resolved path. One harness. |
 | Receipt | `acid.receipt.v1`. Extra keys ignored. Optional `context`. |
 
+Replay is library-only (`replay_run` / `replay_from_record`). There is no
+CLI `replay` in 0.2.
+
 No APort / AGT / Copilot / MCP adapter in 0.2. Those wait on a caller.
 
 ## Embed
