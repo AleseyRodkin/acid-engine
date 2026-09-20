@@ -33,8 +33,8 @@ and not an MCP gateway.
   appear in the AST.
 - Judge contour listed in `runtime_hashes` (`worker.py`,
   `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`,
-  `local_deps.py`, `cli_judge.py`). `cli.py` is not in the pin (argparse / help).
-  The supervisor puts the
+  `local_deps.py`, `cli_judge.py`, `action_driver.py`). `cli.py` is not in
+  the pin (argparse / help). The supervisor puts the
   trusted package on `PYTHONPATH` first, not the user `cwd`.
 - Local deps are sealed from **one read** of each file compared to the
   locked hash, then those bytes are executed. A swap between check and

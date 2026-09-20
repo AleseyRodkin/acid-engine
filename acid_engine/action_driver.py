@@ -1,4 +1,4 @@
-"""CI driver for the supervisor binary. Not in runtime_hashes."""
+"""CI driver for the supervisor binary. In runtime_hashes (not a CLI verb)."""
 from __future__ import annotations
 
 import argparse
@@ -136,6 +136,7 @@ def run(bin_path: Path, index_path: Path, receipts: Path) -> int:
         tool: dict[str, Any] = toolchain_raw if isinstance(toolchain_raw, dict) else {}
         req = {
             "module_hashes": plan_raw.get("module_hashes") or {},
+            "dependency_hashes": plan_raw.get("dependency_hashes") or {},
             "worker_hash": tool.get("worker_hash") or raw.get("worker_hash"),
             "runtime_hashes": tool.get("runtime_hashes") or raw.get("runtime_hashes") or {},
             "source_hash": plan_raw.get("source_hash"),

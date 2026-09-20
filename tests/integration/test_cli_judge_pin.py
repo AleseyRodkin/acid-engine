@@ -100,3 +100,20 @@ def test_worker_byte_patch_fails_before_run(tmp_path: Path):
     assert "PASS" not in proc.stdout
     assert "worker_hash" in proc.stdout or "runtime_hash" in proc.stdout
     assert "was not executed" in proc.stdout or "Execution blocked" in proc.stdout
+
+
+def test_action_driver_byte_patch_is_runtime_hash_fail(tmp_path: Path):
+    root = _tree(tmp_path)
+    path = root / "acid_engine" / "action_driver.py"
+    path.write_bytes(path.read_bytes() + b"\n")
+    proc = _judge(root)
+    assert proc.returncode != 0
+    assert "PASS" not in proc.stdout
+    assert "runtime_hash" in proc.stdout
+    assert "was not executed" in proc.stdout or "Execution blocked" in proc.stdout
+
+
+def test_cmd_judge_lives_in_cli_judge():
+    from acid_engine import cli, cli_judge
+
+    assert cli.cmd_judge is cli_judge.cmd_judge

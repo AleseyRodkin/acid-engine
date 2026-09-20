@@ -56,9 +56,9 @@ def _tiny_index(tmp_path: Path) -> Path:
     return index
 
 
-def test_driver_not_in_runtime_pin():
-    assert "acid_engine/action_driver.py" not in RUNTIME_PIN_PATHS
-    assert len(RUNTIME_PIN_PATHS) == 7
+def test_driver_in_runtime_pin():
+    assert "acid_engine/action_driver.py" in RUNTIME_PIN_PATHS
+    assert len(RUNTIME_PIN_PATHS) == 8
 
 
 def test_empty_index_is_nonzero(tmp_path: Path):

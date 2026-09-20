@@ -90,12 +90,12 @@ Not Sigstore. Tampering the receipt body → verify fails.
 
 The binary does not hash the body. One canon — Python (`implementation_canon`).
 One binary entry: a worker is required.
-Before identify the supervisor checks SHA-256 of the runtime contour (`worker.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`, `cli_judge.py`) against `runtime_hashes` and `worker_hash` in the request/lock.
+Before identify the supervisor checks SHA-256 of the runtime contour (`worker.py`, `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`, `local_deps.py`, `cli_judge.py`, `action_driver.py`) against `runtime_hashes` and `worker_hash` in the request/lock.
 The contour is sought in `ACID_ENGINE_ROOT`, else the installed package (`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last. Not in a foreign project's `cwd` first.
 No `worker_hash` or no full `runtime_hashes` → SKIPPED. Mismatch → FAIL. The runtime hash is not in body identity.
 `locks --index` without `worker_hash` / `runtime_hashes` → FAIL, not fail-open.
 CLI `judge --plan` checks `source_hash` against the exec target **before import**, then the same runtime pins. `source_hash` mismatch → FAIL, the file is not imported. Missing `source_hash` → SKIPPED.
-The PreToolUse hook does the same gate before bind. If the hook runs, the tool must be in the index: unknown → deny. Lookup is exact id or resolved script path, not basename. The settings matcher is how Bash never reaches the hook. The worker refuses to load without `source_hash`.
+The PreToolUse hook does the same gate before bind. If the index carries `worker_hash` / `runtime_hashes`, the hook verifies that pin; no pin is 0.2.28 bind-only. If the hook runs, the tool must be in the index: unknown → deny. Lookup is exact id or resolved script path, not basename. The settings matcher is how Bash never reaches the hook. The worker refuses to load without `source_hash`.
 Supervisor `PYTHONPATH` is the trusted package first, not the user `cwd`. The worker is spawned as an absolute path, not `python -m`.
 `judge_script` without `toolchain` → SKIPPED (`runtime not pinned`). With `toolchain` but without full `runtime_hashes` → FAIL.
 `judge_script_from_lock` reads plan+iface+toolchain from the lock JSON.

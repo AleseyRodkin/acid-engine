@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import Any
 
 from acid_engine.level1.effects import EffectCollector
@@ -20,6 +21,7 @@ async def run_async_script(
     input_snapshot: ContainerSnapshot,
     mode: ExecutionMode = ExecutionMode.NORMAL,
     logger: Any = None,
+    fn: Callable[..., Any] | None = None,
 ) -> tuple[ContainerSnapshot, ExecutionObservation, ContainerDelta, ExecutionState]:
     """
     Run an async ScriptModule.
@@ -37,7 +39,9 @@ async def run_async_script(
         trace.append("start:light")
 
     try:
-        fn, unresolved = resolve_script(script)
+        unresolved = None
+        if fn is None:
+            fn, unresolved = resolve_script(script)
         if unresolved is not None:
             end = time.perf_counter()
             if unresolved == "missing_implementation":

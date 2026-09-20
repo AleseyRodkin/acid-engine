@@ -222,4 +222,47 @@ def test_fragment_matcher_is_placeholder_not_product_ids():
 
 def test_hook_not_in_runtime_pin():
     assert "examples/hooks/pre_tool_use.py" not in RUNTIME_PIN_PATHS
-    assert len(RUNTIME_PIN_PATHS) == 7
+    assert len(RUNTIME_PIN_PATHS) == 8
+
+
+def test_hook_index_pin_mismatch_is_deny(tmp_path: Path) -> None:
+    from acid_engine.worker import runtime_hashes, source_hash
+
+    tree = _foreign_tree(tmp_path)
+    index_path = tree / "locks" / "index.json"
+    raw = json.loads(index_path.read_text(encoding="utf-8"))
+    hashes = dict(runtime_hashes())
+    hashes["acid_engine/action_driver.py"] = "0" * 64
+    raw["worker_hash"] = source_hash()
+    raw["runtime_hashes"] = hashes
+    index_path.write_text(json.dumps(raw), encoding="utf-8")
+    out = _run(
+        {"tool_name": "clean_text", "tool_input": {}},
+        cwd=tree,
+        extra_env={
+            "ACID_REPO_ROOT": str(tree),
+            "ACID_LOCKS_INDEX": str(index_path),
+        },
+    )
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "runtime_hash" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "PASS" not in json.dumps(out)
+
+
+def test_hook_no_pin_is_bind_only_not_pass(tmp_path: Path) -> None:
+    tree = _foreign_tree(tmp_path)
+    shutil.copy(ROOT / "examples" / "tools" / "clean_text.py", tree / "tools" / "clean_text.py")
+    index_path = tree / "locks" / "index.json"
+    raw = json.loads(index_path.read_text(encoding="utf-8"))
+    assert "worker_hash" not in raw
+    out = _run(
+        {"tool_name": "clean_text", "tool_input": {}},
+        cwd=tree,
+        extra_env={
+            "ACID_REPO_ROOT": str(tree),
+            "ACID_LOCKS_INDEX": str(index_path),
+        },
+    )
+    assert out["hookSpecificOutput"]["permissionDecision"] == "allow"
+    assert out["hookSpecificOutput"]["permissionDecisionReason"] == "bound"
+    assert "PASS" not in json.dumps(out)

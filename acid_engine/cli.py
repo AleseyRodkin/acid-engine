@@ -9,15 +9,12 @@ from typing import Any
 
 from acid_engine.cli_judge import (
     admit_bound,
-    admit_judge,
-    dummy_script,
+    cmd_judge,
     load_script_from_file,
     source_hash_gate,
 )
 from acid_engine.level2.conformance import (
-    ConformanceResult,
     explain_block,
-    explain_result,
 )
 
 
@@ -69,48 +66,6 @@ def cmd_lock(args: argparse.Namespace) -> None:
             "declared_pure: Policy.pure is declared; "
             "runtime does not instrument I/O. File writes still PASS unless the body records effects."
         )
-
-
-def cmd_judge(args: argparse.Namespace) -> None:
-    """Public entry: print admit_judge + exit. PASS is not decided here."""
-    if not args.script:
-        print("ERROR: lock not passed — judge requires --script")
-        sys.exit(1)
-    input_val = parse_cli_input(args.input, default=3)
-    from acid_engine.judge import SELF_LOCK_SKIP
-    from acid_engine.level3.pipeline import PipelineResult
-    from acid_engine.level3.script.runner import load_script_lock
-
-    if not args.plan:
-        if not Path(args.script).exists():
-            print(f"ERROR: Failed to load script: Script file not found: {args.script}")
-            sys.exit(1)
-        dummy = dummy_script(args.script)
-        skipped = ConformanceResult.skipped(SELF_LOCK_SKIP)
-        result = PipelineResult(conformance=skipped)
-        print(explain_result(result.conformance))
-        _maybe_write_receipt(args, dummy, input_val, result, plan=None)
-        sys.exit(1)
-    try:
-        raw = json.loads(Path(args.plan).read_text(encoding="utf-8"))
-        iface, plan = load_script_lock(raw)
-    except Exception as e:
-        print(f"ERROR: Failed to load plan: {e}")
-        sys.exit(1)
-    admit = admit_judge(args.script, raw, input_val, iface=iface, plan=plan)
-    result = admit.result
-    if admit.runtime_pinned:
-        print("runtime: pinned")
-    print(explain_block(result.conformance))
-    if admit.runtime_pinned:
-        print(f"output: {result.data}")
-        print(f"interface_contract_hash: {plan.interface_contract_hash}")
-        print(f"plan_content_hash: {plan.content_hash}")
-    _maybe_write_receipt(
-        args, admit.script, input_val, result, plan=plan, toolchain=raw
-    )
-    if not result.ok:
-        sys.exit(1)
 
 
 def _maybe_write_receipt(

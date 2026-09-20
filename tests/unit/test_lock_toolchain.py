@@ -38,8 +38,9 @@ def test_dump_includes_toolchain_outside_identity():
     live_rt = runtime_hashes()
     assert tool["runtime_hashes"] == live_rt
     assert set(tool["runtime_hashes"]) == set(RUNTIME_PIN_PATHS)
-    assert len(RUNTIME_PIN_PATHS) == 7
+    assert len(RUNTIME_PIN_PATHS) == 8
     assert "acid_engine/cli_judge.py" in RUNTIME_PIN_PATHS
+    assert "acid_engine/action_driver.py" in RUNTIME_PIN_PATHS
     assert "acid_engine/cli.py" not in RUNTIME_PIN_PATHS
     assert "acid_engine/cli.py" not in tool["runtime_hashes"]
     assert "acid_engine/cli_judge.py" in tool["runtime_hashes"]
@@ -75,7 +76,7 @@ def test_public_exports_are_the_gate():
         "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.28"
+    assert acid_engine.__version__ == "0.2.29"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():

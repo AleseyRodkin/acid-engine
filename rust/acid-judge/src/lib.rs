@@ -50,6 +50,8 @@ pub struct Request {
     #[serde(default)]
     pub source_hash: Option<String>,
     #[serde(default)]
+    pub dependency_hashes: BTreeMap<String, String>,
+    #[serde(default)]
     pub max_latency_ms: Option<f64>,
 }
 
@@ -133,7 +135,7 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
         Some(h) if !h.is_empty() => h,
         _ => return Response::skipped("source not pinned"),
     };
-    let ident = match spawn_worker(worker, "identify", None, Some(source_hash)) {
+    let ident = match spawn_worker(req, worker, "identify", None, Some(source_hash)) {
         Ok(v) => v,
         Err(e) => return Response::fail(e, "worker"),
     };
@@ -167,7 +169,7 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     if bound.status != "BOUND" {
         return bound;
     }
-    let ran = match spawn_worker(worker, "run", worker.input.clone(), Some(source_hash)) {
+    let ran = match spawn_worker(req, worker, "run", worker.input.clone(), Some(source_hash)) {
         Ok(v) => v,
         Err(e) => return Response::fail(e, "worker"),
     };
@@ -190,6 +192,7 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
 }
 
 fn spawn_worker(
+    req: &Request,
     worker: &WorkerSpec,
     op: &str,
     input: Option<Value>,
@@ -211,6 +214,14 @@ fn spawn_worker(
     if let Some(h) = source_hash {
         payload.insert("source_hash".into(), Value::String(h.into()));
     }
+    payload.insert(
+        "module_hashes".into(),
+        serde_json::to_value(&req.module_hashes).unwrap_or(Value::Null),
+    );
+    payload.insert(
+        "dependency_hashes".into(),
+        serde_json::to_value(&req.dependency_hashes).unwrap_or(Value::Null),
+    );
     let body = Value::Object(payload);
     let mut path_parts: Vec<PathBuf> = vec![root];
     if let Some(existing) = std::env::var_os("PYTHONPATH") {
@@ -275,6 +286,7 @@ const RUNTIME_PIN_PATHS: &[&str] = &[
     "acid_engine/level2/implementation_canon.py",
     "acid_engine/level2/local_deps.py",
     "acid_engine/cli_judge.py",
+    "acid_engine/action_driver.py",
 ];
 
 fn pin_rel_ok(rel: &str) -> bool {
@@ -785,6 +797,7 @@ mod tests {
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
             "acid_engine/cli_judge.py",
+            "acid_engine/action_driver.py",
         ];
         for rel in files {
             let path = tmp.join(rel);
@@ -825,6 +838,7 @@ mod tests {
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
             "acid_engine/cli_judge.py",
+            "acid_engine/action_driver.py",
         ];
         for rel in files {
             let path = tmp.join(rel);
@@ -868,6 +882,7 @@ mod tests {
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
             "acid_engine/cli_judge.py",
+            "acid_engine/action_driver.py",
         ];
         for rel in files {
             let path = tmp.join(rel);
@@ -878,6 +893,41 @@ mod tests {
         let mut runtime = BTreeMap::new();
         for rel in files {
             if rel == "acid_engine/cli_judge.py" {
+                continue;
+            }
+            runtime.insert(rel.to_string(), sha256_file(&tmp.join(rel)).unwrap());
+        }
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
+        let r = judge(&Request {
+            module_hashes: hashes("s", "aaa"),
+            worker_hash: Some(worker_hex),
+            runtime_hashes: runtime,
+            worker: Some(WorkerSpec {
+                script: "tool.py".into(),
+                cwd: Some(tmp.to_string_lossy().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+        let _ = std::fs::remove_dir_all(&tmp);
+        assert_eq!(r.status, "SKIPPED");
+        assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn missing_action_driver_key_is_not_pinned() {
+        let _guard = RootGuard::acquire();
+        let tmp = std::env::temp_dir().join(format!("acid-missing-driver-{}", std::process::id()));
+        let files = RUNTIME_PIN_PATHS;
+        for rel in files {
+            let path = tmp.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, b"print('ok')\n").unwrap();
+        }
+        let worker_hex = sha256_file(&tmp.join("acid_engine/worker.py")).unwrap();
+        let mut runtime = BTreeMap::new();
+        for rel in files {
+            if *rel == "acid_engine/action_driver.py" {
                 continue;
             }
             runtime.insert(rel.to_string(), sha256_file(&tmp.join(rel)).unwrap());
@@ -931,6 +981,7 @@ mod tests {
             "acid_engine/level2/implementation_canon.py",
             "acid_engine/level2/local_deps.py",
             "acid_engine/cli_judge.py",
+            "acid_engine/action_driver.py",
         ];
         for rel in files {
             let path = pkg_root.join(rel);

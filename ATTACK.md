@@ -54,7 +54,7 @@ acid-judge diff \
 
 ## 2. Swap the hasher, not the tool
 
-CLI `judge --plan` pins `runtime_hashes` (worker, python_runtime, runner, implementation_canon) before run.
+CLI `judge --plan` pins `runtime_hashes` (worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge, action_driver) before run.
 
 Poison only the expected hash of the canon file. Live files stay honest. The lock no longer matches the contour:
 

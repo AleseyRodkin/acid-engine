@@ -15,8 +15,8 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | PreToolUse same-stem / stolen id | ✓ | ✓ | ✗ | — | `test_hook_same_stem_foreign_file_is_deny` |
 | PreToolUse foreign repo / tamper | ✓ | ✓ | ✗ | — | `test_hook_foreign_repo_tamper_is_deny` (`ACID_REPO_ROOT`) |
 
-| Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` |
-| Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` / `cli_judge.py` pin |
+| Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` / supervisor `test_rust_dep_seal` |
+| Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` / `cli_judge.py` + `action_driver.py` pin |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |
 | `importlib.import_module` | ⚠ warn | ✗ | ✓ | ✓ | `test_dynamic_import_lock_warns` |
 | `exec` / `eval` in AST | ⚠ warn | ✗ | ✓ | ✓ | same detector |
@@ -36,8 +36,9 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Hostile `cwd/acid_engine` | ✓ | ✓ | ✗ | ✓ | supervisor `PYTHONPATH` trusted first |
 | Action without a release tag | — | python-cli | — | — | `uses: ./` logs `path=python-cli`; no `@main` fetch |
 | Action asset checksum mismatch | ✓ | python-cli | — | — | `sha256sum -c`; log `checksum mismatch`; do not fail open on the binary |
-| `cli.py` / `cmd_judge` patch | ✗ tagged Action | supervisor | ✗ | ✓ | tagged path does not call `cmd_judge` |
-| `cli.py` / `cmd_judge` patch | ✓ pip CLI | — | ✓ | ✓ | argparse CLI is not in the pin; PASS is `cli_judge.py` |
+| `cli.py` help patch | ✗ tagged Action | supervisor | ✗ | ✓ | tagged path does not call argparse CLI |
+| `cli.py` help patch | ✓ pip CLI | — | ✓ | ✓ | argparse is not in the pin |
+| `cli_judge.py` / `cmd_judge` patch | ✓ pip CLI | — | ✗ | ✓ | PASS is `cli_judge.py` (in the pin) |
 
 
 

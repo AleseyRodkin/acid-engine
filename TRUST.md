@@ -35,7 +35,7 @@ downloads `acid-judge-linux-x86_64` from that same release tag, checks
 `<artifact>.sha256`, and runs it. That pair (Release ELF + sha256) is the
 root for the tagged path. Mismatch logs `checksum mismatch` and
 falls back to python-cli. `uses: ./` does not fetch `@main`; it stays python-cli.
-`action_driver.py` is not in the contour: it walks the index and writes receipts.
+`action_driver.py` walks the index and writes receipts. It is in the pin.
 Self-CI `rust` job builds `target/release/acid-judge` from this tree and does
 not Fetch from GitHub.
 
@@ -47,10 +47,10 @@ not Fetch from GitHub.
 - `ArtifactRef` locator hashes (`source_hash` of the file, `body_hash` of the
   entry) compared before import when set.
 - Static local `.py` imports (`dep:`).
-- Judge contour in `runtime_hashes` (7 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge).
+- Judge contour in `runtime_hashes` (8 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge, action_driver).
 - `python_version` / `canon_kind` next to identity.
 - Ed25519 of a receipt, local keys.
-- Not `action_driver.py`, not `cli.py`, not `examples/hooks/pre_tool_use.py`.
+- Not `cli.py`, not `examples/hooks/pre_tool_use.py`. `action_driver.py` is in the pin.
 
 
 

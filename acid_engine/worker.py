@@ -23,6 +23,7 @@ RUNTIME_PIN_PATHS = (
     "acid_engine/level2/implementation_canon.py",
     "acid_engine/level2/local_deps.py",
     "acid_engine/cli_judge.py",
+    "acid_engine/action_driver.py",
 )
 
 
@@ -212,6 +213,39 @@ def identify_script(script: ScriptModule) -> dict[str, Any]:
     }
 
 
+def _locked_deps(req: Mapping[str, Any]) -> dict[str, str]:
+    locked: dict[str, str] = {}
+    raw_deps = req.get("dependency_hashes")
+    if isinstance(raw_deps, Mapping):
+        for key, val in raw_deps.items():
+            if isinstance(key, str) and isinstance(val, str) and val:
+                locked[key] = val
+    raw_mod = req.get("module_hashes")
+    if isinstance(raw_mod, Mapping):
+        for key, val in raw_mod.items():
+            if (
+                isinstance(key, str)
+                and key.startswith("dep:")
+                and isinstance(val, str)
+                and val
+            ):
+                locked[key[4:]] = val
+    return locked
+
+
+def _seal_script(script: ScriptModule, req: Mapping[str, Any]) -> None:
+    """Seal local imports against lock hashes. Unpinned live import is an error."""
+    from acid_engine.level2.local_deps import collect_local_dep_hashes, seal_local_deps
+
+    locked = _locked_deps(req)
+    live = collect_local_dep_hashes(script.implementation)
+    if live and not locked:
+        raise ValueError("local import not pinned")
+    leaked = seal_local_deps(script.implementation, locked=locked)
+    if leaked is not None:
+        raise ValueError(f"dependency_hash mismatch: {leaked}")
+
+
 def run_body(script: ScriptModule, input_data: Any) -> dict[str, Any]:
     in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
     snap = ContainerSnapshot.create(
@@ -250,6 +284,7 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("source_hash mismatch")
     pin_source_bytes(target, src)
     script = materialize_script(load_script_from_file(str(script_path)))
+    _seal_script(script, req)
     if op == "identify":
         return identify_script(script)
     if op == "run":

@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import re
+import subprocess
+import sys
 from typing import Any
+
+_MATCH_BUDGET_S = 0.08
 
 
 class SemanticPredicate:
@@ -22,37 +26,58 @@ class EqualsPredicate(SemanticPredicate):
 
 class ContainsPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # if provided is a string, look for a substring
         if isinstance(provided, str):
             if expected in provided:
                 return True, "contains"
             return False, f"'{expected}' not found in output"
-        # for a dict or list, search the JSON representation
         if isinstance(provided, (dict, list)):
             import json
             as_str = json.dumps(provided, ensure_ascii=False)
             if expected in as_str:
                 return True, "contains"
             return False, f"'{expected}' not found in output"
-        # other types
         if expected in str(provided):
             return True, "contains"
         return False, f"'{expected}' not found in {provided!r}"
+
 
 class MatchesPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
         pattern = str(expected)
         text = str(provided)
-        if re.search(pattern, text):
+        try:
+            re.compile(pattern)
+        except re.error as e:
+            return False, f"invalid pattern: {e}"
+        # CPython `re` holds the GIL; a thread join cannot enforce the budget.
+        try:
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    "import re,sys; sys.stdout.write('1' if re.search(sys.argv[1], sys.argv[2]) else '0')",
+                    pattern,
+                    text,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=_MATCH_BUDGET_S,
+            )
+        except subprocess.TimeoutExpired:
+            return False, "matches timeout"
+        if proc.returncode != 0:
+            err = (proc.stderr or "").strip() or f"exit {proc.returncode}"
+            return False, f"matches raised: {err}"
+        if proc.stdout.strip() == "1":
             return True, f"matches /{pattern}/"
         return False, f"Pattern /{pattern}/ not found in '{text[:80]}...'"
 
 
 class CardinalityPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # expected: ">=N", "==N", "<=N"
-        op = expected[:2] if expected[:2] in (">=", "<=", "==") else expected[:1]
-        n = int(expected[len(op):])
+        spec = str(expected)
+        op = spec[:2] if spec[:2] in (">=", "<=", "==") else spec[:1]
+        n = int(spec[len(op) :])
         count = len(provided) if isinstance(provided, (list, dict, str)) else 1
         if op == ">=" and count >= n:
             return True, f"cardinality >= {n}"
@@ -69,7 +94,6 @@ class CardinalityPredicate(SemanticPredicate):
 
 class JsonSchemaPredicate(SemanticPredicate):
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # expected is a dict with a simple JSON Schema (fields + types)
         if not isinstance(provided, dict):
             return False, "Provided is not a dict"
         if not isinstance(expected, dict):
@@ -94,6 +118,7 @@ class JsonSchemaPredicate(SemanticPredicate):
             return False, "; ".join(errors)
         return True, "json_schema valid"
 
+
 class JsonPathPredicate(SemanticPredicate):
     """Check a JSON field by path (e.g. $.stdout or result.name)."""
 
@@ -110,7 +135,6 @@ class JsonPathPredicate(SemanticPredicate):
         else:
             return False, "Invalid jsonpath format"
 
-        # normalize the path: strip a leading '$' or '$.'
         if path.startswith("$."):
             path = path[2:]
         elif path.startswith("$"):
@@ -130,13 +154,11 @@ class JsonPathPredicate(SemanticPredicate):
         return False, f"Unknown op {op}"
 
     def _extract(self, data: Any, path: str) -> Any:
-        """Extract a value by a simple path (no $)."""
         parts = path.split(".")
         current = data
         for part in parts:
             if current is None:
                 return None
-            # Handle [n] indexes
             if "[" in part and part.endswith("]"):
                 field, idx_str = part.split("[", 1)
                 idx = int(idx_str[:-1])
@@ -154,11 +176,11 @@ class JsonPathPredicate(SemanticPredicate):
                 return None
         return current
 
+
 class InvariantPredicate(SemanticPredicate):
     """Run the given invariant function on provided_data."""
 
     def check(self, provided: Any, expected: Any) -> tuple[bool, str]:
-        # expected must be callable
         if not callable(expected):
             return False, "Invariant must be callable"
         try:
@@ -168,6 +190,7 @@ class InvariantPredicate(SemanticPredicate):
             return False, "invariant violated"
         except Exception as e:
             return False, f"Invariant check raised: {e}"
+
 
 PREDICATES: dict[str, SemanticPredicate] = {
     "equals": EqualsPredicate(),
@@ -187,12 +210,15 @@ def check_semantic(
 ) -> tuple[bool, str]:
     """
     Check provided against expected with a named predicate.
-    Returns (passed, message).
+    Returns (passed, message). Exceptions are FAIL, not raised.
     """
     pred = PREDICATES.get(predicate_name)
     if pred is None:
         return False, f"Unknown predicate: {predicate_name}"
-    return pred.check(provided, expected)
+    try:
+        return pred.check(provided, expected)
+    except Exception as e:
+        return False, f"{predicate_name} raised: {e}"
 
 
 def check_semantic_rules(

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.29 — 2026-09-20
+
+- Supervisor seals `dep:*` on identify and run. Helper swap between those calls is FAIL, not PASS. A live local import without a hash is a worker error (FAIL, not SKIPPED).
+- Async composite goes through `_prepare_execution` (bind + seal). `cmd_judge` lives in `cli_judge.py`. `action_driver.py` is in `runtime_hashes`.
+- `MatchesPredicate` has an 80ms budget (subprocess; CPython `re` holds the GIL). Timeout / bad pattern / predicate exception → FAIL.
+- PreToolUse verifies the index pin when present. Contour is 8 files. Locks reshot on CPython 3.11.
+
 ## 0.2.28 — 2026-09-20
 
 - PreToolUse reads `ACID_REPO_ROOT` / `ACID_LOCKS_INDEX` (else cwd / `locks/index.json`). No `sys.path.insert` into the product tree. Package comes from pip. Matcher fragment is `YOUR_TOOL_ID`; product ids live in `claude_settings.product.fragment.json`.

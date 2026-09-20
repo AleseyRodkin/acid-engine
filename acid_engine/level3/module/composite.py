@@ -83,7 +83,7 @@ class CompositeModule:
         from acid_engine.level3.script.async_module import AsyncScriptModule
         from acid_engine.level3.script.async_runtime import run_async_script
         from acid_engine.level3.script.runner import (
-            bind_script_to_plan,
+            _prepare_execution,
             execute_plan,
         )
 
@@ -130,13 +130,19 @@ class CompositeModule:
             if isinstance(mod, LeafModule):
                 leaf_iface, leaf_plan = iface, plan
                 if isinstance(mod.script, AsyncScriptModule):
-                    bound = bind_script_to_plan(leaf_plan, mod.script)
-                    if bound is not None:
+                    verified, blocked = _prepare_execution(
+                        leaf_iface,
+                        leaf_plan,
+                        mod.script,
+                        toolchain=toolchain,
+                    )
+                    if blocked is not None:
                         return CompositeResult(
                             data=None,
                             observations=tuple(observations),
-                            conformance=bound,
+                            conformance=blocked,
                         )
+                    assert verified is not None
                     in_port = PortRef(module=node_id, direction="input", name="value")
                     input_snap = ContainerSnapshot.create(
                         port_ref=in_port,
@@ -145,7 +151,7 @@ class CompositeModule:
                         data=input_val,
                     )
                     out_snap, obs, _, _ = asyncio.run(
-                        run_async_script(mod.script, input_snap)
+                        run_async_script(mod.script, input_snap, fn=verified.fn)
                     )
                     observations.append(obs)
                     conf = check_conformance(

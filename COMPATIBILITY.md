@@ -21,15 +21,16 @@ Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
 User `cwd` is the project, not the front of `PYTHONPATH`.
 `source_hash` is an extra lock key in 0.2.x. A 0.2.13 lock without it is
 SKIPPED, not PASS. Re-take the lock.
-`runtime_hashes` in 0.2.24 includes `acid_engine/cli_judge.py`. A lock without
-that key FAILs the live pin (`runtime_hashes mismatch`). Re-take the lock on
-CPython 3.11. `cli.py` is still not a pin key.
+`runtime_hashes` in 0.2.29 includes `acid_engine/action_driver.py` (8 keys).
+A lock without that key FAILs the live pin. Re-take the lock on CPython 3.11.
+`cli.py` is still not a pin key. Supervisor `dep:*` silence is FAIL, not SKIPPED.
+
 The Rust crate `acid-judge` (`rust/acid-judge`) is `publish = false` on
-crates.io. Version in Cargo.toml tracks the Python release (0.2.28). GitHub
+crates.io. Version in Cargo.toml tracks the Python release (0.2.29). GitHub
 Release assets are the three supervisor binaries plus `<artifact>.sha256`,
 not a crates.io crate. The supervisor binary exits 0 PASS / 1 FAIL / 2 input
-error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb
-and is not in `runtime_hashes`.
+error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb.
+It is in `runtime_hashes`.
 
 `ArtifactRef.source_hash` is additive (default empty). Empty still loads;
 a filled value is compared before import.

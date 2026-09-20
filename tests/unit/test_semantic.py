@@ -51,3 +51,23 @@ def test_jsonpath_nested():
     data = {"result": {"name": "Alice", "items": [10, 20]}}
     assert check_semantic("jsonpath", data, {"path": "result.name", "value": "Alice", "op": "equals"})[0]
     assert check_semantic("jsonpath", data, {"path": "result.items[0]", "value": "10", "op": "contains"})[0]
+
+
+def test_matches_evil_regex_fails_within_budget():
+    import time
+
+    text = "a" * 30 + "x"
+    start = time.perf_counter()
+    ok, msg = check_semantic("matches", text, r"(a+)+$")
+    elapsed = time.perf_counter() - start
+    assert not ok
+    assert elapsed < 1.0
+    assert "timeout" in msg or "not found" in msg
+
+
+def test_predicate_exception_is_fail_not_raise():
+    ok, msg = check_semantic("cardinality", [1, 2], "not-a-spec")
+    assert not ok
+    assert "raised" in msg or "invalid" in msg or "satisfy" in msg
+    ok, msg = check_semantic("jsonpath", {"a": 1}, {"path": "a[nope]", "value": "1"})
+    assert not ok

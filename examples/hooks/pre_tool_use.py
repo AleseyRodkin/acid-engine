@@ -85,6 +85,17 @@ def lookup(event: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+def _index_pin() -> dict[str, Any] | None:
+    """Index pin when present. No pin → 0.2.28 bind-only."""
+    try:
+        idx = json.loads(index_path().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if isinstance(idx, dict) and idx.get("worker_hash") and idx.get("runtime_hashes"):
+        return idx
+    return None
+
+
 def bind_entry(entry: dict[str, Any]) -> str:
     """Return allow/deny reason. Never PASS."""
     plan_path = entry.get("plan")
@@ -102,6 +113,13 @@ def bind_entry(entry: dict[str, Any]) -> str:
         raw = json.loads(plan_file.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as e:
         return f"deny: {e}"
+    pin_src = _index_pin()
+    if pin_src is not None:
+        from acid_engine.worker import verify_runtime_pin
+
+        pin = verify_runtime_pin(pin_src)
+        if pin is not None:
+            return f"deny: {pin.message}"
     gate = source_hash_gate(script_file, raw)
     if gate is not None:
         return f"deny: {gate.message}"

@@ -65,6 +65,8 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 72. 0.2.26: supervisor exit 0/1/2. Tagged Action checks asset sha256. Driver is `action_driver.py`, not in the pin. Contour unchanged.
 73. 0.2.27: self-CI rust job is a local supervisor (`cargo build --release --locked` + `action_driver`). `cargo audit` is not the MSRV job. Contour unchanged. No second hook.
 74. 0.2.28: PreToolUse is a consumer hook (`ACID_REPO_ROOT` / `ACID_LOCKS_INDEX`, pip package). Matcher fragment is `YOUR_TOOL_ID`. Hook is not in the pin. No minisign in this tag. No MCP.
+75. 0.2.29: supervisor seals `dep:*`. Async composite uses `_prepare_execution`. `cmd_judge` is in `cli_judge.py`. `action_driver.py` is in the pin. MatchesPredicate is budgeted. Hook verifies index pin when present.
+
 
 
 
