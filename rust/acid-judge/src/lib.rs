@@ -742,10 +742,12 @@ mod tests {
 
     #[test]
     fn worker_hash_mismatch_fails_before_identify() {
+        let _guard = RootGuard::acquire();
         let tmp = std::env::temp_dir().join(format!("acid-worker-pin-{}", std::process::id()));
         let pkg = tmp.join("acid_engine");
         std::fs::create_dir_all(&pkg).unwrap();
         std::fs::write(pkg.join("worker.py"), b"print('tamper')\n").unwrap();
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
         let r = judge(&Request {
             module_hashes: hashes("s", "aaa"),
             worker_hash: Some("0".repeat(64)),
@@ -829,6 +831,7 @@ mod tests {
 
     #[test]
     fn runtime_hash_mismatch_fails_before_identify() {
+        let _guard = RootGuard::acquire();
         let tmp = std::env::temp_dir().join(format!("acid-runtime-pin-{}", std::process::id()));
         let files = [
             "acid_engine/worker.py",
@@ -854,6 +857,7 @@ mod tests {
             "acid_engine/level3/script/python_runtime.py".into(),
             "0".repeat(64),
         );
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
         let r = judge(&Request {
             module_hashes: hashes("s", "aaa"),
             worker_hash: Some(worker_hex),
