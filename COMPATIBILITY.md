@@ -37,10 +37,11 @@ It is in `runtime_hashes`.
 `ArtifactRef.source_hash` is required to exec (0.2.31). Empty does not load.
 JSON blanks snapshot the file and fill the digest on the authoring path.
 A filled value is compared before import.
-`allow_dynamic: true` on a lock is 0.2.32 for `detect_dynamic` (judge does not
-FAIL). Absent or false: judge FAIL if the tool AST has `import_module` /
-`__import__` / `exec` / `eval`. Optional key; 0.2.32 locks without it of a
-static tool are unchanged.
+**0.2.33 breaking (judge, not lock format):** `importlib.import_module` /
+`__import__` / `exec` / `eval` in the tool AST is FAIL unless the lock has
+`allow_dynamic: true` (0.2.32 behavior; not a pin of the loaded target).
+Static 0.2.32 locks do not need a re-take. Package `acid-judge==0.2.33`.
+Proof: acid-judge-smoke `@v0.2.33`. Optional key.
 PreToolUse 0.2.20+: a tool that reached the hook and is not in the index is
 deny. 0.2.19 allowed unknown. The settings matcher is unchanged.
 PreToolUse 0.2.28+: `ACID_REPO_ROOT` (else cwd) and `ACID_LOCKS_INDEX`

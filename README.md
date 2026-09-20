@@ -42,6 +42,8 @@ Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock
 
 Package **0.2.33**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
+**0.2.33 breaking:** `importlib.import_module` / `__import__` / `exec` / `eval` in the tool AST is **FAIL** unless the lock has `"allow_dynamic": true` (that flag is 0.2.32, not a pin of the loaded file). Static local imports are unchanged. Package: `pip install acid-judge` — not `acid-engine`. Proof: [acid-judge-smoke @v0.2.33](https://github.com/AleseyRodkin/acid-judge-smoke).
+
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
 Proof: [attacks/](attacks/README.md). Manual copies: [ATTACK.md](ATTACK.md). TCB: [TRUST.md](TRUST.md). Runtime law: [METHOD.md](METHOD.md).
@@ -64,8 +66,7 @@ cd acid-judge-smoke
 ./smoke.sh
 ```
 
-Run the smoke test: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
-The product repository explains Acid Judge. The smoke repository is the proof.
+Proof is [acid-judge-smoke @v0.2.33](https://github.com/AleseyRodkin/acid-judge-smoke) (`uses: …@v0.2.33`, `pip install acid-judge==0.2.33`). The product repository explains Acid Judge. The smoke repository is the proof.
 
 ## Install
 
@@ -73,6 +74,7 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 pip install acid-judge==0.2.33
 acid-judge lock --script FILE --out LOCK.json
 # commit LOCK.json and locks/index.json
+# 0.2.33: importlib.import_module / exec / eval without allow_dynamic is FAIL
 acid-judge locks --index locks/index.json
 acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
@@ -84,7 +86,7 @@ acid-judge judge --script FILE --plan LOCK.json --input '...'
     judge: true
 ```
 
-Swapped body is not PASS. Proof: [acid-judge-smoke](https://github.com/AleseyRodkin/acid-judge-smoke).
+Swapped body is not PASS. Proof: [acid-judge-smoke @v0.2.33](https://github.com/AleseyRodkin/acid-judge-smoke).
 
 ## Hook
 

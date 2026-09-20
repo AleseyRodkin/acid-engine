@@ -4,8 +4,8 @@
 
 ## 0.2.33 — 2026-09-20
 
+- **Breaking:** judge FAIL if the tool AST uses `importlib.import_module` / `__import__` / `exec` / `eval` and the lock has no `"allow_dynamic": true`. Static tools unchanged. The flag is 0.2.32 (not a pin of the loaded target). Not “dynamic is closed”. Proof: acid-judge-smoke `@v0.2.33`. Package `acid-judge`.
 - After seal, `importlib.reload` of a locked helper re-execs the sealed bytes. A later disk write is not PASS.
-- Judge FAIL if `detect_dynamic` is not empty (`importlib.import_module`, `__import__`, `exec`, `eval`). Lock still warns. `allow_dynamic: true` on the lock is 0.2.32 (not pinned). This is not “dynamic is closed”: other loaders are out of the detector.
 - Contour files changed. Locks reshot on CPython 3.11.
 
 ## 0.2.32 — 2026-09-20
