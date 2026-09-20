@@ -28,7 +28,7 @@ Supervisor `bind()` FAILs if `dependency_hashes` is set but `dep:*` was cut
 from `module_hashes`, or a `dep:` value is empty. Not a second hasher.
 
 The Rust crate `acid-judge` (`rust/acid-judge`) is `publish = false` on
-crates.io. Version in Cargo.toml tracks the Python release (0.2.32). GitHub
+crates.io. Version in Cargo.toml tracks the Python release (0.2.33). GitHub
 Release assets are the three supervisor binaries plus `<artifact>.sha256`,
 not a crates.io crate. The supervisor binary exits 0 PASS / 1 FAIL / 2 input
 error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb.
@@ -37,6 +37,10 @@ It is in `runtime_hashes`.
 `ArtifactRef.source_hash` is required to exec (0.2.31). Empty does not load.
 JSON blanks snapshot the file and fill the digest on the authoring path.
 A filled value is compared before import.
+`allow_dynamic: true` on a lock is 0.2.32 for `detect_dynamic` (judge does not
+FAIL). Absent or false: judge FAIL if the tool AST has `import_module` /
+`__import__` / `exec` / `eval`. Optional key; 0.2.32 locks without it of a
+static tool are unchanged.
 PreToolUse 0.2.20+: a tool that reached the hook and is not in the index is
 deny. 0.2.19 allowed unknown. The settings matcher is unchanged.
 PreToolUse 0.2.28+: `ACID_REPO_ROOT` (else cwd) and `ACID_LOCKS_INDEX`

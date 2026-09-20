@@ -50,6 +50,7 @@ not Fetch from GitHub.
 - `ArtifactRef` locator hashes (`source_hash` of the file, `body_hash` of the
   entry) compared before import. Empty `source_hash` does not exec.
 - Static local `.py` imports (`dep:`).
+- `importlib.reload` of a sealed helper (sealed bytes, not a later disk write).
 - Judge contour in `runtime_hashes` (8 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge, action_driver).
 - `python_version` / `canon_kind` next to identity.
 - Ed25519 of a receipt, local keys.
@@ -61,7 +62,8 @@ not Fetch from GitHub.
 
 - The approved tool's behavior after PASS (fs / net / process).
 - Shell the agent starts outside `judge`.
-- `importlib` / `exec` / `eval` (lock warns; not pinned).
+- `importlib` / `exec` / `eval` (lock warns; not pinned; judge FAIL unless
+  `allow_dynamic: true`).
 - `Policy.pure` (declared, not instrumented).
 - `interface_contract_hash` (derived from the same JSON as `module_hashes`).
 - Semantic / business correctness.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "acid-judge"
-version = "0.2.32"
+version = "0.2.33"
 description = "Fail-closed gate for a locked Python-tool body"
 readme = "README.md"
 requires-python = ">=3.11"

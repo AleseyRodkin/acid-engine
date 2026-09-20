@@ -285,6 +285,13 @@ def explain_block(result: ConformanceResult) -> str:
             f"A local import of the tool differs from the lock ({fail.detail or 'dependency_hash'}).\n"
             "The body was not executed."
         )
+    elif prop == "dynamic_import":
+        why = (
+            "Execution blocked\n"
+            f"Tool uses dynamic import ({fail.detail or 'dynamic_import'}) "
+            "without allow_dynamic.\n"
+            "The body was not executed."
+        )
     elif prop == "output_type":
         why = (
             "Observation did not satisfy the contract\n"

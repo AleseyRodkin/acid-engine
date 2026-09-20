@@ -115,3 +115,114 @@ script = ScriptModule(
     assert "PASS" not in judged.stdout
     assert "dependency" in judged.stdout.lower() or "helper.py" in judged.stdout
 
+
+def _write_reload_tool(tmp: Path) -> tuple[Path, Path]:
+    helper = tmp / "helper.py"
+    helper.write_text("def process(d):\n    return {'r': 1}\n", encoding="utf-8")
+    entry = tmp / "entry.py"
+    entry.write_text(
+        """
+import helper
+import importlib
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    importlib.reload(helper)
+    return helper.process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    return entry, helper
+
+
+def test_reload_after_seal_is_not_new_bytes(tmp_path: Path) -> None:
+    """Module-level helper + importlib.reload after seal must not exec a later disk write."""
+    import sys
+
+    entry, helper = _write_reload_tool(tmp_path)
+    sys.path.insert(0, str(tmp_path))
+    sys.modules.pop("helper", None)
+    try:
+        script = materialize_script(load_script_from_file(entry))
+        assert seal_local_deps(script.implementation) is None
+        helper.write_text("def process(d):\n    return {'r': 999}\n", encoding="utf-8")
+        assert script.implementation({"n": 0}) == {"r": 1}
+    finally:
+        sys.modules.pop("helper", None)
+        if sys.path and sys.path[0] == str(tmp_path):
+            sys.path.pop(0)
+
+
+def test_reload_tool_static_swap_is_fail(tmp_path: Path) -> None:
+    import os
+    import subprocess
+    import sys
+
+    entry, helper = _write_reload_tool(tmp_path)
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+    plan = tmp_path / "entry.plan.json"
+    lock = subprocess.run(
+        [sys.executable, "-m", "acid_engine", "lock", "--script", str(entry), "--out", str(plan)],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(tmp_path),
+    )
+    assert lock.returncode == 0, lock.stderr + lock.stdout
+    honest = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "acid_engine",
+            "judge",
+            "--script",
+            str(entry),
+            "--plan",
+            str(plan),
+            "--input",
+            '{"n": 0}',
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(tmp_path),
+    )
+    assert honest.returncode == 0, honest.stderr + honest.stdout
+    assert "PASS" in honest.stdout
+    helper.write_text("def process(d):\n    return {'r': 999}\n", encoding="utf-8")
+    swapped = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "acid_engine",
+            "judge",
+            "--script",
+            str(entry),
+            "--plan",
+            str(plan),
+            "--input",
+            '{"n": 0}',
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(tmp_path),
+    )
+    assert swapped.returncode != 0
+    assert "PASS" not in swapped.stdout
+    assert "999" not in swapped.stdout

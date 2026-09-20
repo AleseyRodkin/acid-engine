@@ -16,6 +16,7 @@ from acid_engine.level2.failure import FailureReason
 from acid_engine.level2.implementation_canon import canon_id_for, live_canon_kind
 from acid_engine.level2.local_deps import (
     collect_local_dep_hashes,
+    dynamic_import_leak,
     origin_source_hash,
     sealed_deps,
 )
@@ -260,6 +261,22 @@ def _prepare_execution(
     bound = bind_script_to_plan(plan, script)
     if bound is not None:
         return None, bound
+
+    leaked = dynamic_import_leak(script.implementation, toolchain)
+    if leaked is not None:
+        return None, ConformanceResult(
+            status=ConformanceStatus.FAIL,
+            level=ConformanceLevel.STRUCTURAL,
+            message="dynamic import is not allowed",
+            failure=FailureReason(
+                node_id=script.name,
+                contract_id=str(script.contract_id),
+                property_name="dynamic_import",
+                expected="pinned",
+                actual=leaked,
+                detail=leaked,
+            ),
+        )
 
     fn, unresolved = resolve_script(script)
     if unresolved is not None:

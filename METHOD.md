@@ -39,7 +39,9 @@ The bytes that matched are the bytes that are imported (one read).
 `judge_script` on an already-constructed `ScriptModule` does not re-read the
 file: the caller already imported it.
 `importlib.import_module` / `__import__` / `exec` / `eval` are not followed:
-`lock` warns that local deps cannot be fully pinned. Renaming a local variable
+`lock` warns that local deps cannot be fully pinned. Judge FAIL unless the
+lock has `allow_dynamic: true` (0.2.32). After seal, `importlib.reload` of a
+locked helper re-execs sealed bytes. Renaming a local variable
 changes the AST canon.
 Body canon is one: the callable. `ArtifactRef` is a locator, not identity.
 When `ArtifactRef` carries `body_hash` or `source_hash`, those are compared

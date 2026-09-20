@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.33 — 2026-09-20
+
+- After seal, `importlib.reload` of a locked helper re-execs the sealed bytes. A later disk write is not PASS.
+- Judge FAIL if `detect_dynamic` is not empty (`importlib.import_module`, `__import__`, `exec`, `eval`). Lock still warns. `allow_dynamic: true` on the lock is 0.2.32 (not pinned). This is not “dynamic is closed”: other loaders are out of the detector.
+- Contour files changed. Locks reshot on CPython 3.11.
+
 ## 0.2.32 — 2026-09-20
 
 - JSON blank: one parse; pin JSON + `.py`. After the source_hash gate, swapping `implementation.file` does not exec the new file.

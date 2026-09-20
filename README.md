@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.32**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.33**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -70,7 +70,7 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 ## Install
 
 ```bash
-pip install acid-judge==0.2.32
+pip install acid-judge==0.2.33
 acid-judge lock --script FILE --out LOCK.json
 # commit LOCK.json and locks/index.json
 acid-judge locks --index locks/index.json
@@ -78,7 +78,7 @@ acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
 
 ```yaml
-- uses: AleseyRodkin/acid-engine@v0.2.32
+- uses: AleseyRodkin/acid-engine@v0.2.33
   with:
     index: locks/index.json
     judge: true
@@ -100,10 +100,11 @@ Pre ≠ PASS. Unknown that reached the hook is deny.
 ## What it protects
 
 - Tool body swap between `lock` and `judge` (if a hook or CI checks the hash)
-- Static local `.py` imports (`dep:`). `importlib.import_module` / `exec` / `eval` are not pinned — `lock` warns
+- Static local `.py` imports (`dep:`). `importlib.import_module` / `exec` / `eval` are not pinned — `lock` warns; judge FAIL unless the lock has `allow_dynamic: true` (0.2.32).
 - Judge contour (`runtime_hashes`)
 - Symlink retarget after lock (bytes of the followed path)
 - Bind-then-disk-write of a lazy local import (sealed against the **locked** hash, one read)
+- `importlib.reload` of a sealed helper after seal (sealed bytes, not a later disk write)
 - Two tools that both have `helper.py` judged concurrently (per-context seal, not a shared `sys.modules` name)
 - Top-level code in the tool file: CLI, supervisor, hook, `locks`, and `diff` compare `source_hash` **before import**. Mismatch → the file is not imported.
 - `ArtifactRef` / JSON blank: `source_hash` (file bytes) and `body_hash` (entry AST) are compared to a snapshot **before** exec. Empty `source_hash` does not exec. Same function plus extra top-level code is `source_hash`.
@@ -117,7 +118,7 @@ The supervisor checks SHA-256 of the contour (`worker.py`, `python_runtime.py`, 
 
 - Shell outside `judge`
 - What the body does after PASS (fs / net / process). No isolation.
-- `importlib` / `exec` / `eval` (lock warns)
+- `importlib` / `exec` / `eval` (lock warns; judge FAIL unless `allow_dynamic: true`. The flag does not pin the loaded target.)
 - site-packages / stdlib supply chain (separate control: SBOM / SLSA)
 - Environment variables (not part of implementation identity)
 - `judge_script` on an already-imported `ScriptModule` (library). The CLI, supervisor, and hook hash the file before import. `lock` loads the file you present — that is how a lock is taken.

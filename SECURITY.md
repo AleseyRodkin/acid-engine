@@ -30,7 +30,9 @@ and not an MCP gateway.
   tool file (not stdlib, not site-packages, not `acid_engine`). Stored as
   `dep:<path>` in `module_hashes`. `importlib.import_module`, `__import__`,
   `exec`, and `eval` are not followed. `lock` prints a warning when those
-  appear in the AST.
+  appear in the AST. Judge FAIL unless the lock has `allow_dynamic: true`.
+- After seal, `importlib.reload` of a locked helper re-execs the sealed
+  bytes. A later disk write of that helper is not those bytes.
 - Judge contour listed in `runtime_hashes` (`worker.py`,
   `python_runtime.py`, `runner.py`, `resolve.py`, `implementation_canon.py`,
   `local_deps.py`, `cli_judge.py`, `action_driver.py`). `cli.py` is not in
@@ -54,7 +56,9 @@ and not an MCP gateway.
   unless the body itself records effects.
 - Imports from the standard library or from site-packages.
 - Dynamic import (`importlib.import_module`, `__import__`, `exec`, `eval`):
-  not pinned; `lock` warns.
+  not pinned; `lock` warns; judge FAIL unless `allow_dynamic: true`.
+  The flag is 0.2.32. Other loaders (`spec_from_file_location`) are not
+  in the detector.
 - MCP / Cursor / Copilot hooks (one harness: Claude Code PreToolUse bind).
 - Cosmetics that change AST (renaming a local variable) — that is FAIL by design.
 

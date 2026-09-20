@@ -52,6 +52,8 @@ pub struct Request {
     #[serde(default)]
     pub dependency_hashes: BTreeMap<String, String>,
     #[serde(default)]
+    pub allow_dynamic: Option<bool>,
+    #[serde(default)]
     pub max_latency_ms: Option<f64>,
 }
 
@@ -257,6 +259,9 @@ fn spawn_worker(
         "dependency_hashes".into(),
         serde_json::to_value(&req.dependency_hashes).unwrap_or(Value::Null),
     );
+    if req.allow_dynamic == Some(true) {
+        payload.insert("allow_dynamic".into(), Value::Bool(true));
+    }
     let body = Value::Object(payload);
     let mut path_parts: Vec<PathBuf> = vec![root];
     if let Some(existing) = std::env::var_os("PYTHONPATH") {

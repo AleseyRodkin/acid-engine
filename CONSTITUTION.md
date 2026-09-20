@@ -69,6 +69,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 76. 0.2.30: tag `v0.2.*` creates the GitHub Release. `bind()` FAILs if `dep:*` was cut from the payload. Contour unchanged. No minisign. No MCP. `cli.py` is not in the pin.
 77. 0.2.31: package `__init__.py` seals as the package name. One plan snapshot for `locks --judge`. Driver PASS does not re-import the tool. `sealed_deps` around execute; pop only this mapping's `acid_dep_*`. Crooked `plan_content_hash` is a load error. ArtifactRef without `source_hash` does not exec. Contour files changed; reshoot on 3.11. No minisign. No MCP. `cli.py` is not in the pin.
 78. 0.2.32: three snapshots (JSON, dep graph, worker bytes). JSON parse once; pin JSON+py. Seal: hash all, then placeholders, then exec. Supervisor spawn from hashed worker bytes, not a second open of the path. Locate via sys.path without importing the package. Empty `source_hash` does not load. Contour files changed; reshoot on 3.11. No minisign. No MCP. `cli.py` is not in the pin.
+79. 0.2.33: reload after seal is sealed bytes, not a later disk write. Judge FAIL if detect_dynamic is not empty; `allow_dynamic: true` is 0.2.32. Contour files changed; reshoot on 3.11. No minisign. No MCP. `cli.py` is not in the pin.
 
 
 

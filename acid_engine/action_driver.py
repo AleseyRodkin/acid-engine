@@ -131,6 +131,7 @@ def run(bin_path: Path, index_path: Path, receipts: Path) -> int:
             "worker_hash": tool.get("worker_hash") or raw.get("worker_hash"),
             "runtime_hashes": tool.get("runtime_hashes") or raw.get("runtime_hashes") or {},
             "source_hash": plan_raw.get("source_hash"),
+            "allow_dynamic": plan_raw.get("allow_dynamic") is True,
             "worker": {
                 "python": sys.executable,
                 "script": str(script),

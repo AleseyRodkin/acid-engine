@@ -10,7 +10,7 @@ import inspect
 import sys
 import threading
 import types
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
@@ -22,7 +22,11 @@ _PINNED_SOURCE: dict[str, bytes] = {}
 _SEALED: contextvars.ContextVar[dict[str, types.ModuleType] | None] = contextvars.ContextVar(
     "acid_sealed_imports", default=None
 )
+_SEALED_SRC: contextvars.ContextVar[dict[str, bytes] | None] = contextvars.ContextVar(
+    "acid_sealed_src", default=None
+)
 _ORIG_IMPORT: Any = None
+_ORIG_RELOAD: Any = None
 _HOOK_LOCK = threading.Lock()
 
 
@@ -59,6 +63,7 @@ def snapshot_exec_target(path: Path) -> tuple[Path, bytes, str]:
 
 def exec_source_module(path: Path, src: bytes, mod_name: str) -> types.ModuleType:
     """Exec already-read bytes. Caller hashed these."""
+    _ensure_import_hook()
     module = types.ModuleType(mod_name)
     resolved = str(Path(path).resolve())
     module.__file__ = resolved
@@ -133,6 +138,29 @@ def detect_dynamic_imports(fn: Callable[..., Any] | None) -> tuple[str, ...]:
         elif tail == "import_module":
             found.add("importlib.import_module")
     return tuple(sorted(found))
+
+
+def allow_dynamic(data: Mapping[str, Any] | None) -> bool:
+    """Lock opt-in to 0.2.32: dynamic import is a warning, not a judge FAIL."""
+    if not isinstance(data, Mapping):
+        return False
+    if data.get("allow_dynamic") is True:
+        return True
+    tool = data.get("toolchain")
+    return isinstance(tool, Mapping) and tool.get("allow_dynamic") is True
+
+
+def dynamic_import_leak(
+    fn: Callable[..., Any] | None,
+    data: Mapping[str, Any] | None,
+) -> str | None:
+    """None = allowed. Else the detect_dynamic names that block judge."""
+    if allow_dynamic(data):
+        return None
+    found = detect_dynamic_imports(fn)
+    if not found:
+        return None
+    return ",".join(found)
 
 
 def _origin_file(fn: Callable[..., Any] | None) -> Path | None:
@@ -266,12 +294,16 @@ def _import_name(rel: str) -> str:
 
 def _ensure_import_hook() -> None:
     """Install once. Consults the per-context sealed map; does not own sys.modules['helper']."""
-    global _ORIG_IMPORT
+    global _ORIG_IMPORT, _ORIG_RELOAD
     with _HOOK_LOCK:
         if _ORIG_IMPORT is not None:
             return
         _ORIG_IMPORT = builtins.__import__
         builtins.__import__ = cast(Any, _sealed_import)
+        import importlib
+
+        _ORIG_RELOAD = importlib.reload
+        importlib.reload = cast(Any, _sealed_reload)
 
 
 def _calling_package(globals: dict[str, Any] | None) -> str | None:
@@ -335,6 +367,55 @@ def _sealed_import(
     return orig(name, globals, locals, fromlist, level)
 
 
+def _sealed_source(module: types.ModuleType) -> tuple[str, bytes] | None:
+    """Pinned bytes for a sealed helper, or None if reload is not this seal."""
+    sealed = _SEALED.get()
+    if not sealed:
+        return None
+    name = getattr(module, "__name__", None)
+    path = getattr(module, "__file__", None)
+    hit: types.ModuleType | None = None
+    for item in sealed.values():
+        if item is module:
+            hit = item
+            break
+    if hit is None and isinstance(name, str):
+        hit = sealed.get(name)
+    if hit is None and isinstance(path, str):
+        for item in sealed.values():
+            if getattr(item, "__file__", None) == path:
+                hit = item
+                break
+    if hit is None:
+        return None
+    file = getattr(hit, "__file__", None) or (path if isinstance(path, str) else None)
+    if not file:
+        return None
+    src_map = _SEALED_SRC.get()
+    src = src_map.get(file) if src_map else None
+    if src is None and src_map:
+        src = src_map.get(str(Path(file).resolve()))
+    if src is None:
+        return None
+    return file, src
+
+
+def _sealed_reload(module: types.ModuleType) -> types.ModuleType:
+    """Re-exec sealed bytes. Does not re-open the helper path after pin."""
+    orig = _ORIG_RELOAD
+    if orig is None:
+        raise RuntimeError("import hook not installed")
+    pinned = _sealed_source(module)
+    if pinned is None:
+        reloaded = orig(module)
+        if not isinstance(reloaded, types.ModuleType):
+            raise TypeError("reload() did not return a module")
+        return reloaded
+    file, src = pinned
+    exec(compile(src, file, "exec"), module.__dict__)  # noqa: S102
+    return module
+
+
 def _acid_dep_prefix(mapping: dict[str, types.ModuleType]) -> str:
     return f"acid_dep_{id(mapping)}_"
 
@@ -353,6 +434,7 @@ def cleanup_sealed() -> None:
     if mapping:
         _pop_acid_dep(mapping)
     _SEALED.set(None)
+    _SEALED_SRC.set(None)
 
 
 def _attach_package(mapping: dict[str, types.ModuleType], name: str, module: types.ModuleType) -> None:
@@ -401,7 +483,9 @@ def _seal_enter(
         return missing[0], None, None
     _ensure_import_hook()
     mapping: dict[str, types.ModuleType] = {}
+    src_map = {str(path): src for path, src, _rel, _name in prepared}
     token = _SEALED.set(mapping)
+    src_token = _SEALED_SRC.set(src_map)
     for path, _src, _rel, name in prepared:
         module = types.ModuleType(name)
         module.__file__ = str(path)
@@ -419,9 +503,10 @@ def _seal_enter(
             exec(compile(src, str(path), "exec"), mapping[name].__dict__)  # noqa: S102
     except Exception:
         _SEALED.reset(token)
+        _SEALED_SRC.reset(src_token)
         _pop_acid_dep(mapping)
         raise
-    return None, token, mapping
+    return None, (token, src_token), mapping
 
 
 def _discover(
@@ -474,7 +559,9 @@ def sealed_deps(
         yield leaked
     finally:
         if token is not None:
-            _SEALED.reset(token)
+            seal_token, src_token = token
+            _SEALED.reset(seal_token)
+            _SEALED_SRC.reset(src_token)
         if mapping is not None:
             _pop_acid_dep(mapping)
 

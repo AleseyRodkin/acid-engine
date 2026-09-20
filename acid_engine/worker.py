@@ -265,6 +265,7 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
     from acid_engine.level2.local_deps import (
         cleanup_sealed,
         collect_local_dep_hashes,
+        dynamic_import_leak,
         pin_source_bytes,
         sealed_deps,
         snapshot_exec_target,
@@ -277,6 +278,9 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("source_hash mismatch")
     pin_source_bytes(target, src)
     script = materialize_script(load_script_from_file(str(script_path)))
+    leaked_dyn = dynamic_import_leak(script.implementation, req)
+    if leaked_dyn is not None:
+        raise ValueError(f"dynamic import not allowed: {leaked_dyn}")
     locked = _locked_deps(req)
     live = collect_local_dep_hashes(script.implementation)
     if live and not locked:

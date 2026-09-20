@@ -18,8 +18,9 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Static helper swap | ✓ | ✓ | ✗ | ✓ | `test_local_deps` / supervisor `test_rust_dep_seal` |
 | Hasher / contour swap | ✓ | ✓ | ✗ | ✓ | `test_cli_judge_runtime_mismatch` / `cli_judge.py` + `action_driver.py` pin |
 | Poisoned expected hash | ✓ | ✓ | ✗ | ✓ | same |
-| `importlib.import_module` | ⚠ warn | ✗ | ✓ | ✓ | `test_dynamic_import_lock_warns` |
-| `exec` / `eval` in AST | ⚠ warn | ✗ | ✓ | ✓ | same detector |
+| `importlib.import_module` | ✓ | ✓ | ✗ | ✓ | `test_dynamic_import_lock_warns` (FAIL unless `allow_dynamic`) |
+| `exec` / `eval` in AST | ✓ | ✓ | ✗ | ✓ | same detector |
+| `allow_dynamic: true` | ⚠ warn | ✗ | ✓ | ✓ | `test_allow_dynamic_is_0_2_32` |
 | `judge` without `--plan` | ✓ | SKIPPED | ✗ | ✓ | `test_cli` |
 | Wrong CPython (distant) | ✓ | ✓ | ✗ | ✓ | `test_lock_toolchain` |
 | `max_latency_ms` overrun | ✓ | ✓ | ran | ✓ | rust `latency_over_limit_fail` |
@@ -27,6 +28,7 @@ This is coverage of **approved → executed**, not a list of 100 CVE classes.
 | Shell outside `judge` | ✗ | ✗ | ✓ | — | out of perimeter |
 | Symlink retarget | ✓ | ✓ | ✗ | ✓ | `test_symlink` |
 | Lazy import TOCTOU | ✓ | ✓ | ✗ | ✓ | `test_toctou` (locked hash, one read) |
+| `importlib.reload` after seal | ✓ | ✓ | ✗ | ✓ | `test_reload_after_seal_is_not_new_bytes` |
 | Concurrent same-named helpers | ✓ | ✓ | ✗ | ✓ | `test_concurrent_helpers` |
 | ArtifactRef file swap before import | ✓ | ✓ | ✗ | ✓ | `test_artifact_source_hash_mismatch_does_not_import` |
 | ArtifactRef entry swap before import | ✓ | ✓ | ✗ | ✓ | `test_artifact_body_hash_mismatch_does_not_import` |
