@@ -24,9 +24,11 @@ SKIPPED, not PASS. Re-take the lock.
 `runtime_hashes` in 0.2.29 includes `acid_engine/action_driver.py` (8 keys).
 A lock without that key FAILs the live pin. Re-take the lock on CPython 3.11.
 `cli.py` is still not a pin key. Supervisor `dep:*` silence is FAIL, not SKIPPED.
+Supervisor `bind()` FAILs if `dependency_hashes` is set but `dep:*` was cut
+from `module_hashes`, or a `dep:` value is empty. Not a second hasher.
 
 The Rust crate `acid-judge` (`rust/acid-judge`) is `publish = false` on
-crates.io. Version in Cargo.toml tracks the Python release (0.2.29). GitHub
+crates.io. Version in Cargo.toml tracks the Python release (0.2.30). GitHub
 Release assets are the three supervisor binaries plus `<artifact>.sha256`,
 not a crates.io crate. The supervisor binary exits 0 PASS / 1 FAIL / 2 input
 error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb.

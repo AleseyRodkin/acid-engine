@@ -150,6 +150,7 @@ CLI / supervisor also check `source_hash` **before import**.
 No hashes in the lock → SKIPPED.
 `interface_contract_hash` is checked too.
 Local deps are sealed from **one read** compared to locked `dep:` hashes, then those bytes are exec'd. Undeclared local import → FAIL. Sealed imports are per-judge context, not a shared `sys.modules` name.
+Supervisor `bind()` FAILs if `dependency_hashes` is set but `dep:*` is missing from `module_hashes`, or a `dep:` value is empty. That is payload presence, not a second hasher.
 `replay_run` without `iface` or `toolchain` → SKIPPED.
 `replay_run` without `expected_output` → SKIPPED after the gate (body not run).
 `execute_plan` returns `PipelineResult` (data + observation + conformance).

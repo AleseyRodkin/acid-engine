@@ -471,12 +471,43 @@ fn bind(req: &Request) -> Response {
     if want != actual {
         return Response::fail("plan.lock module hash mismatch", "module_hash");
     }
+    if let Some(fail) = bind_dep_forward(req) {
+        return fail;
+    }
     Response {
         status: "BOUND".into(),
         message: "bound".into(),
         property: None,
         data: None,
     }
+}
+
+fn bind_dep_forward(req: &Request) -> Option<Response> {
+    // Not a hasher. FAIL if the lock listed deps but dep:* was cut from the payload.
+    for (path, want) in &req.dependency_hashes {
+        if path.is_empty() || want.is_empty() {
+            return Some(Response::fail(
+                "plan.lock dependency hash empty",
+                "dependency_hash",
+            ));
+        }
+        let key = format!("dep:{path}");
+        match req.module_hashes.get(&key).map(String::as_str) {
+            Some(got) if !got.is_empty() => {}
+            _ => {
+                return Some(Response::fail(
+                    "plan.lock dep:* missing from payload",
+                    "dependency_hash",
+                ))
+            }
+        }
+    }
+    for (key, val) in &req.module_hashes {
+        if key.starts_with("dep:") && val.is_empty() {
+            return Some(Response::fail("plan.lock dep:* empty", "dependency_hash"));
+        }
+    }
+    None
 }
 
 fn verdict(req: &Request, obs: &Observation) -> Response {
@@ -827,6 +858,56 @@ mod tests {
         assert_eq!(r.status, "SKIPPED");
         assert!(r.message.contains("source"));
         assert_ne!(r.status, "PASS");
+    }
+
+    #[test]
+    fn bind_fails_if_dep_star_cut_from_payload() {
+        let mut dependency_hashes = BTreeMap::new();
+        dependency_hashes.insert("helper.py".into(), "bbb".into());
+        let r = bind(&Request {
+            module_hashes: hashes("entry", "aaa"),
+            dependency_hashes,
+            script_name: Some("entry".into()),
+            script_hash: Some("aaa".into()),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("dependency_hash"));
+        assert_ne!(r.status, "BOUND");
+    }
+
+    #[test]
+    fn bind_fails_on_empty_dep_star_value() {
+        let mut module_hashes = hashes("entry", "aaa");
+        module_hashes.insert("dep:helper.py".into(), "".into());
+        let mut dependency_hashes = BTreeMap::new();
+        dependency_hashes.insert("helper.py".into(), "bbb".into());
+        let r = bind(&Request {
+            module_hashes,
+            dependency_hashes,
+            script_name: Some("entry".into()),
+            script_hash: Some("aaa".into()),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "FAIL");
+        assert_eq!(r.property.as_deref(), Some("dependency_hash"));
+        assert_ne!(r.status, "BOUND");
+    }
+
+    #[test]
+    fn bind_ok_when_dep_star_forwarded() {
+        let mut module_hashes = hashes("entry", "aaa");
+        module_hashes.insert("dep:helper.py".into(), "bbb".into());
+        let mut dependency_hashes = BTreeMap::new();
+        dependency_hashes.insert("helper.py".into(), "bbb".into());
+        let r = bind(&Request {
+            module_hashes,
+            dependency_hashes,
+            script_name: Some("entry".into()),
+            script_hash: Some("aaa".into()),
+            ..Default::default()
+        });
+        assert_eq!(r.status, "BOUND");
     }
 
     #[test]

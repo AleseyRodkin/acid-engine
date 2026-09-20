@@ -185,3 +185,58 @@ def test_rust_swapped_helper_is_fail_not_pass(tmp_path: Path) -> None:
     assert rust["status"] != "PASS"
     assert rust["status"] == "FAIL"
     assert rust.get("data") != {"r": "SWAPPED"}
+
+
+def test_rust_bind_fails_if_dep_star_cut_from_payload(tmp_path: Path) -> None:
+    from tests.integration.test_rust_judge import rust_judge
+
+    helper = tmp_path / "helper.py"
+    helper.write_text("def process(d):\n    return {'r': d.get('n', 0)}\n", encoding="utf-8")
+    entry = tmp_path / "entry.py"
+    entry.write_text(
+        """
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    from helper import process
+    return process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    plan = _lock(tmp_path, entry)
+    assert "dep:helper.py" in plan["module_hashes"]
+    module_hashes = {
+        k: v for k, v in plan["module_hashes"].items() if not k.startswith("dep:")
+    }
+    rust = rust_judge(
+        {
+            "module_hashes": module_hashes,
+            "dependency_hashes": dict(plan.get("dependency_hashes") or {}),
+            "worker_hash": source_hash(),
+            "runtime_hashes": runtime_hashes(),
+            "source_hash": plan["source_hash"],
+            "worker": {
+                "python": sys.executable,
+                "script": str(entry),
+                "input": {"n": 5},
+                "cwd": str(tmp_path),
+            },
+        }
+    )
+    assert rust["status"] == "FAIL"
+    assert rust.get("property") == "dependency_hash"
+    assert rust["status"] != "PASS"

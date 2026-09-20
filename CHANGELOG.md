@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.30 — 2026-09-20
+
+- Pushing tag `v0.2.N` runs the gate then `gh release create --verify-tag`. Do not create the GitHub Release first. No minisign.
+- Supervisor `bind()` FAILs if `dependency_hashes` is set but `dep:*` was cut from `module_hashes`, or a `dep:` value is empty. Not a second hasher. Contour unchanged.
+
 ## 0.2.29 — 2026-09-20
 
 - Supervisor seals `dep:*` on identify and run. Helper swap between those calls is FAIL, not PASS. A live local import without a hash is a worker error (FAIL, not SKIPPED).

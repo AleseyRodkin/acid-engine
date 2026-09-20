@@ -27,6 +27,9 @@ Rust supervisor  (does not hash the tool body)
           Python tool body
 ```
 
+`bind()` FAILs if `dependency_hashes` is set but `dep:*` was cut from the
+payload. That is not a second hasher.
+
 CLI-only path (`acid-judge` without the binary) trusts the same Python
 contour in-process. That is a smaller TCB story: the process that judges
 is the process that can be swapped. Use the supervisor when that matters.
