@@ -41,9 +41,19 @@ def read_source_bytes(path: Path) -> bytes:
 
 
 def snapshot_exec_target(path: Path) -> tuple[Path, bytes, str]:
-    """One read of the file that would be exec'd. JSON blanks resolve to implementation.file."""
-    target = _exec_target(Path(path))
-    src = target.read_bytes()
+    """One read of the presented file. JSON blanks: pin JSON + py; hash is py bytes."""
+    presented = Path(path).resolve()
+    if str(presented) not in _PINNED_SOURCE:
+        pin_source_bytes(presented, presented.read_bytes())
+    raw = read_source_bytes(presented)
+    if presented.suffix.lower() != ".json":
+        return presented, raw, hashlib.sha256(raw).hexdigest()
+    target = _exec_target(presented)
+    if target == presented:
+        return presented, raw, hashlib.sha256(raw).hexdigest()
+    if str(target) not in _PINNED_SOURCE:
+        pin_source_bytes(target, target.read_bytes())
+    src = read_source_bytes(target)
     return target, src, hashlib.sha256(src).hexdigest()
 
 
@@ -60,7 +70,7 @@ def exec_source_module(path: Path, src: bytes, mod_name: str) -> types.ModuleTyp
 
 def source_bytes_hash(path: Path) -> str:
     """SHA-256 of the file that would be exec'd. JSON blanks resolve to implementation.file."""
-    return hashlib.sha256(_exec_target(path).read_bytes()).hexdigest()
+    return snapshot_exec_target(path)[2]
 
 
 def origin_source_hash(fn: Callable[..., Any] | None) -> str | None:
@@ -77,8 +87,8 @@ def _exec_target(path: Path) -> Path:
     import json
 
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        data = json.loads(read_source_bytes(path).decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return path
     impl = data.get("implementation") if isinstance(data, dict) else None
     if not isinstance(impl, dict):
@@ -361,31 +371,80 @@ def _seal_enter(
     fn: Callable[..., Any] | None,
     locked: dict[str, str] | None,
 ) -> tuple[str | None, Any, dict[str, types.ModuleType] | None]:
-    """Load sealed modules. On success leave mapping in _SEALED. On error, clean up."""
+    """Discover + verify all hashes, then placeholders, then exec pinned bytes."""
     start = _origin_file(fn)
     if start is None:
         return None, None, None
+    root = start.parent
+    discovered: dict[Path, bytes] = {}
+    _discover(start, root, discovered, set())
+    deps = [(path, src) for path, src in discovered.items() if path != start]
     if locked is not None:
         hashes = dict(locked)
     else:
-        hashes = collect_local_dep_hashes(fn)
+        hashes = {
+            _relkey(path, root): hashlib.sha256(src).hexdigest() for path, src in deps
+        }
         if not hashes:
             return None, None, None
+    sealed: set[str] = set()
+    prepared: list[tuple[Path, bytes, str, str]] = []
+    for path, src in deps:
+        rel = _relkey(path, root)
+        digest = hashes.get(rel)
+        if digest is None or hashlib.sha256(src).hexdigest() != digest:
+            return rel, None, None
+        sealed.add(rel)
+        prepared.append((path, src, rel, _import_name(rel)))
+    missing = sorted(set(hashes) - sealed)
+    if missing:
+        return missing[0], None, None
     _ensure_import_hook()
     mapping: dict[str, types.ModuleType] = {}
     token = _SEALED.set(mapping)
-    sealed: set[str] = set()
-    err = _seal_walk(start, start.parent, hashes, set(), sealed, mapping, is_root=True)
-    if err is not None:
+    for path, _src, _rel, name in prepared:
+        module = types.ModuleType(name)
+        module.__file__ = str(path)
+        if path.name == "__init__.py":
+            module.__package__ = name
+            module.__path__ = [str(path.parent)]
+        else:
+            module.__package__ = name.rpartition(".")[0]
+        sys.modules[f"{_acid_dep_prefix(mapping)}{name}"] = module
+        mapping[name] = module
+    for _path, _src, _rel, name in prepared:
+        _attach_package(mapping, name, mapping[name])
+    try:
+        for path, src, _rel, name in prepared:
+            exec(compile(src, str(path), "exec"), mapping[name].__dict__)  # noqa: S102
+    except Exception:
         _SEALED.reset(token)
         _pop_acid_dep(mapping)
-        return err, None, None
-    missing = sorted(set(hashes) - sealed)
-    if missing:
-        _SEALED.reset(token)
-        _pop_acid_dep(mapping)
-        return missing[0], None, None
+        raise
     return None, token, mapping
+
+
+def _discover(
+    file: Path,
+    root: Path,
+    out: dict[Path, bytes],
+    seen: set[Path],
+) -> None:
+    file = file.resolve()
+    if file in seen or not file.is_file():
+        return
+    seen.add(file)
+    try:
+        src = read_source_bytes(file)
+        tree = ast.parse(src.decode("utf-8"))
+    except (OSError, SyntaxError, UnicodeDecodeError):
+        return
+    for mod, level in _import_specs(tree):
+        resolved = _resolve(mod, level, file, root)
+        if resolved is None:
+            continue
+        _discover(resolved, root, out, seen)
+    out[file] = src
 
 
 def seal_local_deps(
@@ -420,53 +479,3 @@ def sealed_deps(
             _pop_acid_dep(mapping)
 
 
-def _seal_walk(
-    file: Path,
-    root: Path,
-    hashes: dict[str, str],
-    seen: set[Path],
-    sealed: set[str],
-    mapping: dict[str, types.ModuleType],
-    *,
-    is_root: bool,
-) -> str | None:
-    file = file.resolve()
-    if file in seen or not file.is_file():
-        return None
-    seen.add(file)
-    try:
-        src = file.read_bytes()
-        tree = ast.parse(src.decode("utf-8"))
-    except (OSError, SyntaxError, UnicodeDecodeError):
-        return None
-    for mod, level in _import_specs(tree):
-        resolved = _resolve(mod, level, file, root)
-        if resolved is None:
-            continue
-        err = _seal_walk(
-            resolved, root, hashes, seen, sealed, mapping, is_root=False
-        )
-        if err is not None:
-            return err
-    if is_root:
-        return None
-    rel = _relkey(file, root)
-    digest = hashes.get(rel)
-    if digest is None:
-        return rel
-    if hashlib.sha256(src).hexdigest() != digest:
-        return rel
-    sealed.add(rel)
-    name = _import_name(rel)
-    module = types.ModuleType(name)
-    module.__file__ = str(file)
-    if file.name == "__init__.py":
-        module.__package__ = name
-        module.__path__ = [str(file.parent)]
-    else:
-        module.__package__ = name.rpartition(".")[0]
-    sys.modules[f"{_acid_dep_prefix(mapping)}{name}"] = module
-    mapping[name] = module
-    _attach_package(mapping, name, module)
-    exec(compile(src, str(file), "exec"), module.__dict__)  # noqa: S102
-    return None

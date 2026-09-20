@@ -20,7 +20,7 @@ and not an MCP gateway.
   not basename. The settings matcher is how Bash never hits the hook.
   Library `resolve_script` / JSON blank with a filled `ArtifactRef.source_hash`
   or `body_hash` compare those to a snapshot of the file **before** exec.
-  Empty hashes still load (phase 2b). `body_hash` is the entry callable, not
+  Empty `source_hash` does not exec. `body_hash` is the entry callable, not
   the whole file — extra module-level payload is `source_hash`.
 - Bytes of the locked tool's implementation (AST canon, else bytecode).
   The live check is `module_hashes`. `interface_contract_hash` is derived

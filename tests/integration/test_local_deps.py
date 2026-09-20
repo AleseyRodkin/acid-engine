@@ -312,3 +312,77 @@ script = ScriptModule(
     assert swapped.returncode != 0
     assert "PASS" not in swapped.stdout
     assert "7777" not in swapped.stdout
+
+
+def _write_cycle_tool(tmp: Path, *, a_prefix: str = "", b_body: str) -> Path:
+    (tmp / "a.py").write_text(
+        a_prefix + "import b\n\ndef process(d):\n    return {'r': b.value}\n",
+        encoding="utf-8",
+    )
+    (tmp / "b.py").write_text(b_body, encoding="utf-8")
+    entry = tmp / "entry.py"
+    entry.write_text(
+        """
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    from a import process
+    return process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    return entry
+
+
+def test_cycle_overwrite_after_seal_is_not_new_bytes(tmp_path: Path):
+    from acid_engine.cli import load_script_from_file
+    from acid_engine.level2.local_deps import seal_local_deps
+    from acid_engine.level3.script.resolve import materialize_script
+
+    entry = _write_cycle_tool(
+        tmp_path, b_body="import a\nvalue = 1\n"
+    )
+    script = materialize_script(load_script_from_file(entry))
+    assert seal_local_deps(script.implementation) is None
+    (tmp_path / "b.py").write_text("import a\nvalue = 999\n", encoding="utf-8")
+    (tmp_path / "a.py").write_text(
+        "import b\n\ndef process(d):\n    return {'r': 888}\n",
+        encoding="utf-8",
+    )
+    assert script.implementation({"n": 0}) == {"r": 1}
+
+
+def test_mismatch_does_not_exec_good_neighbor(tmp_path: Path):
+    from acid_engine.cli import load_script_from_file
+    from acid_engine.level2.local_deps import seal_local_deps
+    from acid_engine.level3.script.resolve import materialize_script
+    from acid_engine.level3.script.runner import dump_script_lock
+
+    marker = tmp_path / "good_ran"
+    entry = _write_cycle_tool(
+        tmp_path,
+        a_prefix=f"from pathlib import Path\nPath({str(marker)!r}).write_text('ran')\n",
+        b_body="import a\nvalue = 1\n",
+    )
+    script = materialize_script(load_script_from_file(entry))
+    payload = dump_script_lock(script)
+    locked = payload["dependency_hashes"]
+    marker.unlink(missing_ok=True)
+    (tmp_path / "b.py").write_text("import a\nvalue = 999\n", encoding="utf-8")
+    leaked = seal_local_deps(script.implementation, locked=locked)
+    assert leaked == "b.py"
+    assert not marker.exists()

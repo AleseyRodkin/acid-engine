@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.2.32 — 2026-09-20
+
+- JSON blank: one parse; pin JSON + `.py`. After the source_hash gate, swapping `implementation.file` does not exec the new file.
+- Local dep seal: discover + verify all hashes, then `ModuleType` placeholders, then exec pinned bytes. Cycle A↔B goes through placeholders. A mismatch does not exec a good neighbor.
+- Supervisor: both identify and run spawn from the hashed worker bytes (`python -c`), not a second open of the path. Worker is not embedded in the binary. CPython and `__init__.py` are not pinned.
+- Locate the package via sys.path (site-packages / `ACID_ENGINE_ROOT`), without importing it.
+- README / SECURITY: empty `source_hash` does not load.
+- Contour files changed. Locks reshot on CPython 3.11.
+
 ## 0.2.31 — 2026-09-20
 
 - Package `__init__.py` seals as the import name (`pkg/__init__.py` → `pkg` + `__path__`). Lock key stays the file path (`dep:pkg/__init__.py`). `from pkg import sub` is walked.

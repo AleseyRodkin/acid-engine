@@ -43,7 +43,9 @@ def load_script_blank(path: str | Path) -> ScriptModule:
         raise ValueError("markdown specs are not parsed")
     if source.suffix.lower() != ".json":
         raise ValueError(f"blank loader expects .json, got: {source}")
-    data = json.loads(source.read_text(encoding="utf-8"))
+    from acid_engine.level2.local_deps import read_source_bytes
+
+    data = json.loads(read_source_bytes(source).decode("utf-8"))
     if not isinstance(data, dict):
         raise TypeError("script blank JSON must be an object")
     return script_from_authoring_dict(data, base_dir=source.parent)

@@ -198,3 +198,34 @@ def test_cli_run_json_script():
         assert result.returncode == 0, result.stderr + result.stdout
         assert "PASS" in result.stdout
         assert "output: 4" in result.stdout
+
+
+def test_json_file_swap_after_gate_does_not_exec_evil():
+    """After source_hash_gate, swapping implementation.file is not a new exec."""
+    from acid_engine.cli_judge import admit_judge, source_hash_gate
+    from acid_engine.level3.script.runner import dump_script_lock, load_script_lock
+
+    with tempfile.TemporaryDirectory() as tmp:
+        _py, js = _write_pair(tmp)
+        evil = Path(tmp) / "evil.py"
+        marker = Path(tmp) / "pwned"
+        evil.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('pwn')\n"
+            "def plus_one(x):\n    return 999\n",
+            encoding="utf-8",
+        )
+        script = load_script_from_file(js)
+        raw = dump_script_lock(script)
+        iface, plan = load_script_lock(raw)
+        assert source_hash_gate(js, raw) is None
+        data = json.loads(Path(js).read_text(encoding="utf-8"))
+        data["implementation"]["file"] = "evil.py"
+        Path(js).write_text(json.dumps(data), encoding="utf-8")
+        admit = admit_judge(js, raw, 3, iface=iface, plan=plan)
+        assert not marker.exists()
+        assert admit.result.ok, admit.result.conformance.message
+        assert admit.result.data == 4
+        src = Path(__file__).resolve().parents[2] / "acid_engine" / "level2" / "blank_loader.py"
+        text = src.read_text(encoding="utf-8")
+        assert "read_source_bytes" in text
+        assert "source.read_text" not in text

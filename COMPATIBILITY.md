@@ -16,8 +16,8 @@ Public contract for an adopter who pins a 0.2 lock and CLI in their own CI.
   `acid-engine==0.2.0` is the archived data-contracts product. 0.2.21–0.2.22 on
   that name are yanked. Do not install `acid-engine` for Acid Judge.
 
-Supervisor contour: `ACID_ENGINE_ROOT`, else the installed package
-(`python -P -c "import acid_engine"`), else `cwd/acid_engine/` last.
+Supervisor contour: `ACID_ENGINE_ROOT`, else site-packages / sys.path
+(the installed package, without importing it), else `cwd/acid_engine/` last.
 User `cwd` is the project, not the front of `PYTHONPATH`.
 `source_hash` is an extra lock key in 0.2.x. A 0.2.13 lock without it is
 SKIPPED, not PASS. Re-take the lock.
@@ -28,7 +28,7 @@ Supervisor `bind()` FAILs if `dependency_hashes` is set but `dep:*` was cut
 from `module_hashes`, or a `dep:` value is empty. Not a second hasher.
 
 The Rust crate `acid-judge` (`rust/acid-judge`) is `publish = false` on
-crates.io. Version in Cargo.toml tracks the Python release (0.2.31). GitHub
+crates.io. Version in Cargo.toml tracks the Python release (0.2.32). GitHub
 Release assets are the three supervisor binaries plus `<artifact>.sha256`,
 not a crates.io crate. The supervisor binary exits 0 PASS / 1 FAIL / 2 input
 error or SKIPPED. JSON body is unchanged. `action_driver.py` is not a CLI verb.

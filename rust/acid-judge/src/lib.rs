@@ -125,7 +125,19 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     if worker.script.trim().is_empty() {
         return Response::fail("worker.script is empty", "worker");
     }
-    if let Some(pin) = pin_worker(req, worker) {
+    match req.worker_hash.as_deref() {
+        Some(h) if !h.is_empty() => {}
+        _ => return Response::skipped("worker not pinned"),
+    }
+    let (worker_py, worker_src) = match read_worker(worker) {
+        Ok(v) => v,
+        Err(e) => return Response::fail(e, "worker_hash"),
+    };
+    let hex = match sha256_bytes(&worker_src) {
+        Ok(h) => h,
+        Err(e) => return Response::fail(e, "worker_hash"),
+    };
+    if let Some(pin) = pin_worker(req, &hex) {
         return pin;
     }
     if let Some(pin) = pin_runtime(req, worker) {
@@ -135,7 +147,15 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
         Some(h) if !h.is_empty() => h,
         _ => return Response::skipped("source not pinned"),
     };
-    let ident = match spawn_worker(req, worker, "identify", None, Some(source_hash)) {
+    let ident = match spawn_worker(
+        req,
+        worker,
+        "identify",
+        None,
+        Some(source_hash),
+        &worker_py,
+        &worker_src,
+    ) {
         Ok(v) => v,
         Err(e) => return Response::fail(e, "worker"),
     };
@@ -169,7 +189,15 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     if bound.status != "BOUND" {
         return bound;
     }
-    let ran = match spawn_worker(req, worker, "run", worker.input.clone(), Some(source_hash)) {
+    let ran = match spawn_worker(
+        req,
+        worker,
+        "run",
+        worker.input.clone(),
+        Some(source_hash),
+        &worker_py,
+        &worker_src,
+    ) {
         Ok(v) => v,
         Err(e) => return Response::fail(e, "worker"),
     };
@@ -191,20 +219,27 @@ fn judge_with_worker(req: &Request, worker: &WorkerSpec) -> Response {
     resp
 }
 
+fn read_worker(worker: &WorkerSpec) -> Result<(PathBuf, Vec<u8>), String> {
+    let root = engine_root(worker)?;
+    let worker_py = root.join("acid_engine").join("worker.py");
+    let worker_src = std::fs::read(&worker_py).map_err(|_| {
+        format!("worker source missing: {}", worker_py.display())
+    })?;
+    Ok((worker_py, worker_src))
+}
+
 fn spawn_worker(
     req: &Request,
     worker: &WorkerSpec,
     op: &str,
     input: Option<Value>,
     source_hash: Option<&str>,
+    worker_py: &Path,
+    worker_src: &[u8],
 ) -> Result<WorkerOut, String> {
     let python = worker.python.as_deref().unwrap_or("python3");
     let cwd = worker.cwd.as_deref().unwrap_or(".");
     let root = engine_root(worker)?;
-    let worker_py = root.join("acid_engine").join("worker.py");
-    if !worker_py.is_file() {
-        return Err(format!("worker source missing: {}", worker_py.display()));
-    }
     let mut payload = serde_json::Map::new();
     payload.insert("op".into(), Value::String(op.into()));
     payload.insert("script".into(), Value::String(worker.script.clone()));
@@ -228,8 +263,14 @@ fn spawn_worker(
         path_parts.extend(std::env::split_paths(&existing));
     }
     let pythonpath = std::env::join_paths(&path_parts).unwrap_or_else(|_| cwd.into());
+    let path_str = worker_py.to_string_lossy();
+    let hex = to_hex(worker_src);
+    let boot = format!(
+        "p={path_str:?};s=bytes.fromhex({hex:?});import sys;sys.path=[x for x in sys.path if x!=''];ns={{'__name__':'__main__','__file__':p,'__package__':None}};exec(compile(s,p,'exec'),ns)"
+    );
     let mut child = Command::new(python)
-        .arg(&worker_py)
+        .arg("-c")
+        .arg(&boot)
         .current_dir(cwd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -261,20 +302,15 @@ fn spawn_worker(
     serde_json::from_str(text.trim()).map_err(|e| format!("worker json: {e}"))
 }
 
-fn pin_worker(req: &Request, worker: &WorkerSpec) -> Option<Response> {
+fn pin_worker(req: &Request, actual_hex: &str) -> Option<Response> {
     let expected = match req.worker_hash.as_deref() {
         Some(h) if !h.is_empty() => h.to_lowercase(),
         _ => return Some(Response::skipped("worker not pinned")),
     };
-    let root = match engine_root(worker) {
-        Ok(p) => p,
-        Err(e) => return Some(Response::fail(e, "worker_hash")),
-    };
-    let path = root.join("acid_engine").join("worker.py");
-    match sha256_file(&path) {
-        Ok(actual) if actual == expected => None,
-        Ok(_) => Some(Response::fail("worker source hash mismatch", "worker_hash")),
-        Err(e) => Some(Response::fail(e, "worker_hash")),
+    if actual_hex == expected {
+        None
+    } else {
+        Some(Response::fail("worker source hash mismatch", "worker_hash"))
     }
 }
 
@@ -365,11 +401,12 @@ fn resolve_root_dir(p: &Path) -> Result<PathBuf, String> {
 
 fn locate_via_python(worker: &WorkerSpec) -> Result<PathBuf, String> {
     let python = worker.python.as_deref().unwrap_or("python3");
+    // find_spec locates site-packages / editable ROOT without running package __init__.
     let out = Command::new(python)
         .arg("-P")
         .args([
             "-c",
-            "import acid_engine, pathlib; print(pathlib.Path(acid_engine.__file__).resolve().parent.parent)",
+            "import importlib.util,json,sys; s=importlib.util.find_spec('acid_engine'); print(json.dumps({'origin': None if s is None else s.origin, 'locs': list(s.submodule_search_locations or []) if s is not None else [], 'path': sys.path}))",
         ])
         .env_remove("PYTHONPATH")
         .output()
@@ -382,25 +419,109 @@ fn locate_via_python(worker: &WorkerSpec) -> Result<PathBuf, String> {
         ));
     }
     let text = String::from_utf8_lossy(&out.stdout);
-    let root = PathBuf::from(text.trim());
-    resolve_root_dir(&root)
+    let info: Value = serde_json::from_str(text.trim()).map_err(|e| {
+        format!(
+            "acid_engine package not found (pip install the package or set ACID_ENGINE_ROOT). {e}"
+        )
+    })?;
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    if let Some(origin) = info.get("origin").and_then(Value::as_str) {
+        if !origin.is_empty() && origin != "built-in" && origin != "frozen" {
+            let p = PathBuf::from(origin);
+            if let Some(pkg) = p.parent() {
+                if let Some(root) = pkg.parent() {
+                    candidates.push(root.to_path_buf());
+                }
+                candidates.push(pkg.to_path_buf());
+            }
+        }
+    }
+    if let Some(locs) = info.get("locs").and_then(Value::as_array) {
+        for loc in locs {
+            if let Some(s) = loc.as_str() {
+                if s.is_empty() {
+                    continue;
+                }
+                let pkg = PathBuf::from(s);
+                candidates.push(pkg.clone());
+                if let Some(parent) = pkg.parent() {
+                    candidates.push(parent.to_path_buf());
+                }
+            }
+        }
+    }
+    if let Some(paths) = info.get("path").and_then(Value::as_array) {
+        for raw in paths {
+            if let Some(s) = raw.as_str() {
+                if !s.is_empty() {
+                    candidates.push(PathBuf::from(s));
+                }
+            }
+        }
+    }
+    for dir in candidates {
+        if dir.join("acid_engine").join("worker.py").is_file() {
+            return resolve_root_dir(&dir);
+        }
+        if dir.join("worker.py").is_file()
+            && dir.file_name().and_then(|n| n.to_str()) == Some("acid_engine")
+        {
+            if let Some(parent) = dir.parent() {
+                return resolve_root_dir(parent);
+            }
+        }
+    }
+    Err(
+        "acid_engine package not found (pip install the package or set ACID_ENGINE_ROOT)."
+            .into(),
+    )
 }
 
 fn sha256_file(path: &Path) -> Result<String, String> {
     if !path.is_file() {
         return Err(format!("worker source missing: {}", path.display()));
     }
-    let attempts = [
-        Command::new("sha256sum").arg(path).output(),
-        Command::new("shasum").args(["-a", "256"]).arg(path).output(),
-        Command::new("openssl")
-            .args(["dgst", "-sha256", "-r"])
-            .arg(path)
-            .output(),
+    let data = std::fs::read(path)
+        .map_err(|_| format!("worker source missing: {}", path.display()))?;
+    sha256_bytes(&data)
+}
+
+fn sha256_bytes(data: &[u8]) -> Result<String, String> {
+    let attempts: [(&str, &[&str]); 3] = [
+        ("sha256sum", &[]),
+        ("shasum", &["-a", "256"]),
+        ("openssl", &["dgst", "-sha256", "-r"]),
     ];
     let mut last_err = "no hash tool".to_string();
-    for result in attempts {
-        match result {
+    for (tool, args) in attempts {
+        let mut child = match Command::new(tool)
+            .args(args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+        {
+            Ok(c) => c,
+            Err(e) => {
+                last_err = format!("hash worker: {e}");
+                continue;
+            }
+        };
+        {
+            let stdin = match child.stdin.as_mut() {
+                Some(s) => s,
+                None => {
+                    last_err = "hash stdin closed".into();
+                    continue;
+                }
+            };
+            if let Err(e) = stdin.write_all(data) {
+                last_err = format!("hash worker: {e}");
+                continue;
+            }
+        }
+        drop(child.stdin.take());
+        match child.wait_with_output() {
             Ok(out) if out.status.success() => {
                 let text = String::from_utf8_lossy(&out.stdout);
                 if let Some(hex) = parse_sha256_output(&text) {
@@ -419,6 +540,16 @@ fn sha256_file(path: &Path) -> Result<String, String> {
         }
     }
     Err(last_err)
+}
+
+fn to_hex(data: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut out = String::with_capacity(data.len() * 2);
+    for &b in data {
+        out.push(HEX[(b >> 4) as usize] as char);
+        out.push(HEX[(b & 0x0f) as usize] as char);
+    }
+    out
 }
 
 fn parse_sha256_output(text: &str) -> Option<String> {
@@ -1129,5 +1260,62 @@ mod tests {
             "must not require acid_engine under the user cwd: {}",
             r.message
         );
+    }
+
+    #[test]
+    fn locate_source_does_not_import_package() {
+        let src = include_str!("lib.rs");
+        let needle = concat!("import ", "acid_engine");
+        assert!(
+            !src.contains(needle),
+            "locate must walk sys.path, not import the package"
+        );
+    }
+
+    #[test]
+    fn spawn_uses_hashed_bytes_not_later_path() {
+        let _guard = RootGuard::acquire();
+        let tmp = std::env::temp_dir().join(format!("acid-spawn-bytes-{}", std::process::id()));
+        let pkg = tmp.join("acid_engine");
+        std::fs::create_dir_all(&pkg).unwrap();
+        let worker_src = br#"
+import json, sys
+req = json.loads(sys.stdin.read() or "{}")
+print(json.dumps({
+    "script_name": "s",
+    "script_hash": "pinned-bytes",
+    "output_type": "int",
+    "pure": True,
+    "data": 1,
+    "effects": [],
+    "observation": {"status": "completed", "latency_ms": 1.0},
+}))
+"#;
+        let worker_py = pkg.join("worker.py");
+        std::fs::write(&worker_py, worker_src).unwrap();
+        std::env::set_var("ACID_ENGINE_ROOT", &tmp);
+        std::fs::write(&worker_py, b"raise SystemExit('tampered path')\n").unwrap();
+        let req = Request {
+            module_hashes: hashes("s", "aaa"),
+            ..Default::default()
+        };
+        let worker = WorkerSpec {
+            script: "tool.py".into(),
+            cwd: Some(tmp.to_string_lossy().into()),
+            python: Some("python3".into()),
+            ..Default::default()
+        };
+        let out = spawn_worker(
+            &req,
+            &worker,
+            "identify",
+            None,
+            None,
+            &worker_py,
+            worker_src,
+        );
+        let _ = std::fs::remove_dir_all(&tmp);
+        let out = out.expect("spawn hashed bytes");
+        assert_eq!(out.script_hash, "pinned-bytes");
     }
 }

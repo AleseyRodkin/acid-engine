@@ -68,6 +68,7 @@ Law: METHOD.md. Bones queue (archive): docs/archive/PLAN.md. Product queue: COMM
 75. 0.2.29: supervisor seals `dep:*`. Async composite uses `_prepare_execution`. `cmd_judge` is in `cli_judge.py`. `action_driver.py` is in the pin. MatchesPredicate is budgeted. Hook verifies index pin when present.
 76. 0.2.30: tag `v0.2.*` creates the GitHub Release. `bind()` FAILs if `dep:*` was cut from the payload. Contour unchanged. No minisign. No MCP. `cli.py` is not in the pin.
 77. 0.2.31: package `__init__.py` seals as the package name. One plan snapshot for `locks --judge`. Driver PASS does not re-import the tool. `sealed_deps` around execute; pop only this mapping's `acid_dep_*`. Crooked `plan_content_hash` is a load error. ArtifactRef without `source_hash` does not exec. Contour files changed; reshoot on 3.11. No minisign. No MCP. `cli.py` is not in the pin.
+78. 0.2.32: three snapshots (JSON, dep graph, worker bytes). JSON parse once; pin JSON+py. Seal: hash all, then placeholders, then exec. Supervisor spawn from hashed worker bytes, not a second open of the path. Locate via sys.path without importing the package. Empty `source_hash` does not load. Contour files changed; reshoot on 3.11. No minisign. No MCP. `cli.py` is not in the pin.
 
 
 

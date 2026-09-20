@@ -40,7 +40,7 @@ The lock catches a tool-file swap between `lock` and `judge`. It does not catch 
 
 Fail-closed gate of a locked Python-tool body. Catches a file swap between `lock` and `judge`. Does not catch a shell, does not sandbox the body after PASS, is not a development OS. Not SaaS, not `proven_pure`.
 
-Package **0.2.31**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
+Package **0.2.32**. MIT core. Supervisor binaries: GitHub Releases (`linux-x86_64` / `windows-x86_64` / `macos-arm64`), no local `cargo`. After `pip install` the binary finds the contour in the installed package, not in `cwd`.
 
 Not an MCP gateway. Gateways watch poisoned *tool descriptions* on the network. Acid Judge checks *file bytes* of a locally approved Python tool (and the judge contour) right before the call. Complementary layer, not a substitute.
 
@@ -70,7 +70,7 @@ The product repository explains Acid Judge. The smoke repository is the proof.
 ## Install
 
 ```bash
-pip install acid-judge==0.2.31
+pip install acid-judge==0.2.32
 acid-judge lock --script FILE --out LOCK.json
 # commit LOCK.json and locks/index.json
 acid-judge locks --index locks/index.json
@@ -78,7 +78,7 @@ acid-judge judge --script FILE --plan LOCK.json --input '...'
 ```
 
 ```yaml
-- uses: AleseyRodkin/acid-engine@v0.2.31
+- uses: AleseyRodkin/acid-engine@v0.2.32
   with:
     index: locks/index.json
     judge: true
@@ -106,7 +106,7 @@ Pre ≠ PASS. Unknown that reached the hook is deny.
 - Bind-then-disk-write of a lazy local import (sealed against the **locked** hash, one read)
 - Two tools that both have `helper.py` judged concurrently (per-context seal, not a shared `sys.modules` name)
 - Top-level code in the tool file: CLI, supervisor, hook, `locks`, and `diff` compare `source_hash` **before import**. Mismatch → the file is not imported.
-- `ArtifactRef` / JSON blank: `source_hash` (file bytes) and `body_hash` (entry AST) are compared to a snapshot **before** exec. Empty hashes still load. Same function plus extra top-level code is `source_hash`.
+- `ArtifactRef` / JSON blank: `source_hash` (file bytes) and `body_hash` (entry AST) are compared to a snapshot **before** exec. Empty `source_hash` does not exec. Same function plus extra top-level code is `source_hash`.
 - PreToolUse hook: a tool that reached the hook and is not in the index is **deny**. Lookup is exact id or resolved script path, not basename. The settings matcher is how Bash never hits the hook.
 
 Renaming a local variable changes the AST canon — FAIL. Comments and blank lines are not in the canon.

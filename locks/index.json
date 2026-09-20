@@ -7,7 +7,7 @@
     "acid_engine/level3/script/runner.py": "edfcd4db0be0f06160d0978cbce36ff3a139a647a77f8d1231d54344263e6c10",
     "acid_engine/level3/script/resolve.py": "7534028d3b1e78dcaca97fa3350cc36fa10e15baeaa9b19324aa0e6a6b42f2be",
     "acid_engine/level2/implementation_canon.py": "5f1ac5a2301cd9318b9838d9fc9c64fc607d98234ef8f7982dc4a456e9d72b79",
-    "acid_engine/level2/local_deps.py": "d106170253fe6af37e749404202780ef9b5c225b793db3d8950a3babe5d93a79",
+    "acid_engine/level2/local_deps.py": "6933a94e4759230dcbea55449efe1b93d443bd5ab4d30e3e79cef2ba4cd95cfe",
     "acid_engine/cli_judge.py": "52a436c8d01ed8e7acce6f054dc5f2bd25bfbdc62e810bb3b5c987a65055a9c5",
     "acid_engine/action_driver.py": "307a08ad195bf20db1d055f573bb34b5898a663d5dfc17ff6ade9d2099fbe614"
   },
