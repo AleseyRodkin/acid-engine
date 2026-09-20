@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from acid_engine.cli_judge import dummy_script, load_script_from_file
+from acid_engine.cli_judge import dummy_script
 from acid_engine.level2.conformance import (
     ConformanceLevel,
     ConformanceResult,
@@ -51,15 +51,6 @@ def _conformance(status: str, message: str, property_name: str | None) -> Confor
     return ConformanceResult.skipped(message)
 
 
-def _script_for_receipt(script_path: str, status: str) -> Any:
-    if status == "PASS":
-        try:
-            return load_script_from_file(script_path)
-        except Exception:
-            return dummy_script(script_path)
-    return dummy_script(script_path)
-
-
 def _write_receipt(
     receipts: Path,
     ident: str,
@@ -85,7 +76,7 @@ def _write_receipt(
     except Exception:
         plan = None
     payload = build_receipt(
-        _script_for_receipt(script_path, status),
+        dummy_script(script_path),
         input_data,
         result,
         plan=plan,

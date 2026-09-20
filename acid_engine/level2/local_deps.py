@@ -10,7 +10,8 @@ import inspect
 import sys
 import threading
 import types
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -146,6 +147,24 @@ def _call_qualname(func: ast.AST) -> str:
     return ""
 
 
+def _import_specs(tree: ast.AST) -> list[tuple[str, int]]:
+    """(module, level) from Import / ImportFrom, including from pkg import sub."""
+    specs: list[tuple[str, int]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            specs.extend((alias.name, 0) for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            specs.append((node.module or "", node.level))
+            for alias in node.names:
+                if alias.name == "*":
+                    continue
+                if node.module:
+                    specs.append((f"{node.module}.{alias.name}", node.level))
+                else:
+                    specs.append((alias.name, node.level))
+    return specs
+
+
 def _walk(file: Path, root: Path, out: dict[str, str], seen: set[Path]) -> None:
     file = file.resolve()
     if file in seen or not file.is_file():
@@ -159,20 +178,14 @@ def _walk(file: Path, root: Path, out: dict[str, str], seen: set[Path]) -> None:
         tree = ast.parse(src)
     except SyntaxError:
         return
-    for node in ast.walk(tree):
-        specs: list[tuple[str, int]] = []
-        if isinstance(node, ast.Import):
-            specs.extend((alias.name, 0) for alias in node.names)
-        elif isinstance(node, ast.ImportFrom):
-            specs.append((node.module or "", node.level))
-        for mod, level in specs:
-            resolved = _resolve(mod, level, file, root)
-            if resolved is None:
-                continue
-            rel = _relkey(resolved, root)
-            if rel not in out:
-                out[rel] = hashlib.sha256(read_source_bytes(resolved)).hexdigest()
-            _walk(resolved, root, out, seen)
+    for mod, level in _import_specs(tree):
+        resolved = _resolve(mod, level, file, root)
+        if resolved is None:
+            continue
+        rel = _relkey(resolved, root)
+        if rel not in out:
+            out[rel] = hashlib.sha256(read_source_bytes(resolved)).hexdigest()
+        _walk(resolved, root, out, seen)
 
 
 def _relkey(path: Path, root: Path) -> str:
@@ -230,9 +243,15 @@ def _py_file(candidate: Path, root: Path) -> Path | None:
 
 
 def _import_name(rel: str) -> str:
-    if rel.endswith(".py"):
-        rel = rel[:-3]
-    return rel.replace("/", ".").replace("\\", ".")
+    """Import name for a sealed file. Lock key stays the file path (dep:pkg/__init__.py)."""
+    posix = rel.replace("\\", "/")
+    if posix.endswith("/__init__.py"):
+        return posix[: -len("/__init__.py")].replace("/", ".")
+    if posix == "__init__.py":
+        return ""
+    if posix.endswith(".py"):
+        posix = posix[:-3]
+    return posix.replace("/", ".")
 
 
 def _ensure_import_hook() -> None:
@@ -306,6 +325,69 @@ def _sealed_import(
     return orig(name, globals, locals, fromlist, level)
 
 
+def _acid_dep_prefix(mapping: dict[str, types.ModuleType]) -> str:
+    return f"acid_dep_{id(mapping)}_"
+
+
+def _pop_acid_dep(mapping: dict[str, types.ModuleType]) -> None:
+    """Drop this seal's sys.modules keys. Never pop a bare helper name."""
+    prefix = _acid_dep_prefix(mapping)
+    for key in list(sys.modules):
+        if key.startswith(prefix):
+            sys.modules.pop(key, None)
+
+
+def cleanup_sealed() -> None:
+    """Worker finally: pop this context's acid_dep_* keys only."""
+    mapping = _SEALED.get()
+    if mapping:
+        _pop_acid_dep(mapping)
+    _SEALED.set(None)
+
+
+def _attach_package(mapping: dict[str, types.ModuleType], name: str, module: types.ModuleType) -> None:
+    if "." in name:
+        parent_name, _, child = name.rpartition(".")
+        parent = mapping.get(parent_name)
+        if parent is not None:
+            setattr(parent, child, module)
+    prefix = name + "."
+    for child_name, child_mod in list(mapping.items()):
+        if child_name.startswith(prefix) and "." not in child_name[len(prefix) :]:
+            setattr(module, child_name[len(prefix) :], child_mod)
+
+
+def _seal_enter(
+    fn: Callable[..., Any] | None,
+    locked: dict[str, str] | None,
+) -> tuple[str | None, Any, dict[str, types.ModuleType] | None]:
+    """Load sealed modules. On success leave mapping in _SEALED. On error, clean up."""
+    start = _origin_file(fn)
+    if start is None:
+        return None, None, None
+    if locked is not None:
+        hashes = dict(locked)
+    else:
+        hashes = collect_local_dep_hashes(fn)
+        if not hashes:
+            return None, None, None
+    _ensure_import_hook()
+    mapping: dict[str, types.ModuleType] = {}
+    token = _SEALED.set(mapping)
+    sealed: set[str] = set()
+    err = _seal_walk(start, start.parent, hashes, set(), sealed, mapping, is_root=True)
+    if err is not None:
+        _SEALED.reset(token)
+        _pop_acid_dep(mapping)
+        return err, None, None
+    missing = sorted(set(hashes) - sealed)
+    if missing:
+        _SEALED.reset(token)
+        _pop_acid_dep(mapping)
+        return missing[0], None, None
+    return None, token, mapping
+
+
 def seal_local_deps(
     fn: Callable[..., Any] | None,
     locked: dict[str, str] | None = None,
@@ -316,29 +398,26 @@ def seal_local_deps(
     Returns the relative path that drifted, or None.
     locked=None: hash the tree as it is now (lock / tests).
     locked={}: still walk; an undeclared local import is FAIL.
+    Does not reset on success: reset before execute would unseal. Execute paths use sealed_deps.
     """
-    start = _origin_file(fn)
-    if start is None:
-        return None
-    if locked is not None:
-        hashes = dict(locked)
-    else:
-        hashes = collect_local_dep_hashes(fn)
-        if not hashes:
-            return None
-    _ensure_import_hook()
-    mapping: dict[str, types.ModuleType] = {}
-    token = _SEALED.set(mapping)
-    sealed: set[str] = set()
-    err = _seal_walk(start, start.parent, hashes, set(), sealed, mapping, is_root=True)
-    if err is not None:
-        _SEALED.reset(token)
-        return err
-    missing = sorted(set(hashes) - sealed)
-    if missing:
-        _SEALED.reset(token)
-        return missing[0]
-    return None
+    leaked, _token, _mapping = _seal_enter(fn, locked)
+    return leaked
+
+
+@contextmanager
+def sealed_deps(
+    fn: Callable[..., Any] | None,
+    locked: dict[str, str] | None = None,
+) -> Iterator[str | None]:
+    """Seal for the with-block, then pop this mapping's acid_dep_* keys."""
+    leaked, token, mapping = _seal_enter(fn, locked)
+    try:
+        yield leaked
+    finally:
+        if token is not None:
+            _SEALED.reset(token)
+        if mapping is not None:
+            _pop_acid_dep(mapping)
 
 
 def _seal_walk(
@@ -360,21 +439,15 @@ def _seal_walk(
         tree = ast.parse(src.decode("utf-8"))
     except (OSError, SyntaxError, UnicodeDecodeError):
         return None
-    for node in ast.walk(tree):
-        specs: list[tuple[str, int]] = []
-        if isinstance(node, ast.Import):
-            specs.extend((alias.name, 0) for alias in node.names)
-        elif isinstance(node, ast.ImportFrom):
-            specs.append((node.module or "", node.level))
-        for mod, level in specs:
-            resolved = _resolve(mod, level, file, root)
-            if resolved is None:
-                continue
-            err = _seal_walk(
-                resolved, root, hashes, seen, sealed, mapping, is_root=False
-            )
-            if err is not None:
-                return err
+    for mod, level in _import_specs(tree):
+        resolved = _resolve(mod, level, file, root)
+        if resolved is None:
+            continue
+        err = _seal_walk(
+            resolved, root, hashes, seen, sealed, mapping, is_root=False
+        )
+        if err is not None:
+            return err
     if is_root:
         return None
     rel = _relkey(file, root)
@@ -387,9 +460,13 @@ def _seal_walk(
     name = _import_name(rel)
     module = types.ModuleType(name)
     module.__file__ = str(file)
-    module.__package__ = name.rpartition(".")[0]
-    # Unique sys.modules key (same idea as cli.py id(source)). Bare 'helper' is not bound.
-    sys.modules[f"acid_dep_{id(mapping)}_{name}"] = module
+    if file.name == "__init__.py":
+        module.__package__ = name
+        module.__path__ = [str(file.parent)]
+    else:
+        module.__package__ = name.rpartition(".")[0]
+    sys.modules[f"{_acid_dep_prefix(mapping)}{name}"] = module
     mapping[name] = module
+    _attach_package(mapping, name, module)
     exec(compile(src, str(file), "exec"), module.__dict__)  # noqa: S102
     return None

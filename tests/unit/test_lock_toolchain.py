@@ -64,6 +64,20 @@ def test_load_ignores_toolchain_and_still_binds():
     assert iface2.content_hash == iface.content_hash
 
 
+def test_crooked_plan_content_hash_is_load_error():
+    script = _script()
+    payload = dump_script_lock(script)
+    payload["plan_content_hash"] = "0" * 64
+    try:
+        load_script_lock(payload)
+        assert False, "expected plan_content_hash mismatch"
+    except ValueError as e:
+        assert "plan_content_hash mismatch" in str(e)
+    payload.pop("plan_content_hash")
+    iface, plan = load_script_lock(payload)
+    assert plan.module_hashes[script.name] == script.content_hash
+
+
 def test_public_exports_are_the_gate():
     import acid_engine
 
@@ -76,7 +90,7 @@ def test_public_exports_are_the_gate():
         "build_receipt",
     ]
     assert "Pipeline" not in acid_engine.__all__
-    assert acid_engine.__version__ == "0.2.30"
+    assert acid_engine.__version__ == "0.2.31"
 
 
 def test_verify_runtime_pin_ok_and_mismatch():

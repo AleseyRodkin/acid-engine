@@ -66,6 +66,7 @@ def test_tools_locked_pass_and_swap_fails():
         assert result.ok, (name, result.conformance.message)
         assert result.data == expected
         raw["module_hashes"][name] = "0" * 64
+        raw.pop("plan_content_hash", None)
         iface_bad, plan_bad = load_script_lock(raw)
         bad = judge_script(
             script, incoming, plan=plan_bad, iface=iface_bad, toolchain=raw

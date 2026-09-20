@@ -233,19 +233,6 @@ def _locked_deps(req: Mapping[str, Any]) -> dict[str, str]:
     return locked
 
 
-def _seal_script(script: ScriptModule, req: Mapping[str, Any]) -> None:
-    """Seal local imports against lock hashes. Unpinned live import is an error."""
-    from acid_engine.level2.local_deps import collect_local_dep_hashes, seal_local_deps
-
-    locked = _locked_deps(req)
-    live = collect_local_dep_hashes(script.implementation)
-    if live and not locked:
-        raise ValueError("local import not pinned")
-    leaked = seal_local_deps(script.implementation, locked=locked)
-    if leaked is not None:
-        raise ValueError(f"dependency_hash mismatch: {leaked}")
-
-
 def run_body(script: ScriptModule, input_data: Any) -> dict[str, Any]:
     in_port = PortRef(module=script.contract_id.name, direction="input", name="value")
     snap = ContainerSnapshot.create(
@@ -275,7 +262,13 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
     if not script_path:
         raise ValueError("worker request needs script path")
     expected = req.get("source_hash")
-    from acid_engine.level2.local_deps import pin_source_bytes, snapshot_exec_target
+    from acid_engine.level2.local_deps import (
+        cleanup_sealed,
+        collect_local_dep_hashes,
+        pin_source_bytes,
+        sealed_deps,
+        snapshot_exec_target,
+    )
 
     if not expected:
         raise ValueError("source not pinned")
@@ -284,12 +277,21 @@ def handle(req: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("source_hash mismatch")
     pin_source_bytes(target, src)
     script = materialize_script(load_script_from_file(str(script_path)))
-    _seal_script(script, req)
-    if op == "identify":
-        return identify_script(script)
-    if op == "run":
-        return run_body(script, req.get("input"))
-    raise ValueError(f"unknown worker op: {op!r}")
+    locked = _locked_deps(req)
+    live = collect_local_dep_hashes(script.implementation)
+    if live and not locked:
+        raise ValueError("local import not pinned")
+    try:
+        with sealed_deps(script.implementation, locked=locked) as leaked:
+            if leaked is not None:
+                raise ValueError(f"dependency_hash mismatch: {leaked}")
+            if op == "identify":
+                return identify_script(script)
+            if op == "run":
+                return run_body(script, req.get("input"))
+            raise ValueError(f"unknown worker op: {op!r}")
+    finally:
+        cleanup_sealed()
 
 
 def main() -> None:

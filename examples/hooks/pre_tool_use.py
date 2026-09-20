@@ -123,8 +123,11 @@ def bind_entry(entry: dict[str, Any]) -> str:
     gate = source_hash_gate(script_file, raw)
     if gate is not None:
         return f"deny: {gate.message}"
-    script = materialize_script(load_script_from_file(script_file))
-    _iface, plan = load_script_lock(raw)
+    try:
+        script = materialize_script(load_script_from_file(script_file))
+        _iface, plan = load_script_lock(raw)
+    except Exception as e:
+        return f"deny: {e}"
     result = bind_script_to_plan(plan, script)
     if result is None:
         return "allow: bound"

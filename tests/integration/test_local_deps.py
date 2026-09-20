@@ -154,3 +154,161 @@ script = ScriptModule(
     assert "PASS" in swapped.stdout
     assert "3330" in swapped.stdout
 
+
+def _write_pkg_tool(tmp: Path, init_body: str) -> tuple[Path, Path]:
+    pkg = tmp / "pkg"
+    pkg.mkdir()
+    init = pkg / "__init__.py"
+    init.write_text(init_body, encoding="utf-8")
+    entry = tmp / "entry.py"
+    entry.write_text(
+        """
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    from pkg import process
+    return process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    return entry, init
+
+
+def test_package_init_lock_key_is_file_path(tmp_path: Path):
+    from acid_engine.level2.local_deps import _import_name
+
+    assert _import_name("pkg/__init__.py") == "pkg"
+    assert _import_name("pkg/sub.py") == "pkg.sub"
+    entry, _init = _write_pkg_tool(
+        tmp_path,
+        "def process(d):\n    return {'r': d.get('n', 0) * 2}\n",
+    )
+    plan = tmp_path / "entry.plan.json"
+    lock = _cli("lock", "--script", str(entry), "--out", str(plan), cwd=tmp_path)
+    assert lock.returncode == 0, lock.stderr + lock.stdout
+    payload = json.loads(plan.read_text(encoding="utf-8"))
+    assert "pkg/__init__.py" in payload["dependency_hashes"]
+    assert payload["module_hashes"]["dep:pkg/__init__.py"] == payload["dependency_hashes"][
+        "pkg/__init__.py"
+    ]
+    assert "dep:pkg.__init" not in payload["module_hashes"]
+    assert "dep:pkg" not in payload["module_hashes"]
+    honest = _cli(
+        "judge",
+        "--script",
+        str(entry),
+        "--plan",
+        str(plan),
+        "--input",
+        '{"n": 5}',
+        cwd=tmp_path,
+    )
+    assert honest.returncode == 0, honest.stderr + honest.stdout
+    assert "PASS" in honest.stdout
+    (tmp_path / "pkg" / "__init__.py").write_text(
+        "def process(d):\n    return {'r': 4995}\n",
+        encoding="utf-8",
+    )
+    swapped = _cli(
+        "judge",
+        "--script",
+        str(entry),
+        "--plan",
+        str(plan),
+        "--input",
+        '{"n": 5}',
+        cwd=tmp_path,
+    )
+    assert swapped.returncode != 0
+    assert "PASS" not in swapped.stdout
+    assert "4995" not in swapped.stdout
+    assert "pkg/__init__.py" in swapped.stdout
+
+
+def test_package_init_seal_overwrite_is_not_new_bytes(tmp_path: Path):
+    from acid_engine.cli import load_script_from_file
+    from acid_engine.level2.local_deps import seal_local_deps
+    from acid_engine.level3.script.resolve import materialize_script
+
+    entry, init = _write_pkg_tool(
+        tmp_path,
+        "def process(d):\n    return {'r': 1}\n",
+    )
+    script = materialize_script(load_script_from_file(entry))
+    assert seal_local_deps(script.implementation) is None
+    init.write_text("def process(d):\n    return {'r': 999}\n", encoding="utf-8")
+    assert script.implementation({"n": 0}) == {"r": 1}
+
+
+def test_from_pkg_import_sub_seal_overwrite_is_not_new_bytes(tmp_path: Path):
+    from acid_engine.cli import load_script_from_file
+    from acid_engine.level2.local_deps import seal_local_deps
+    from acid_engine.level3.script.resolve import materialize_script
+
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("# pkg\n", encoding="utf-8")
+    sub = pkg / "sub.py"
+    sub.write_text("def process(d):\n    return {'r': 2}\n", encoding="utf-8")
+    entry = tmp_path / "entry.py"
+    entry.write_text(
+        """
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    from pkg import sub
+    return sub.process(data)
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    script = materialize_script(load_script_from_file(entry))
+    plan = tmp_path / "entry.plan.json"
+    lock = _cli("lock", "--script", str(entry), "--out", str(plan), cwd=tmp_path)
+    assert lock.returncode == 0, lock.stderr + lock.stdout
+    payload = json.loads(plan.read_text(encoding="utf-8"))
+    assert "pkg/__init__.py" in payload["dependency_hashes"]
+    assert "pkg/sub.py" in payload["dependency_hashes"]
+    assert seal_local_deps(script.implementation) is None
+    sub.write_text("def process(d):\n    return {'r': 7777}\n", encoding="utf-8")
+    assert script.implementation({"n": 0}) == {"r": 2}
+    swapped = _cli(
+        "judge",
+        "--script",
+        str(entry),
+        "--plan",
+        str(plan),
+        "--input",
+        '{"n": 0}',
+        cwd=tmp_path,
+    )
+    assert swapped.returncode != 0
+    assert "PASS" not in swapped.stdout
+    assert "7777" not in swapped.stdout

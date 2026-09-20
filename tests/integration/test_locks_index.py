@@ -51,6 +51,7 @@ def test_index_bones_pass_and_swapped_plan_fails():
     ok = judge_script(script, bones["input"], plan=plan, iface=iface, toolchain=raw)
     assert ok.ok
     raw["module_hashes"][script.name] = "0" * 64
+    raw.pop("plan_content_hash", None)
     iface_bad, plan_bad = load_script_lock(raw)
     bad = judge_script(
         script, bones["input"], plan=plan_bad, iface=iface_bad, toolchain=raw

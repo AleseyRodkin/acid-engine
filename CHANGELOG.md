@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.2.31 — 2026-09-20
+
+- Package `__init__.py` seals as the import name (`pkg/__init__.py` → `pkg` + `__path__`). Lock key stays the file path (`dep:pkg/__init__.py`). `from pkg import sub` is walked.
+- `locks --judge` keeps the first plan JSON snapshot. Changing the file after bind does not re-bind.
+- Action driver receipts on PASS use the supervisor payload / `dummy_script`. No second `load_script_from_file`.
+- Execute paths wrap `with sealed_deps` and pop only this mapping's `acid_dep_*`. `seal_local_deps` does not reset on success (that would unseal before run).
+- `load_script_lock` rejects a crooked `plan_content_hash`.
+- `ArtifactRef` without `source_hash` does not exec. JSON blanks still snapshot and fill the digest before load.
+- Contour files changed. Locks reshot on CPython 3.11.
+
 ## 0.2.30 — 2026-09-20
 
 - Pushing tag `v0.2.N` runs the gate then `gh release create --verify-tag`. Do not create the GitHub Release first. No minisign.

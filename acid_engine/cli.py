@@ -171,7 +171,7 @@ def cmd_locks(args: argparse.Namespace) -> None:
                 failed += 1
                 continue
             script = materialize_script(load_script_from_file(script_path))
-            _iface, plan = load_script_lock(plan_raw)
+            iface, plan = load_script_lock(plan_raw)
         except Exception as e:
             print(f"[FAIL] {ident} {e}")
             failed += 1
@@ -187,10 +187,8 @@ def cmd_locks(args: argparse.Namespace) -> None:
             continue
         from acid_engine.receipt import build_receipt, write_receipt
 
-        raw_plan = json.loads(plan_path.read_text(encoding="utf-8"))
-        iface, plan = load_script_lock(raw_plan)
         result = admit_bound(
-            script, item.get("input"), plan=plan, iface=iface, toolchain=raw_plan
+            script, item.get("input"), plan=plan, iface=iface, toolchain=plan_raw
         )
         print(explain_block(result.conformance))
         dest = Path(getattr(args, "receipts", None) or "receipts")
@@ -199,7 +197,7 @@ def cmd_locks(args: argparse.Namespace) -> None:
         write_receipt(
             rec_path,
             build_receipt(
-                script, item.get("input"), result, plan=plan, toolchain=raw_plan
+                script, item.get("input"), result, plan=plan, toolchain=plan_raw
             ),
         )
         print(f"receipt: {rec_path}")

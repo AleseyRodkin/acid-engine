@@ -73,6 +73,7 @@ def test_receipt_swapped_plan_fail_module_hash():
     script = materialize_script(load_script_from_file(SCRIPT))
     raw = json.loads(PLAN.read_text(encoding="utf-8"))
     raw["module_hashes"]["n_plus_one"] = "0" * 64
+    raw.pop("plan_content_hash", None)
     iface, plan = load_script_lock(raw)
     result = judge_script(script, {"n": 3}, plan=plan, iface=iface, toolchain=raw)
     assert not result.ok

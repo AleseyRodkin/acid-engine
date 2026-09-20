@@ -80,9 +80,12 @@ class CompositeModule:
 
         from acid_engine.judge import SELF_LOCK_SKIP
         from acid_engine.level2.conformance import check_conformance
+        from acid_engine.level2.local_deps import sealed_deps
         from acid_engine.level3.script.async_module import AsyncScriptModule
         from acid_engine.level3.script.async_runtime import run_async_script
         from acid_engine.level3.script.runner import (
+            _dep_leak_result,
+            _dep_locked,
             _prepare_execution,
             execute_plan,
         )
@@ -143,16 +146,25 @@ class CompositeModule:
                             conformance=blocked,
                         )
                     assert verified is not None
-                    in_port = PortRef(module=node_id, direction="input", name="value")
-                    input_snap = ContainerSnapshot.create(
-                        port_ref=in_port,
-                        contract_id=mod.contract_id,
-                        contract_hash=mod.content_hash,
-                        data=input_val,
-                    )
-                    out_snap, obs, _, _ = asyncio.run(
-                        run_async_script(mod.script, input_snap, fn=verified.fn)
-                    )
+                    with sealed_deps(
+                        verified.script.implementation, locked=_dep_locked(leaf_plan)
+                    ) as leaked:
+                        if leaked is not None:
+                            return CompositeResult(
+                                data=None,
+                                observations=tuple(observations),
+                                conformance=_dep_leak_result(verified.script, leaked),
+                            )
+                        in_port = PortRef(module=node_id, direction="input", name="value")
+                        input_snap = ContainerSnapshot.create(
+                            port_ref=in_port,
+                            contract_id=mod.contract_id,
+                            contract_hash=mod.content_hash,
+                            data=input_val,
+                        )
+                        out_snap, obs, _, _ = asyncio.run(
+                            run_async_script(mod.script, input_snap, fn=verified.fn)
+                        )
                     observations.append(obs)
                     conf = check_conformance(
                         required_output_type=mod.script.output_type,

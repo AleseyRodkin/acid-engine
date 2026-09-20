@@ -1,3 +1,4 @@
+import hashlib
 import os
 import tempfile
 from pathlib import Path
@@ -16,6 +17,10 @@ from acid_engine.worker import live_toolchain
 BODY = '''def plus_one(x):
     return x + 1
 '''
+
+
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _iface_plan(script):
@@ -44,13 +49,13 @@ def test_resolve_python_file_and_run():
         path = os.path.join(tmp, "plus.py")
         with open(path, "w", encoding="utf-8") as f:
             f.write(BODY)
-        # body_hash empty: 2b allows run without hash check
         art = ArtifactRef(
             language="python",
             file=path,
             entry="plus_one",
             canon="ast",
             body_hash="",
+            source_hash=_digest(BODY),
         )
         script = _script(implementation=None, artifact=art)
         iface, plan = _iface_plan(script)
@@ -83,6 +88,7 @@ def test_broken_file_is_fail():
         entry="plus_one",
         canon="ast",
         body_hash="",
+        source_hash=_digest(BODY),
     )
     script = _script(implementation=None, artifact=art)
     iface, plan = _iface_plan(script)
@@ -129,6 +135,7 @@ def test_materialize_artifact_hash_equals_callable():
             entry="plus_one",
             canon="ast",
             body_hash="",
+            source_hash=_digest(BODY),
         )
         only_ref = _script(implementation=None, artifact=art)
         native = _script(implementation=plus_one)
@@ -150,6 +157,7 @@ def test_lock_after_materialize_matches_callable_not_naked_ref():
             entry="plus_one",
             canon="ast",
             body_hash="",
+            source_hash=_digest(BODY),
         )
         only_ref = _script(implementation=None, artifact=art)
         native = _script(implementation=plus_one)
@@ -174,17 +182,18 @@ def test_artifact_body_hash_mismatch_does_not_import(tmp_path: Path) -> None:
     py = tmp_path / "plus.py"
     marker = tmp_path / "pwned"
     approved = content_hash_of(canonical_implementation(plus_one))
-    py.write_text(
+    src = (
         f"from pathlib import Path\nPath({str(marker)!r}).write_text('pwn')\n"
-        "def plus_one(x):\n    return x + 99\n",
-        encoding="utf-8",
+        "def plus_one(x):\n    return x + 99\n"
     )
+    py.write_text(src, encoding="utf-8")
     art = ArtifactRef(
         language="python",
         file=str(py),
         entry="plus_one",
         canon="ast",
         body_hash=approved,
+        source_hash=hashlib.sha256(src.encode("utf-8")).hexdigest(),
     )
     script = _script(implementation=None, artifact=art)
     fn, err = resolve_script(script)
@@ -195,8 +204,6 @@ def test_artifact_body_hash_mismatch_does_not_import(tmp_path: Path) -> None:
 
 
 def test_artifact_source_hash_mismatch_does_not_import(tmp_path: Path) -> None:
-    import hashlib
-
     py = tmp_path / "plus.py"
     marker = tmp_path / "pwned"
     honest = BODY.encode("utf-8")
@@ -220,6 +227,29 @@ def test_artifact_source_hash_mismatch_does_not_import(tmp_path: Path) -> None:
     assert not marker.exists()
 
 
+def test_artifact_empty_source_hash_does_not_exec(tmp_path: Path) -> None:
+    py = tmp_path / "plus.py"
+    marker = tmp_path / "pwned"
+    py.write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('pwn')\n" + BODY,
+        encoding="utf-8",
+    )
+    art = ArtifactRef(
+        language="python",
+        file=str(py),
+        entry="plus_one",
+        canon="ast",
+        body_hash="",
+        source_hash="",
+    )
+    script = _script(implementation=None, artifact=art)
+    fn, err = resolve_script(script)
+    assert fn is None
+    assert err is not None
+    assert err.startswith("source_hash")
+    assert not marker.exists()
+
+
 def test_artifact_body_hash_match_still_loads(tmp_path: Path) -> None:
     py = tmp_path / "plus.py"
     py.write_text(BODY, encoding="utf-8")
@@ -230,6 +260,7 @@ def test_artifact_body_hash_match_still_loads(tmp_path: Path) -> None:
         entry="plus_one",
         canon="ast",
         body_hash=approved,
+        source_hash=_digest(BODY),
     )
     script = _script(implementation=None, artifact=art)
     fn, err = resolve_script(script)

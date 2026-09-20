@@ -68,9 +68,10 @@ def test_composite_with_async_leaf():
 
 
 def test_composite_async_helper_swap_after_prepare_is_not_new_bytes(tmp_path):
-    """Seal in _prepare_execution; disk swap after bind is not the run body."""
-    from acid_engine.level2.local_deps import _SEALED, collect_local_dep_hashes
+    """Seal around run; disk swap after bind is not the run body."""
+    from acid_engine.level2.local_deps import _SEALED, collect_local_dep_hashes, sealed_deps
     from acid_engine.level3.script.runner import (
+        _dep_locked,
         _prepare_execution,
         dump_script_lock,
         load_script_lock,
@@ -107,29 +108,36 @@ script = AsyncScriptModule(
     _SEALED.set(None)
     sys.modules.pop("helper", None)
     sys.path.insert(0, str(tmp_path))
-    spec = importlib.util.spec_from_file_location("async_entry", entry)
-    assert spec is not None and spec.loader is not None
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    script = mod.script
-    assert collect_local_dep_hashes(script.implementation)
-    payload = dump_script_lock(script)
-    iface, plan = load_script_lock(payload)
-    verified, blocked = _prepare_execution(
-        iface, plan, script, toolchain=payload
-    )
-    assert blocked is None
-    assert verified is not None
-    helper.write_text("def process(x):\n    return 'SWAPPED'\n", encoding="utf-8")
-    in_port = PortRef(module="t", direction="input", name="val")
-    input_snap = ContainerSnapshot.create(
-        in_port, script.contract_id, script.content_hash, 10
-    )
+    try:
+        spec = importlib.util.spec_from_file_location("async_entry", entry)
+        assert spec is not None and spec.loader is not None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        script = mod.script
+        assert collect_local_dep_hashes(script.implementation)
+        payload = dump_script_lock(script)
+        iface, plan = load_script_lock(payload)
+        verified, blocked = _prepare_execution(
+            iface, plan, script, toolchain=payload
+        )
+        assert blocked is None
+        assert verified is not None
+        with sealed_deps(verified.script.implementation, locked=_dep_locked(plan)) as leaked:
+            assert leaked is None
+            helper.write_text("def process(x):\n    return 'SWAPPED'\n", encoding="utf-8")
+            in_port = PortRef(module="t", direction="input", name="val")
+            input_snap = ContainerSnapshot.create(
+                in_port, script.contract_id, script.content_hash, 10
+            )
 
-    async def _run():
-        return await run_async_script(script, input_snap, fn=verified.fn)
+            async def _run():
+                return await run_async_script(script, input_snap, fn=verified.fn)
 
-    out_snap, obs, _delta, _state = asyncio.run(_run())
-    assert obs.status == "completed", obs.trace
-    assert out_snap.data != "SWAPPED"
-    assert out_snap.data == 20
+            out_snap, obs, _delta, _state = asyncio.run(_run())
+            assert obs.status == "completed", obs.trace
+            assert out_snap.data != "SWAPPED"
+            assert out_snap.data == 20
+    finally:
+        sys.modules.pop("helper", None)
+        if sys.path and sys.path[0] == str(tmp_path):
+            sys.path.pop(0)

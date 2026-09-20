@@ -46,6 +46,9 @@ def resolve_script(script: Any) -> tuple[Callable[..., Any] | None, str | None]:
     if not entry:
         return None, f"{BROKEN_REF}:empty entry"
 
+    if not (artifact.source_hash or "").strip():
+        return None, f"{SOURCE_HASH}:missing"
+
     try:
         fn = _load_python_entry(
             path,
@@ -108,10 +111,11 @@ def _load_python_entry(
 
     source = Path(path)
     src = read_source_bytes(source)
-    if expected_source_hash:
-        actual_file = hashlib.sha256(src).hexdigest()
-        if actual_file != expected_source_hash:
-            raise ValueError("source_hash mismatch")
+    if not expected_source_hash:
+        raise ValueError("source_hash missing")
+    actual_file = hashlib.sha256(src).hexdigest()
+    if actual_file != expected_source_hash:
+        raise ValueError("source_hash mismatch")
     if expected_body_hash:
         preview_impl = canonical_implementation_from_source(src, entry)
         preview = content_hash_of(preview_impl) if preview_impl is not None else None

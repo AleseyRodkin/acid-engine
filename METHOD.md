@@ -45,8 +45,9 @@ Body canon is one: the callable. `ArtifactRef` is a locator, not identity.
 When `ArtifactRef` carries `body_hash` or `source_hash`, those are compared
 to a snapshot of the file **before** exec. Mismatch → do not import.
 `body_hash` is the AST canon of the named entry. `source_hash` is SHA-256
-of the file bytes. Empty hashes still load. No callable → `implementation`
-in identity = `{kind: missing}`.
+of the file bytes. Empty `source_hash` does not exec (0.2.31). JSON blanks
+snapshot the file and fill the digest on the authoring path. No callable →
+`implementation` in identity = `{kind: missing}`.
 After resolve (`materialize_script`) identity is the canon of the fn body.
 Take the lock after materialize. A reference dict is not in the hash.
 

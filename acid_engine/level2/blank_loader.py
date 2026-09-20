@@ -109,11 +109,18 @@ def script_from_authoring_dict(
     if language.strip().lower() == "python" and file_s and entry:
         if not path.is_file():
             raise FileNotFoundError(str(path))
+        from acid_engine.level2.local_deps import pin_source_bytes, read_source_bytes
+
+        src = read_source_bytes(path)
+        file_digest = hashlib.sha256(src).hexdigest()
+        if source_hash and source_hash != file_digest:
+            raise ValueError("source_hash mismatch")
+        pin_source_bytes(path, src)
         fn = _load_python_entry(
             path,
             entry,
             expected_body_hash=body_hash,
-            expected_source_hash=source_hash,
+            expected_source_hash=source_hash or file_digest,
         )
         if not callable(fn):
             raise TypeError(f"entry {entry!r} is not callable")

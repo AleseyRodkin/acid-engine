@@ -88,3 +88,29 @@ def test_concurrent_same_named_helpers_do_not_cross(tmp_path: Path) -> None:
     for t in threads:
         t.join()
     assert crosses == []
+
+
+def test_two_executes_do_not_share_acid_dep_keys(tmp_path: Path) -> None:
+    from acid_engine.level2.local_deps import sealed_deps
+
+    sys.modules.pop("helper", None)
+    script_a = materialize_script(load_script_from_file(_make_tool(tmp_path / "a", 1)))
+    script_b = materialize_script(load_script_from_file(_make_tool(tmp_path / "b", 2)))
+    locked_a = dump_script_lock(script_a)["dependency_hashes"]
+    locked_b = dump_script_lock(script_b)["dependency_hashes"]
+    before = {k for k in sys.modules if k.startswith("acid_dep_")}
+    with sealed_deps(script_a.implementation, locked=locked_a) as leaked:
+        assert leaked is None
+        first = {k for k in sys.modules if k.startswith("acid_dep_")} - before
+        assert first
+        assert "helper" not in sys.modules
+        assert script_a.implementation({"n": 0}) == {"r": 1}
+    assert {k for k in sys.modules if k.startswith("acid_dep_")}.isdisjoint(first)
+    with sealed_deps(script_b.implementation, locked=locked_b) as leaked:
+        assert leaked is None
+        live = {k for k in sys.modules if k.startswith("acid_dep_")} - before
+        assert live
+        assert "helper" not in sys.modules
+        assert script_b.implementation({"n": 0}) == {"r": 2}
+    leftover = {k for k in sys.modules if k.startswith("acid_dep_")} - before
+    assert leftover == set()

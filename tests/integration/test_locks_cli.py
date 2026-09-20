@@ -75,6 +75,92 @@ def test_locks_swapped_hash_fails():
         assert "PASS" not in proc.stdout
 
 
+def test_locks_judge_keeps_plan_snapshot(tmp_path: Path, monkeypatch):
+    """Changing the plan file after the first read must not re-bind locks --judge."""
+    from argparse import Namespace
+    from contextlib import redirect_stdout
+    from io import StringIO
+
+    from acid_engine.cli import cmd_locks
+    from acid_engine.worker import runtime_hashes, source_hash
+
+    entry = tmp_path / "entry.py"
+    entry.write_text(
+        """
+from acid_engine.level2.identity import ContractId, Version
+from acid_engine.level2.specification import Policy, Specification
+from acid_engine.level3.script.module import ScriptModule
+
+
+def entry(data):
+    return {"r": data.get("n", 0) + 1}
+
+
+script = ScriptModule(
+    contract_id=ContractId("t", "entry"),
+    version=Version(0, 1, 0),
+    specification=Specification(policy=Policy()),
+    input_type="dict",
+    output_type="dict",
+    implementation=entry,
+    name="entry",
+)
+""",
+        encoding="utf-8",
+    )
+    plan = tmp_path / "entry.plan.json"
+    lock = _cli("lock", "--script", str(entry), "--out", str(plan), cwd=tmp_path)
+    assert lock.returncode == 0, lock.stderr + lock.stdout
+    index = tmp_path / "index.json"
+    index.write_text(
+        json.dumps(
+            {
+                "schema": "acid.locks.v1",
+                "worker_hash": source_hash(),
+                "runtime_hashes": runtime_hashes(),
+                "entries": [
+                    {
+                        "id": "entry",
+                        "script": str(entry),
+                        "plan": str(plan),
+                        "input": {"n": 1},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    orig = Path.read_text
+    reads: list[int] = []
+
+    def wrapped(self: Path, *args: object, **kwargs: object) -> str:
+        text = orig(self, *args, **kwargs)
+        if self.resolve() == plan.resolve():
+            reads.append(1)
+            if len(reads) == 1:
+                raw = json.loads(text)
+                tool = dict(raw.get("toolchain") or {})
+                tool["worker_hash"] = "0" * 64
+                raw["toolchain"] = tool
+                Path.write_text(self, json.dumps(raw), encoding="utf-8")
+        return text
+
+    monkeypatch.setattr(Path, "read_text", wrapped)
+    buf = StringIO()
+    with redirect_stdout(buf):
+        cmd_locks(
+            Namespace(index=str(index), judge=True, receipts=str(tmp_path / "receipts"))
+        )
+    out = buf.getvalue()
+    assert reads == [1]
+    assert "PASS" in out
+    assert "worker_hash mismatch" not in out
+    rec = tmp_path / "receipts" / "entry.json"
+    assert rec.is_file()
+    payload = json.loads(rec.read_text(encoding="utf-8"))
+    assert payload["verdict"]["status"] == "PASS"
+
+
 def test_locks_missing_plan_fails():
     from acid_engine.worker import runtime_hashes, source_hash
 

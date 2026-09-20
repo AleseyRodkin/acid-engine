@@ -17,7 +17,7 @@ from acid_engine.level2.implementation_canon import canon_id_for, live_canon_kin
 from acid_engine.level2.local_deps import (
     collect_local_dep_hashes,
     origin_source_hash,
-    seal_local_deps,
+    sealed_deps,
 )
 from acid_engine.level3.bootstrap.plan_lock import PlanLock
 from acid_engine.level3.container.port import PortRef
@@ -205,6 +205,9 @@ def load_script_lock(data: Mapping[str, Any]) -> tuple[InterfaceContract, PlanLo
         module_hashes=dict(data.get("module_hashes") or {}),
         execution_mode=ExecutionMode(mode_raw),
     )
+    want = data.get("plan_content_hash")
+    if want is not None and str(want) != plan.content_hash:
+        raise ValueError("plan_content_hash mismatch")
     return iface, plan
 
 
@@ -258,29 +261,6 @@ def _prepare_execution(
     if bound is not None:
         return None, bound
 
-    leaked = seal_local_deps(
-        script.implementation,
-        locked={
-            name[4:]: digest
-            for name, digest in plan.module_hashes.items()
-            if name.startswith("dep:")
-        },
-    )
-    if leaked is not None:
-        return None, ConformanceResult(
-            status=ConformanceStatus.FAIL,
-            level=ConformanceLevel.STRUCTURAL,
-            message="plan.lock dependency hash mismatch",
-            failure=FailureReason(
-                node_id=script.name,
-                contract_id=str(iface.contract_id),
-                property_name="dependency_hash",
-                expected="sealed",
-                actual="drift",
-                detail=leaked,
-            ),
-        )
-
     fn, unresolved = resolve_script(script)
     if unresolved is not None:
         return None, unresolved_conformance(script, unresolved)
@@ -322,6 +302,30 @@ def _execute_verified(
     )
 
 
+def _dep_locked(plan: PlanLock) -> dict[str, str]:
+    return {
+        name[4:]: digest
+        for name, digest in plan.module_hashes.items()
+        if name.startswith("dep:")
+    }
+
+
+def _dep_leak_result(script: ScriptModule, leaked: str) -> ConformanceResult:
+    return ConformanceResult(
+        status=ConformanceStatus.FAIL,
+        level=ConformanceLevel.STRUCTURAL,
+        message="plan.lock dependency hash mismatch",
+        failure=FailureReason(
+            node_id=script.name,
+            contract_id=str(script.contract_id),
+            property_name="dependency_hash",
+            expected="sealed",
+            actual="drift",
+            detail=leaked,
+        ),
+    )
+
+
 def execute_plan(
     iface: InterfaceContract,
     plan: PlanLock,
@@ -337,7 +341,10 @@ def execute_plan(
     if blocked is not None:
         return PipelineResult(conformance=blocked)
     assert verified is not None
-    return _execute_verified(verified, input_data, plan)
+    with sealed_deps(verified.script.implementation, locked=_dep_locked(plan)) as leaked:
+        if leaked is not None:
+            return PipelineResult(conformance=_dep_leak_result(verified.script, leaked))
+        return _execute_verified(verified, input_data, plan)
 
 
 def replay_run(
@@ -370,7 +377,10 @@ def replay_run(
             "replay without expected_output is not a fact"
         )
     assert verified is not None
-    result = _execute_verified(verified, input_data, plan)
+    with sealed_deps(verified.script.implementation, locked=_dep_locked(plan)) as leaked:
+        if leaked is not None:
+            return _dep_leak_result(verified.script, leaked)
+        result = _execute_verified(verified, input_data, plan)
     if result.data != expected_output:
         return ConformanceResult(
             status=ConformanceStatus.FAIL,

@@ -48,7 +48,7 @@ not Fetch from GitHub.
 - Bytes of the tool file before import (`source_hash`).
 - Bytes of the locked callable (AST canon, else bytecode).
 - `ArtifactRef` locator hashes (`source_hash` of the file, `body_hash` of the
-  entry) compared before import when set.
+  entry) compared before import. Empty `source_hash` does not exec.
 - Static local `.py` imports (`dep:`).
 - Judge contour in `runtime_hashes` (8 files: worker, python_runtime, runner, resolve, implementation_canon, local_deps, cli_judge, action_driver).
 - `python_version` / `canon_kind` next to identity.
